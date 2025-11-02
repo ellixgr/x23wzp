@@ -481,7 +481,7 @@ async function salvarNovoGrupo() {
     return;
   }
   
-  // Validação: Link repetido (CONFORME SOLICITADO)
+  // Validação: Link repetido
   const linkExiste = todosGrupos.some(g => g.link === link);
   if (linkExiste) {
       alert('Já existe um grupo com esse link. Use um link que ainda não está cadastrado.');
@@ -495,7 +495,7 @@ async function salvarNovoGrupo() {
       return;
   }
   
-  // Gera ID de usuário se não existir (MANTIDO)
+  // Gera ID de usuário se não existir
   const isVip = vipCodigo === "∜"; 
   const usuario = localStorage.getItem('usuarioID') || crypto.randomUUID();
   localStorage.setItem('usuarioID', usuario);
@@ -533,21 +533,23 @@ function abrirEdicao(grupo){
   document.getElementById('grupoVipCodigo').value = grupo.vip ? "∜" : "";
   
   const nomeOriginal = grupo.nome; 
-  
+  const linkOriginal = grupo.link; // Salva o link original também
+
   // Define a função de salvar para a edição
-  salvarGrupoBtn.onclick = () => salvarEdicao(grupo, nomeOriginal);
+  salvarGrupoBtn.onclick = () => salvarEdicao(grupo, nomeOriginal, linkOriginal);
 }
 
-async function salvarEdicao(grupo, nomeOriginal){
-  grupo.nome = document.getElementById('grupoNome').value.trim();
-  grupo.link = document.getElementById('grupoLink').value.trim();
+// *** FUNÇÃO SALVAREDICAO CORRIGIDA PARA O SEU PROBLEMA ***
+async function salvarEdicao(grupoOriginal, nomeOriginal, linkOriginal){
+  const nomeNovo = document.getElementById('grupoNome').value.trim();
+  const linkNovo = document.getElementById('grupoLink').value.trim();
   // Se a foto não foi alterada, mantém a original. Se sim, usa a nova prévia.
-  grupo.foto = previewFoto.src.trim() || 'https://files.catbox.moe/ls07y5.jpg'; 
-  grupo.categoria = document.getElementById('grupoCategoria').value;
-  grupo.vip = document.getElementById('grupoVipCodigo').value.trim() === "∜"; 
+  const fotoNova = previewFoto.src.trim() || 'https://files.catbox.moe/ls07y5.jpg'; 
+  const categoriaNova = document.getElementById('grupoCategoria').value;
+  const vipNovo = document.getElementById('grupoVipCodigo').value.trim() === "∜"; 
 
-  // Validação CORRIGIDA usando o novo Regex
-  if (!grupo.nome || !WHATSAPP_LINK_REGEX.test(grupo.link) || !grupo.categoria) {
+  // 1. Validação de Campos
+  if (!nomeNovo || !WHATSAPP_LINK_REGEX.test(linkNovo) || !categoriaNova) {
     alert('Preencha corretamente o nome, link válido do WhatsApp e a categoria!');
     return;
   }
@@ -557,30 +559,48 @@ async function salvarEdicao(grupo, nomeOriginal){
       alert("ATENÇÃO: A foto foi carregada apenas localmente. Para que ela persista após o carregamento, você precisa implementar o upload para o Firebase Storage ou outro serviço.");
   }
   
-  // Verifica se o link já existe em *outro* grupo
-  const linkExiste = todosGrupos.some(g => g.link === grupo.link && g.nome !== nomeOriginal);
-  if (linkExiste) {
+  // 2. Verificação de Duplicidade (Link e Nome)
+
+  // CORREÇÃO: Verifica se o link JÁ EXISTE em *outro* grupo (IGNORANDO o link original)
+  const linkExisteEmOutro = todosGrupos.some(g => 
+    g.link === linkNovo && g.nome.toLowerCase() !== nomeOriginal.toLowerCase()
+  );
+  if (linkExisteEmOutro) {
       alert('Já existe outro grupo com esse link. Use um link que ainda não está cadastrado.');
       return;
   }
   
-  // Verifica se o nome já existe em *outro* grupo
-  const nomeExiste = todosGrupos.some(g => g.nome.toLowerCase() === grupo.nome.toLowerCase() && g.nome !== nomeOriginal);
-  if (nomeExiste) {
+  // CORREÇÃO: Verifica se o nome JÁ EXISTE em *outro* grupo (IGNORANDO o nome original)
+  const nomeExisteEmOutro = todosGrupos.some(g => 
+    g.nome.toLowerCase() === nomeNovo.toLowerCase() && g.nome.toLowerCase() !== nomeOriginal.toLowerCase()
+  );
+  if (nomeExisteEmOutro) {
       alert('Já existe outro grupo com esse nome. Por favor, escolha outro nome.');
       return;
   }
 
-  // Se o nome foi alterado, remove o antigo antes de salvar o novo
-  if (nomeOriginal !== grupo.nome) {
+  // 3. Monta o Objeto Editado
+  const grupoEditado = {
+      ...grupoOriginal, // Mantém o dono e outras propriedades
+      nome: nomeNovo,
+      link: linkNovo,
+      foto: fotoNova,
+      categoria: categoriaNova,
+      vip: vipNovo
+  };
+
+  // 4. Se o nome foi alterado, remove o grupo antigo e salva o novo
+  if (nomeOriginal !== nomeNovo) {
     await remove(ref(db, 'grupos/' + nomeOriginal));
   }
 
-  await set(ref(db, 'grupos/' + grupo.nome), grupo);
+  // 5. Salva (ou atualiza se o nome for o mesmo)
+  await set(ref(db, 'grupos/' + grupoEditado.nome), grupoEditado);
 
-  // Atualiza no localStorage
+
+  // 6. Atualiza no localStorage
   let enviados = JSON.parse(localStorage.getItem('gruposEnviados') || '[]');
-  enviados = enviados.map(g => g.nome === nomeOriginal ? grupo : g);
+  enviados = enviados.map(g => g.nome === nomeOriginal ? grupoEditado : g);
   localStorage.setItem('gruposEnviados', JSON.stringify(enviados));
 
   modal.style.display = 'none';
