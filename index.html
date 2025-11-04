@@ -99,13 +99,22 @@ header p{margin-top:4px;text-shadow:1px 1px 3px #000}
 }
 .grupo.vip .categoria{color: #ffd700; background: rgba(255,215,0,0.2);}
 
-/* NOVO: Estilos para Botões de Ação (Editar/Excluir) */
+/* NOVO: Estilos para Grupos IMPULSIONADOS (Azul/Ciano) */
+.grupo.boosted {
+    background: linear-gradient(90deg, rgba(0,255,255,0.1), rgba(0,191,255,0.05));
+    border: 1px solid rgba(0,191,255,0.35);
+    box-shadow: 0 0 10px 4px rgba(0,191,255,0.2), 0 4px 12px rgba(0,0,0,0.5);
+}
+.grupo.boosted .categoria{color: #00ffff; background: rgba(0,191,255,0.2);}
+
+/* NOVO: Estilos para Botões de Ação (Editar/Excluir/Impulsionar) */
 .grupo-acoes-wrapper { /* Classe para o wrapper onde ficam os botões */
     display: flex; 
     gap: 8px; 
     margin-top: 10px; 
     width: 100%;
     justify-content: center; /* Centraliza as ações */
+    flex-wrap: wrap; /* Permite quebrar linha se for necessário */
 }
 .grupo-acoes-wrapper button {
     border: none;
@@ -116,10 +125,12 @@ header p{margin-top:4px;text-shadow:1px 1px 3px #000}
     font-weight: bold;
     transition: background 0.2s;
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    min-width: 95px; /* Garante que todos tenham um tamanho mínimo */
 }
 .grupo-acoes-wrapper button:hover {
     box-shadow: 0 4px 8px rgba(0,0,0,0.3);
 }
+
 /* Estilo Específico para o botão Editar */
 .grupo-acoes-wrapper button.edit-btn {
     background: rgba(46, 204, 113, 0.8); /* Verde suave */
@@ -135,6 +146,19 @@ header p{margin-top:4px;text-shadow:1px 1px 3px #000}
 }
 .grupo-acoes-wrapper button.delete-btn:hover {
     background: rgba(231, 76, 60, 1);
+}
+/* NOVO: Estilo Específico para o botão Impulsionar */
+.grupo-acoes-wrapper button.boost-btn {
+    background: rgba(52, 152, 219, 0.9); /* Azul Padrão */
+    color: #fff;
+}
+.grupo-acoes-wrapper button.boost-btn:hover:not(:disabled) {
+    background: rgba(41, 128, 185, 1);
+}
+.grupo-acoes-wrapper button.boost-btn:disabled {
+    background: #5c5c5c; /* Cinza para desabilitado */
+    cursor: not-allowed;
+    color: #ccc;
 }
 
 /* Ajuste no estilo dos cliques */
@@ -287,13 +311,15 @@ footer a{color:#b78cff;text-decoration:none}
     <button class="cat-btn" data-cat="namoro">Namoro</button>
   </div>
 </header>
-<div class="menu-icon" id="menuBtn">☰</div> <div class="menu" id="sideMenu">
+<div class="menu-icon" id="menuBtn">☰</div> 
+<div class="menu" id="sideMenu">
   <button class="close-btn" id="closeBtn">❌</button>
   <h2>MENU</h2>
   <a href="https://br.shp.ee/1r878lx?smtt=0.0.9" target="_blank">🛍️ Loja</a>
   <a href="#" id="meusGrupos">📝 Meus Grupos</a>
   <a href="#" id="enviarGrupo">🚀 Enviar Meu Grupo</a>
-  <a href="https://linkfly.to/grifinoria" target="_blank">Renda extra👨‍💻💰</a> <a href="#" id="comprarVipBtn">⭐ Comprar VIP</a>
+  <a href="https://linkfly.to/grifinoria" target="_blank">Renda extra👨‍💻💰</a> 
+  <a href="#" id="comprarVipBtn">⭐ Comprar VIP</a>
 </div>
 
 <div id="lista-grupos"></div>
@@ -500,7 +526,7 @@ async function salvarNovoGrupo() {
   const usuario = localStorage.getItem('usuarioID') || crypto.randomUUID();
   localStorage.setItem('usuarioID', usuario);
 
-  const novoGrupo = { nome, link, foto, categoria, dono: usuario, vip: isVip };
+  const novoGrupo = { nome, link, foto, categoria, dono: usuario, vip: isVip, boostEndTime: 0, boostCooldown: 0 };
 
   // Salva no Firebase
   await set(ref(db, 'grupos/' + nome), novoGrupo);
@@ -522,6 +548,36 @@ async function salvarNovoGrupo() {
 // ELA SERÁ SOBRESCRITA PELA FUNÇÃO DE EDIÇÃO QUANDO NECESSÁRIO
 salvarGrupoBtn.onclick = salvarNovoGrupo;
 
+// ================== FUNÇÃO PARA IMPULSIONAR GRUPO ================== //
+async function impulsionarGrupo(grupo) {
+    const agora = Date.now();
+    const COOL_DOWN_DURATION = 2 * 60 * 60 * 1000; // 2 horas em milissegundos
+    const BOOST_DURATION = 2 * 60 * 60 * 1000; // 2 horas em milissegundos
+
+    if (agora < grupo.boostCooldown) {
+        alert('Aguarde o tempo de recarga antes de impulsionar novamente.');
+        return;
+    }
+
+    const novoBoostEndTime = agora + BOOST_DURATION;
+    const novoBoostCooldown = novoBoostEndTime + COOL_DOWN_DURATION;
+
+    try {
+        await set(ref(db, 'grupos/' + grupo.nome), {
+            ...grupo,
+            boostEndTime: novoBoostEndTime,
+            boostCooldown: novoBoostCooldown,
+        });
+
+        alert(`Grupo "${grupo.nome}" impulsionado com sucesso por 2 horas!`);
+        // O onValue no carregarGrupos vai se encarregar de re-renderizar e iniciar a contagem.
+
+    } catch (error) {
+        console.error("Erro ao impulsionar:", error);
+        alert('Erro ao impulsionar o grupo. Tente novamente.');
+    }
+}
+
 // ================== FUNÇÕES DE EDIÇÃO/EXCLUSÃO, CARREGAR GRUPOS ================== //
 
 function abrirEdicao(grupo){
@@ -539,7 +595,7 @@ function abrirEdicao(grupo){
   salvarGrupoBtn.onclick = () => salvarEdicao(grupo, nomeOriginal, linkOriginal);
 }
 
-// *** FUNÇÃO SALVAREDICAO CORRIGIDA PARA O SEU PROBLEMA ***
+// *** FUNÇÃO SALVAREDICAO CORRIGIDA ***
 async function salvarEdicao(grupoOriginal, nomeOriginal, linkOriginal){
   const nomeNovo = document.getElementById('grupoNome').value.trim();
   const linkNovo = document.getElementById('grupoLink').value.trim();
@@ -560,8 +616,6 @@ async function salvarEdicao(grupoOriginal, nomeOriginal, linkOriginal){
   }
   
   // 2. Verificação de Duplicidade (Link e Nome)
-
-  // CORREÇÃO: Verifica se o link JÁ EXISTE em *outro* grupo (IGNORANDO o link original)
   const linkExisteEmOutro = todosGrupos.some(g => 
     g.link === linkNovo && g.nome.toLowerCase() !== nomeOriginal.toLowerCase()
   );
@@ -570,7 +624,6 @@ async function salvarEdicao(grupoOriginal, nomeOriginal, linkOriginal){
       return;
   }
   
-  // CORREÇÃO: Verifica se o nome JÁ EXISTE em *outro* grupo (IGNORANDO o nome original)
   const nomeExisteEmOutro = todosGrupos.some(g => 
     g.nome.toLowerCase() === nomeNovo.toLowerCase() && g.nome.toLowerCase() !== nomeOriginal.toLowerCase()
   );
@@ -581,7 +634,7 @@ async function salvarEdicao(grupoOriginal, nomeOriginal, linkOriginal){
 
   // 3. Monta o Objeto Editado
   const grupoEditado = {
-      ...grupoOriginal, // Mantém o dono e outras propriedades
+      ...grupoOriginal, // Mantém o dono, boostEndTime e boostCooldown
       nome: nomeNovo,
       link: linkNovo,
       foto: fotoNova,
@@ -646,6 +699,9 @@ async function carregarGrupos() {
     [...jsonGrupos, ...dadosFirebase, ...enviadosLocais].forEach(g => {
       if (g?.nome) {
         g.vip = !!g.vip; // Garante que 'vip' é booleano
+        // Garante que os campos de boost existam
+        g.boostEndTime = g.boostEndTime || 0; 
+        g.boostCooldown = g.boostCooldown || 0;
         mapa.set(g.nome.toLowerCase(), g);
       }
     });
@@ -655,10 +711,34 @@ async function carregarGrupos() {
   });
 }
 
+// ================== FUNÇÃO PARA FORMATAR TEMPO (MINUTOS:SEGUNDOS) ================== //
+function formatarTempo(ms) {
+    const totalSeconds = Math.floor(ms / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    let parts = [];
+    if (hours > 0) parts.push(String(hours).padStart(2, '0'));
+    parts.push(String(minutes).padStart(2, '0'));
+    parts.push(String(seconds).padStart(2, '0'));
+
+    return parts.join(':');
+}
+
+
 // ================== RENDERIZAR GRUPOS (ATUALIZADO com novo CSS e botões) ================== //
+// Variável para armazenar os IDs dos intervalos de contagem regressiva
+let countdownIntervals = {};
+
 function renderizarGrupos(lista) {
   const container = document.getElementById('lista-grupos');
   container.innerHTML = '';
+
+  // Limpa intervalos de contagem regressiva antigos
+  Object.values(countdownIntervals).forEach(clearInterval);
+  countdownIntervals = {};
+
 
   if (lista.length === 0) {
     container.innerHTML = '<p style="color:#ccc;">Nenhum grupo encontrado.</p>';
@@ -666,15 +746,32 @@ function renderizarGrupos(lista) {
   }
 
   const usuario = localStorage.getItem('usuarioID');
+  const agora = Date.now();
 
-  // Ordena VIPs no topo
+  // Função de Ordenação: VIP > BOOST ATIVO > Demais
   lista.sort((a, b) => {
+    // 1. VIPs SEMPRE no topo
     if (a.vip && !b.vip) return -1;
     if (!a.vip && b.vip) return 1;
-    return 0;
+
+    // Calcula se o boost está ativo
+    const aBoostAtivo = a.boostEndTime > agora;
+    const bBoostAtivo = b.boostEndTime > agora;
+
+    // 2. Grupos com BOOST ATIVO abaixo dos VIPs
+    if (aBoostAtivo && !bBoostAtivo) return -1;
+    if (!aBoostAtivo && bBoostAtivo) return 1;
+
+    // 3. Critério de desempate para os demais (pode ser cliques, nome, ou nenhum)
+    return 0; 
   });
 
   lista.forEach(g => {
+    // Verifica status de boost
+    const boostAtivo = g.boostEndTime > agora;
+    const recargaAtiva = g.boostCooldown > agora;
+    const isOwner = g.dono === usuario;
+
     const wrapper = document.createElement('div');
     wrapper.style.display = 'flex';
     wrapper.style.flexDirection = 'column';
@@ -682,7 +779,11 @@ function renderizarGrupos(lista) {
     wrapper.style.width = '100%';
 
     const btn = document.createElement('a');
-    btn.className = 'grupo' + (g.vip ? ' vip' : '');
+    let classNames = ['grupo'];
+    if (g.vip) classNames.push('vip');
+    else if (boostAtivo) classNames.push('boosted'); // Novo estilo para boost
+    
+    btn.className = classNames.join(' ');
     btn.href = g.link;
     btn.target = '_blank';
     btn.innerHTML = `
@@ -713,22 +814,59 @@ function renderizarGrupos(lista) {
 
     wrapper.appendChild(btn);
 
-    // Criação dos botões de ação (Editar/Excluir)
-    if (g.dono === usuario) {
+    // Criação dos botões de ação (Editar/Impulsionar/Excluir)
+    if (isOwner) {
       const box = document.createElement('div');
       box.className = 'grupo-acoes-wrapper'; 
-
+      
       const edit = document.createElement('button');
       edit.textContent = 'Editar';
       edit.className = 'edit-btn'; 
       edit.onclick = () => abrirEdicao(g);
+      
+      // Botão IMPULSIONAR
+      const boostBtn = document.createElement('button');
+      boostBtn.className = 'boost-btn';
+      boostBtn.onclick = () => impulsionarGrupo(g);
+      
+      const updateBoostButton = () => {
+          const currentTime = Date.now();
+          if (g.boostCooldown > currentTime) {
+              // Em Recarga
+              const timeLeft = g.boostCooldown - currentTime;
+              boostBtn.textContent = `⏳ ${formatarTempo(timeLeft)}`;
+              boostBtn.disabled = true;
+          } else if (g.boostEndTime > currentTime) {
+              // Impulso Ativo
+              const timeLeft = g.boostEndTime - currentTime;
+              boostBtn.textContent = `🔥 Ativo: ${formatarTempo(timeLeft)}`;
+              boostBtn.disabled = true;
+          } else {
+              // Disponível para Impulsionar
+              boostBtn.textContent = '🚀 Impulsionar';
+              boostBtn.disabled = false;
+              // Se estava em countdown, limpa o intervalo
+              if (countdownIntervals[g.nome]) {
+                  clearInterval(countdownIntervals[g.nome]);
+                  delete countdownIntervals[g.nome];
+              }
+          }
+      };
 
+      updateBoostButton();
+
+      // Inicia a contagem regressiva se a recarga ou o boost estiver ativo
+      if (recargaAtiva || boostAtivo) {
+          countdownIntervals[g.nome] = setInterval(updateBoostButton, 1000);
+      }
+      
       const del = document.createElement('button');
       del.textContent = 'Excluir';
       del.className = 'delete-btn'; 
       del.onclick = () => excluirGrupo(g);
 
       box.appendChild(edit);
+      box.appendChild(boostBtn); // Impulsionar no meio
       box.appendChild(del);
       wrapper.appendChild(box);
     }
@@ -785,8 +923,37 @@ document.querySelectorAll('.cat-btn').forEach(btn => {
     document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     const cat = btn.dataset.cat.toLowerCase();
-    if (cat === 'todos') renderizarGrupos(todosGrupos);
-    else renderizarGrupos(todosGrupos.filter(g => g.categoria?.toLowerCase() === cat));
+    
+    const agora = Date.now();
+    
+    // Filtra e depois ordena
+    let listaFiltrada;
+    if (cat === 'todos') {
+        listaFiltrada = todosGrupos;
+    } else {
+        listaFiltrada = todosGrupos.filter(g => g.categoria?.toLowerCase() === cat);
+    }
+
+    // Re-ordena a lista filtrada (necessário para manter VIPs/Boost no topo da categoria)
+    listaFiltrada.sort((a, b) => {
+        // 1. VIPs SEMPRE no topo
+        if (a.vip && !b.vip) return -1;
+        if (!a.vip && b.vip) return 1;
+
+        // Calcula se o boost está ativo
+        const aBoostAtivo = a.boostEndTime > agora;
+        const bBoostAtivo = b.boostEndTime > agora;
+
+        // 2. Grupos com BOOST ATIVO abaixo dos VIPs
+        if (aBoostAtivo && !bBoostAtivo) return -1;
+        if (!aBoostAtivo && bBoostAtivo) return 1;
+
+        // 3. Critério de desempate para os demais
+        return 0; 
+    });
+
+
+    renderizarGrupos(listaFiltrada);
   });
 });
 
@@ -834,9 +1001,15 @@ document.getElementById('termosLink').onclick = (e) => {
       <li>O site não se responsabiliza pelo conteúdo dos grupos externos do WhatsApp.</li>
       <li>Os grupos VIPs são destacados apenas para fins de visibilidade dentro do site.</li>
       <li>Podemos alterar os termos de uso a qualquer momento, sendo sua responsabilidade consultar atualizações.</li>
-      <li>O uso do site é gratuito, mas o envio de grupos e pagamentos VIP seguem as regras aqui descritas.</li>
+      <li>O uso do site é gratuito, mas o envio de grupos e pagamentos VIP e Impulsionamentos seguem as regras aqui descritas.</li>
       </ul>
     <p>Se você não concorda com estes termos, por favor, não utilize o site.</p>
+    <p style="margin-top: 10px; font-weight: bold;">Regra de Impulsionamento:</p>
+    <ul>
+        <li>O impulsionamento coloca seu grupo acima de grupos normais por 2 horas.</li>
+        <li>Há um período de recarga de 2 horas após o uso antes de poder impulsionar novamente.</li>
+        <li>Grupos VIP sempre aparecem acima dos impulsionados.</li>
+    </ul>
   `;
   modalTermos.style.display = "flex";
 };
@@ -849,7 +1022,7 @@ document.getElementById('privacidadeLink').onclick = (e) => {
     <ul>
       <li>Coletamos apenas informações necessárias para o funcionamento do site, como seu identificador único (usuarioID), cliques nos grupos e visitas ao site.</li>
       <li>O usuarioID é armazenado no seu navegador via localStorage e não contém dados pessoais identificáveis.</li>
-      <li>Os dados de cliques e visitas são armazenados no Firebase apenas para exibir estatísticas do site.</li>
+      <li>Os dados de cliques e visitas, bem como os tempos de impulsionamento/recarga, são armazenados no Firebase apenas para exibir estatísticas do site e gerenciar a fila.</li>
       <li>Não compartilhamos seus dados com terceiros.</li>
       <li>Você pode limpar os dados do seu navegador a qualquer momento, removendo seu usuarioID e histórico local.</li>
     </ul>
