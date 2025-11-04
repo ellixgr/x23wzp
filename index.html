@@ -159,6 +159,7 @@ header p{margin-top:4px;text-shadow:1px 1px 3px #000}
     background: #5c5c5c; /* Cinza para desabilitado */
     cursor: not-allowed;
     color: #ccc;
+    box-shadow: none; /* Remove a sombra quando desabilitado */
 }
 
 /* Ajuste no estilo dos cliques */
@@ -548,14 +549,20 @@ async function salvarNovoGrupo() {
 // ELA SERÁ SOBRESCRITA PELA FUNÇÃO DE EDIÇÃO QUANDO NECESSÁRIO
 salvarGrupoBtn.onclick = salvarNovoGrupo;
 
-// ================== FUNÇÃO PARA IMPULSIONAR GRUPO ================== //
+// ================== FUNÇÃO PARA IMPULSIONAR GRUPO (CORRIGIDA) ================== //
 async function impulsionarGrupo(grupo) {
     const agora = Date.now();
-    const COOL_DOWN_DURATION = 2 * 60 * 60 * 1000; // 2 horas em milissegundos
-    const BOOST_DURATION = 2 * 60 * 60 * 1000; // 2 horas em milissegundos
+    // 2 horas em milissegundos
+    const BOOST_DURATION = 2 * 60 * 60 * 1000; 
+    const COOL_DOWN_DURATION = BOOST_DURATION; // Mantido o cooldown igual à duração do boost (2 horas)
 
     if (agora < grupo.boostCooldown) {
         alert('Aguarde o tempo de recarga antes de impulsionar novamente.');
+        return;
+    }
+    
+    if (grupo.vip) {
+        alert('Grupos VIP já possuem o máximo destaque e não podem ser impulsionados.');
         return;
     }
 
@@ -569,7 +576,7 @@ async function impulsionarGrupo(grupo) {
             boostCooldown: novoBoostCooldown,
         });
 
-        alert(`Grupo "${grupo.nome}" impulsionado com sucesso por 2 horas!`);
+        alert(`Grupo "${grupo.nome}" impulsionado com sucesso por ${formatarTempo(BOOST_DURATION)}!`);
         // O onValue no carregarGrupos vai se encarregar de re-renderizar e iniciar a contagem.
 
     } catch (error) {
@@ -711,19 +718,19 @@ async function carregarGrupos() {
   });
 }
 
-// ================== FUNÇÃO PARA FORMATAR TEMPO (MINUTOS:SEGUNDOS) ================== //
+// ================== FUNÇÃO PARA FORMATAR TEMPO (HH:MM:SS) ================== //
 function formatarTempo(ms) {
     const totalSeconds = Math.floor(ms / 1000);
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
 
-    let parts = [];
-    if (hours > 0) parts.push(String(hours).padStart(2, '0'));
-    parts.push(String(minutes).padStart(2, '0'));
-    parts.push(String(seconds).padStart(2, '0'));
+    // Garante HH:MM:SS
+    const h = String(hours).padStart(2, '0');
+    const m = String(minutes).padStart(2, '0');
+    const s = String(seconds).padStart(2, '0');
 
-    return parts.join(':');
+    return `${h}:${m}:${s}`;
 }
 
 
@@ -768,8 +775,8 @@ function renderizarGrupos(lista) {
 
   lista.forEach(g => {
     // Verifica status de boost
-    const boostAtivo = g.boostEndTime > agora;
-    const recargaAtiva = g.boostCooldown > agora;
+    let boostAtivo = g.boostEndTime > agora;
+    let recargaAtiva = g.boostCooldown > agora;
     const isOwner = g.dono === usuario;
 
     const wrapper = document.createElement('div');
@@ -831,12 +838,28 @@ function renderizarGrupos(lista) {
       
       const updateBoostButton = () => {
           const currentTime = Date.now();
-          if (g.boostCooldown > currentTime) {
-              // Em Recarga
+          boostAtivo = g.boostEndTime > currentTime;
+          recargaAtiva = g.boostCooldown > currentTime;
+
+          // Remove a classe boosted se o tempo acabou (para garantir a remoção visual)
+          if (!boostAtivo && btn.classList.contains('boosted')) {
+             btn.classList.remove('boosted');
+          }
+          // Adiciona se estiver ativo e não for VIP
+          if (boostAtivo && !g.vip && !btn.classList.contains('boosted')) {
+             btn.classList.add('boosted');
+          }
+
+          if (g.vip) {
+             boostBtn.textContent = '⭐ VIP Permanente';
+             boostBtn.disabled = true;
+          }
+          else if (recargaAtiva) {
+              // Em Recarga (Cooldown)
               const timeLeft = g.boostCooldown - currentTime;
-              boostBtn.textContent = `⏳ ${formatarTempo(timeLeft)}`;
+              boostBtn.textContent = `⏳ Recarga: ${formatarTempo(timeLeft)}`;
               boostBtn.disabled = true;
-          } else if (g.boostEndTime > currentTime) {
+          } else if (boostAtivo) {
               // Impulso Ativo
               const timeLeft = g.boostEndTime - currentTime;
               boostBtn.textContent = `🔥 Ativo: ${formatarTempo(timeLeft)}`;
@@ -855,8 +878,12 @@ function renderizarGrupos(lista) {
 
       updateBoostButton();
 
-      // Inicia a contagem regressiva se a recarga ou o boost estiver ativo
-      if (recargaAtiva || boostAtivo) {
+      // Inicia a contagem regressiva se a recarga ou o boost estiver ativo (e não for VIP)
+      if ((recargaAtiva || boostAtivo) && !g.vip) {
+          // Limpa qualquer intervalo existente antes de iniciar um novo
+          if (countdownIntervals[g.nome]) {
+              clearInterval(countdownIntervals[g.nome]);
+          }
           countdownIntervals[g.nome] = setInterval(updateBoostButton, 1000);
       }
       
