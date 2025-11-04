@@ -522,7 +522,7 @@ async function salvarNovoGrupo() {
   }
   
   // Gera ID de usuário se não existir
-  const isVip = vipCodigo === "∜"; 
+  const isVip = vipCodigo === "21977"; 
   const usuario = localStorage.getItem('usuarioID') || crypto.randomUUID();
   localStorage.setItem('usuarioID', usuario);
 
@@ -586,7 +586,7 @@ function abrirEdicao(grupo){
   document.getElementById('grupoLink').value = grupo.link;
   previewFoto.src = grupo.foto;
   document.getElementById('grupoCategoria').value = grupo.categoria;
-  document.getElementById('grupoVipCodigo').value = grupo.vip ? "∜" : "";
+  document.getElementById('grupoVipCodigo').value = grupo.vip ? "21977" : "";
   
   const nomeOriginal = grupo.nome; 
   const linkOriginal = grupo.link; // Salva o link original também
@@ -602,7 +602,7 @@ async function salvarEdicao(grupoOriginal, nomeOriginal, linkOriginal){
   // Se a foto não foi alterada, mantém a original. Se sim, usa a nova prévia.
   const fotoNova = previewFoto.src.trim() || 'https://files.catbox.moe/ls07y5.jpg'; 
   const categoriaNova = document.getElementById('grupoCategoria').value;
-  const vipNovo = document.getElementById('grupoVipCodigo').value.trim() === "∜"; 
+  const vipNovo = document.getElementById('grupoVipCodigo').value.trim() === "21977"; 
 
   // 1. Validação de Campos
   if (!nomeNovo || !WHATSAPP_LINK_REGEX.test(linkNovo) || !categoriaNova) {
