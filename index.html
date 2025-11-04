@@ -568,10 +568,12 @@ async function salvarEdicao(grupoOriginal, nomeOriginal, linkOriginal){
     return;
   }
   
-  // Aviso sobre o upload de foto (mantido)
+  // Aviso sobre o upload de foto (REMOVIDO/COMENTADO)
+  /*
   if(fotoInput.files.length > 0) {
       alert("ATENÇÃO: A foto foi carregada apenas localmente. Para que ela persista após o carregamento, você precisa implementar o upload para o Firebase Storage ou outro serviço.");
   }
+  */
   
   // 2. Verificação de Duplicidade (Link e Nome)
   const linkExisteEmOutro = todosGrupos.some(g => 
