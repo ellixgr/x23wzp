@@ -572,15 +572,25 @@ async function impulsionarGrupo(grupo) {
     const novoBoostCooldown = novoBoostEndTime + COOL_DOWN_DURATION;
 
     try {
-        await set(ref(db, 'grupos/' + grupo.nome), {
-            ...grupo,
-            boostEndTime: novoBoostEndTime,
-            boostCooldown: novoBoostCooldown,
+        // Usa runTransaction para evitar condições de corrida (mais seguro)
+        await runTransaction(ref(db, 'grupos/' + grupo.nome), (currentData) => {
+            if (currentData) {
+                // Se alguém tentar impulsionar enquanto o boost está ativo, 
+                // garantimos que ele só comece a contar a partir do fim do boost atual.
+                const baseTime = Math.max(agora, currentData.boostEndTime || 0); 
+
+                return {
+                    ...currentData,
+                    boostEndTime: baseTime + BOOST_DURATION,
+                    boostCooldown: baseTime + BOOST_DURATION + COOL_DOWN_DURATION,
+                };
+            }
+            return currentData; // Retorna o dado se for nulo
         });
 
         alert(`Grupo "${grupo.nome}" impulsionado com sucesso por 2 horas!`);
         // O onValue no carregarGrupos vai se encarregar de re-renderizar e iniciar a contagem.
-
+        
     } catch (error) {
         console.error("Erro ao impulsionar:", error);
         alert('Erro ao impulsionar o grupo. Tente novamente.');
@@ -628,7 +638,7 @@ async function salvarEdicao(grupoOriginal, nomeOriginal, linkOriginal){
   const linkExisteEmOutro = todosGrupos.some(g => 
     g.link === linkNovo && g.nome.toLowerCase() !== nomeOriginal.toLowerCase()
   );
-  if (linkExisteEmOtro) { alert('Já existe outro grupo com esse link.'); return; }
+  if (linkExisteEmOutro) { alert('Já existe outro grupo com esse link.'); return; }
   
   const nomeExisteEmOutro = todosGrupos.some(g => 
     g.nome.toLowerCase() === nomeNovo.toLowerCase() && g.nome.toLowerCase() !== nomeOriginal.toLowerCase()
@@ -640,11 +650,11 @@ async function salvarEdicao(grupoOriginal, nomeOriginal, linkOriginal){
   
   // Se o código foi inserido/mantido
   if (vipCodigo === "21977") {
-      // Se não tem tempo ou expirou, começa um novo período de 24h
+      // Se não tem tempo ou expirou, começa um novo período de 24h A PARTIR DE AGORA
       if (novoVipExpirationTime < agora) {
           novoVipExpirationTime = agora + VIP_DURATION;
       }
-      // Se já está ativo, mantém o tempo atual
+      // Se já está ativo, mantém o tempo atual (para não resetar o tempo de quem já pagou)
   } else {
       // Se o código foi removido ou está incorreto, remove a expiração.
       novoVipExpirationTime = 0;
@@ -736,6 +746,7 @@ async function carregarGrupos() {
 
 // ================== FUNÇÃO PARA FORMATAR TEMPO (HH:MM:SS) ================== //
 function formatarTempo(ms) {
+    if (ms <= 0) return '00:00:00';
     const totalSeconds = Math.floor(ms / 1000);
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -758,7 +769,7 @@ function renderizarGrupos(lista) {
   const container = document.getElementById('lista-grupos');
   container.innerHTML = '';
 
-  // Limpa intervalos de contagem regressiva antigos
+  // Limpa intervalos de contagem regressiva antigos (VIP e BOOST/COOLDOWN)
   Object.values(countdownIntervals).forEach(clearInterval);
   countdownIntervals = {};
 
@@ -797,7 +808,7 @@ function renderizarGrupos(lista) {
     let recargaAtiva = g.boostCooldown > agora;
     const isOwner = g.dono === usuario;
     
-    // CORREÇÃO: Atualiza a propriedade 'vip' do objeto g para que a renderização funcione
+    // CORREÇÃO: Otimização
     g.vip = isVip; 
 
     const wrapper = document.createElement('div');
@@ -819,9 +830,9 @@ function renderizarGrupos(lista) {
     let statusMessage = '';
     if (isOwner && isVip) {
         const timeLeft = g.vipExpirationTime - agora;
-        statusMessage = `<span style="font-size:12px; color:#ffd700;">VIP expira em: ${formatarTempo(timeLeft)}</span>`;
+        statusMessage = `<span class="vip-status-msg" style="font-size:12px; color:#ffd700;">⭐ VIP expira em: ${formatarTempo(timeLeft)}</span>`;
     } else if (isOwner && g.vipExpirationTime > 0) {
-         statusMessage = `<span style="font-size:12px; color:#ff6666;">VIP Expirado</span>`;
+         statusMessage = `<span class="vip-status-msg" style="font-size:12px; color:#ff6666;">VIP Expirado</span>`;
     }
 
     btn.innerHTML = `
@@ -865,7 +876,8 @@ function renderizarGrupos(lista) {
       // Botão IMPULSIONAR
       const boostBtn = document.createElement('button');
       boostBtn.className = 'boost-btn';
-      boostBtn.onclick = () => impulsionarGrupo(g);
+      // Atualiza o objeto G (referência em todosGrupos) para que o onValue faça o resto
+      boostBtn.onclick = () => impulsionarGrupo(g); 
       
       const updateBoostButton = () => {
           const currentTime = Date.now();
@@ -911,14 +923,39 @@ function renderizarGrupos(lista) {
       updateBoostButton();
 
       // Inicia a contagem regressiva se a recarga ou o boost estiver ativo (e não for VIP)
-      // Ou se for VIP e o dono quiser ver a contagem regressiva da expiração
-      if ((recargaAtiva || boostAtivo || isVip) && !countdownIntervals[g.nome]) {
+      if ((recargaAtiva || boostAtivo) && !countdownIntervals[g.nome]) {
           // Limpa qualquer intervalo existente antes de iniciar um novo
           if (countdownIntervals[g.nome]) {
               clearInterval(countdownIntervals[g.nome]);
           }
+          // Intervalo para o botão de boost/cooldown
           countdownIntervals[g.nome] = setInterval(updateBoostButton, 1000);
       }
+      
+      // NOVO: Intervalo para a mensagem VIP dentro do grupo (apenas para o dono)
+      const statusMsgElement = btn.querySelector('.vip-status-msg');
+      if (isOwner && isVip && statusMsgElement) {
+          const updateVipStatus = () => {
+              const currentTime = Date.now();
+              const timeLeft = g.vipExpirationTime - currentTime;
+              if (timeLeft > 0) {
+                 statusMsgElement.innerHTML = `⭐ VIP expira em: ${formatarTempo(timeLeft)}`;
+              } else {
+                 statusMsgElement.innerHTML = `VIP Expirado`;
+                 // Limpa o intervalo do VIP quando expirar
+                 clearInterval(countdownIntervals[`vip_${g.nome}`]); 
+              }
+              // A cada segundo
+          };
+          
+          // Limpa o intervalo antigo se existir
+          if (countdownIntervals[`vip_${g.nome}`]) {
+              clearInterval(countdownIntervals[`vip_${g.nome}`]);
+          }
+          // Inicia o novo
+          countdownIntervals[`vip_${g.nome}`] = setInterval(updateVipStatus, 1000); 
+      }
+
       
       const del = document.createElement('button');
       del.textContent = 'Excluir';
@@ -1064,42 +1101,4 @@ document.getElementById('termosLink').onclick = (e) => {
       <li>O uso do site é gratuito, mas o envio de grupos e pagamentos VIP e Impulsionamentos seguem as regras aqui descritas.</li>
       </ul>
     <p>Se você não concorda com estes termos, por favor, não utilize o site.</p>
-    <p style="margin-top: 10px; font-weight: bold;">Regra de Impulsionamento:</p>
-    <ul>
-        <li>O impulsionamento coloca seu grupo acima de grupos normais por **2 horas**.</li>
-        <li>Há um período de **recarga de 2 horas** após o uso antes de poder impulsionar novamente.</li>
-        <li>Grupos VIP **sempre** aparecem acima dos impulsionados e não podem ser impulsionados.</li>
-    </ul>
-    <p style="margin-top: 10px; font-weight: bold;">Regra VIP:</p>
-    <ul>
-        <li>O status VIP é válido por **24 horas** após a ativação.</li>
-        <li>Após 24 horas, o grupo volta a ser um grupo normal.</li>
-    </ul>
-  `;
-  modalTermos.style.display = "flex";
-};
-
-document.getElementById('privacidadeLink').onclick = (e) => {
-  e.preventDefault();
-  modalTitulo.textContent = "Política de Privacidade";
-  modalTexto.innerHTML = `
-    <p>Esta Política de Privacidade explica como coletamos e usamos os dados dos usuários em nosso site.</p>
-    <ul>
-      <li>Coletamos apenas informações necessárias para o funcionamento do site, como seu identificador único (usuarioID), cliques nos grupos e visitas ao site.</li>
-      <li>O usuarioID é armazenado no seu navegador via localStorage e não contém dados pessoais identificáveis.</li>
-      <li>Os dados de cliques e visitas, bem como os tempos de impulsionamento/recarga e **expiração VIP**, são armazenados no Firebase apenas para exibir estatísticas do site e gerenciar a fila.</li>
-      <li>Não compartilhamos seus dados com terceiros.</li>
-      <li>Você pode limpar os dados do seu navegador a qualquer momento, removendo seu usuarioID e histórico local.</li>
-    </ul>
-    <p>Ao continuar usando o site, você concorda com esta política.</p>
-  `;
-  modalTermos.style.display = "flex";
-};
-
-closeModalTermos.onclick = () => modalTermos.style.display = "none";
-
-// ================== INICIAR ================== //
-carregarGrupos();
-</script>
-</body>
-</html>
+    <p style="margin-top: 10px; font-weight: bold;">
