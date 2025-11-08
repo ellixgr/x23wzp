@@ -45,6 +45,27 @@ header p{margin-top:4px;text-shadow:1px 1px 3px #000}
 /* --- Lista de Grupos (Estilo NOVO - Como no Print) --- */
 #lista-grupos{width:100%;max-width:420px;padding:30px 20px 60px;display:flex;flex-direction:column;align-items:center;gap:22px}
 
+/* NOVO ESTILO PARA O ANÚNCIO DE AFILIADO */
+#anuncio-afiliado {
+    width: 100%;
+    max-width: 420px; /* Limita a largura para ficar junto aos botões */
+    margin: 25px auto; /* Margem para separar dos grupos */
+    display: block;
+    border-radius: 15px;
+    overflow: hidden; /* Garante que a imagem fique dentro da borda arredondada */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.7);
+    transition: transform 0.2s;
+}
+#anuncio-afiliado:hover {
+    transform: scale(1.03);
+    box-shadow: 0 6px 20px rgba(183,140,255,0.6); /* Efeito de destaque ao passar o mouse */
+}
+#anuncio-afiliado img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
 /* Aprimoramento do Cartão do Grupo (Baseado no Print) */
 .grupo{
     width:100%;
@@ -306,7 +327,17 @@ footer a{color:#b78cff;text-decoration:none}
   <a href="#" id="comprarVipBtn">⭐ Comprar VIP</a>
 </div>
 
-<div id="lista-grupos"></div>
+<div style="width: 100%; max-width: 420px; display: flex; flex-direction: column; align-items: center; padding: 0 20px;">
+    
+    <a href="https://soupopular.net/ref/bagau" target="_blank" id="anuncio-afiliado">
+        <img src="https://files.catbox.moe/755rh6.jpg" alt="Anúncio - Compre Seguidores e Curtidas" loading="lazy">
+    </a>
+
+    <div id="lista-grupos" style="padding: 0; padding-bottom: 60px;"></div>
+
+</div>
+
+
 <div id="modalTermos" class="modal">
   <div class="modal-content">
     <span class="close-modal">❌</span>
