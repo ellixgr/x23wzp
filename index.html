@@ -64,11 +64,13 @@ header p{margin-top:4px;text-shadow:1px 1px 3px #000}
 
 #anuncio-afiliado img {
     width: 100%;
-    height: auto;
+    /* É importante manter a altura como auto para não distorcer */
+    height: auto; 
     display: block;
-    /* --- LINHAS CORRIGIDAS/ADICIONADAS PARA DIMINUIR A IMAGEM --- */
+    /* --- LINHAS CORRIGIDAS PARA DIMINUIR A IMAGEM INTEIRA --- */
     max-height: 180px; 
-    object-fit: cover; 
+    object-fit: contain; /* AGORA VAI MANTER A IMAGEM INTEIRA */
+    background: #000; /* Adiciona um fundo para o espaço vazio (se a imagem for muito estreita/baixa) */
     /* ------------------------------------------------------------- */
 }
 
