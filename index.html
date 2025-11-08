@@ -45,7 +45,7 @@ header p{margin-top:4px;text-shadow:1px 1px 3px #000}
 /* --- Lista de Grupos (Estilo NOVO - Como no Print) --- */
 #lista-grupos{width:100%;max-width:420px;padding:30px 20px 60px;display:flex;flex-direction:column;align-items:center;gap:22px}
 
-/* NOVO ESTILO PARA O ANÚNCIO */
+/* NOVO ESTILO PARA O ANÚNCIO (CORRIGIDO) */
 #anuncio-afiliado {
     width: 100%;
     max-width: 420px; /* Limita a largura para ficar junto aos botões */
@@ -55,6 +55,7 @@ header p{margin-top:4px;text-shadow:1px 1px 3px #000}
     overflow: hidden; /* Garante que a imagem fique dentro da borda arredondada */
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.7);
     transition: transform 0.2s;
+    background: none; /* Garante que o contêiner não tenha fundo */
 }
 
 #anuncio-afiliado:hover {
@@ -63,15 +64,16 @@ header p{margin-top:4px;text-shadow:1px 1px 3px #000}
 }
 
 #anuncio-afiliado img {
-    width: 100%;
-    /* É importante manter a altura como auto para não distorcer */
+    /* CORREÇÃO AQUI: Deixa a imagem menor (80% da largura do contêiner) */
+    width: 80%; 
+    max-width: 100%;
     height: auto; 
     display: block;
-    /* --- LINHAS CORRIGIDAS PARA DIMINUIR A IMAGEM INTEIRA --- */
-    max-height: 180px; 
-    object-fit: contain; /* AGORA VAI MANTER A IMAGEM INTEIRA */
-    background: #000; /* Adiciona um fundo para o espaço vazio (se a imagem for muito estreita/baixa) */
-    /* ------------------------------------------------------------- */
+    /* CORREÇÃO AQUI: Centraliza a imagem e remove a borda preta de fundo */
+    margin: 0 auto;
+    /* Removido: max-height: 180px; */ 
+    /* Removido: object-fit: contain; */ 
+    /* Removido: background: #000; */ 
 }
 
 
@@ -627,7 +629,7 @@ async function salvarEdicao(grupoOriginal, nomeOriginal, linkOriginal){
   const nomeExisteEmOutro = todosGrupos.some(g => 
     g.nome.toLowerCase() === nomeNovo.toLowerCase() && g.nome.toLowerCase() !== nomeOriginal.toLowerCase()
   );
-  if (nomeExisteEmOutro) {
+  if (nomeExisteEmOtro) {
       alert('Já existe outro grupo com esse nome. Por favor, escolha outro nome.');
       return;
   }
