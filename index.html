@@ -45,7 +45,7 @@ header p{margin-top:4px;text-shadow:1px 1px 3px #000}
 /* --- Lista de Grupos (Estilo NOVO - Como no Print) --- */
 #lista-grupos{width:100%;max-width:420px;padding:30px 20px 60px;display:flex;flex-direction:column;align-items:center;gap:22px}
 
-/* NOVO ESTILO PARA O ANÚNCIO DE AFILIADO */
+/* NOVO ESTILO PARA O ANÚNCIO */
 #anuncio-afiliado {
     width: 100%;
     max-width: 420px; /* Limita a largura para ficar junto aos botões */
@@ -56,15 +56,22 @@ header p{margin-top:4px;text-shadow:1px 1px 3px #000}
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.7);
     transition: transform 0.2s;
 }
+
 #anuncio-afiliado:hover {
     transform: scale(1.03);
     box-shadow: 0 6px 20px rgba(183,140,255,0.6); /* Efeito de destaque ao passar o mouse */
 }
+
 #anuncio-afiliado img {
     width: 100%;
     height: auto;
     display: block;
+    /* --- LINHAS CORRIGIDAS/ADICIONADAS PARA DIMINUIR A IMAGEM --- */
+    max-height: 180px; 
+    object-fit: cover; 
+    /* ------------------------------------------------------------- */
 }
+
 
 /* Aprimoramento do Cartão do Grupo (Baseado no Print) */
 .grupo{
