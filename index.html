@@ -3,47 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="pageTitle">Carregando Minha Loja...</title>
+    <title>Minha Loja TikTok Shop</title>
     <style>
         body {
             font-family: sans-serif;
             background-color: #f0f2f5;
             display: flex;
+            flex-wrap: wrap; /* Permite múltiplos cartões */
             justify-content: center;
-            align-items: center;
             min-height: 100vh;
             margin: 0;
+            padding: 30px; /* Adiciona padding para os cartões */
         }
 
         .product-card {
             background-color: #fff;
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            max-width: 400px;
-            width: 90%;
+            max-width: 350px;
+            width: 100%;
             padding: 20px;
             text-align: center;
+            margin: 15px; /* Espaçamento entre os cartões */
+            box-sizing: border-box;
         }
 
         .product-title {
             color: #333;
-            font-size: 1.5em;
+            font-size: 1.4em;
             margin-bottom: 10px;
         }
 
+        /* Os estilos de carrossel (image-carousel, image-container, product-image, nav-button)
+           vão precisar ser gerados dinamicamente para cada cartão (veja o JavaScript) */
+        
+        /* Apenas o estilo do botão de compra é mantido */
+        .buy-button {
+            display: inline-block;
+            background-color: #fe2c55;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 1em;
+            transition: background-color 0.3s;
+            border: none;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+
+        .buy-button:hover {
+            background-color: #d12749;
+        }
+
+        /* Estilos específicos para carrossel dinâmico */
         .image-carousel {
             position: relative;
             width: 100%;
             overflow: hidden;
             border-radius: 8px;
-            margin-bottom: 15px;
         }
 
         .image-container {
             display: flex;
             transition: transform 0.3s ease-in-out;
         }
-
+        
         .product-image {
             min-width: 100%;
             height: auto;
@@ -57,130 +83,108 @@
             background: rgba(0, 0, 0, 0.5);
             color: white;
             border: none;
-            padding: 10px;
+            padding: 8px;
             cursor: pointer;
             z-index: 10;
             user-select: none;
             border-radius: 50%;
+            font-size: 1em;
+            display: none; /* Escondido por padrão, mostrado se houver mais de uma foto */
+        }
+
+        .nav-button.prev { left: 10px; }
+        .nav-button.next { right: 10px; }
+        
+        .no-products {
+            text-align: center;
+            padding: 50px;
             font-size: 1.2em;
-        }
-
-        .nav-button.prev {
-            left: 10px;
-        }
-
-        .nav-button.next {
-            right: 10px;
-        }
-
-        .buy-button {
-            display: inline-block;
-            background-color: #fe2c55;
-            color: white;
-            padding: 12px 25px;
-            text-decoration: none;
-            border-radius: 50px;
-            font-weight: bold;
-            font-size: 1.1em;
-            transition: background-color 0.3s;
-            border: none;
-            cursor: pointer;
-        }
-
-        .buy-button:hover {
-            background-color: #d12749;
+            color: #666;
         }
     </style>
 </head>
 <body>
 
-    <div class="product-card">
-        <h2 class="product-title" id="productNameDisplay">Carregando...</h2>
-
-        <div class="image-carousel">
-            <div class="image-container" id="imageContainer">
-                </div>
-            
-            <button class="nav-button prev" onclick="navigateCarousel(-1)">&#10094;</button>
-            <button class="nav-button next" onclick="navigateCarousel(1)">&#10095;</button>
+    <div id="productGallery">
         </div>
-
-        <a 
-            class="buy-button" 
-            href="#" 
-            target="_blank"
-            rel="noopener noreferrer"
-            id="buyButtonLink" >
-            🛒 Comprar no TikTok Shop
-        </a>
-    </div>
-
+    
     <script>
-        // Lógica de Carregamento de Dados
-        function loadProductData() {
-            const storedData = localStorage.getItem('tiktokShopProduct');
-            let data;
+        const STORAGE_KEY = 'tiktokShopProducts';
+
+        // Objeto para rastrear o índice atual de cada carrossel
+        const carouselStates = {};
+
+        document.addEventListener('DOMContentLoaded', loadProductsAndRender);
+
+        function loadProductsAndRender() {
+            const storedData = localStorage.getItem(STORAGE_KEY);
+            let products = [];
             
             if (storedData) {
                 try {
-                    data = JSON.parse(storedData);
+                    products = JSON.parse(storedData);
                 } catch (e) {
-                    console.error("Erro ao analisar dados salvos:", e);
-                    // Fallback se houver erro nos dados
-                    data = null; 
+                    console.error("Erro ao carregar lista de produtos:", e);
                 }
             }
-            
-            if (!data || !data.name || !data.link || !data.images) {
-                // Dados padrão se não houver nada salvo ou se houver erro
-                data = {
-                    name: 'PRODUTO NÃO CONFIGURADO',
-                    link: 'admin.html',
-                    images: ['https://via.placeholder.com/400x400?text=ADICIONE+FOTOS+NO+ADM']
-                };
+
+            const gallery = document.getElementById('productGallery');
+            gallery.innerHTML = ''; // Limpa o conteúdo
+
+            if (products.length === 0) {
+                gallery.innerHTML = '<div class="no-products">Nenhum produto cadastrado. Por favor, acesse o <a href="admin.html">Painel ADM</a> para adicionar.</div>';
+                return;
             }
 
-            // 1. Atualiza o texto e links
-            document.getElementById('productNameDisplay').textContent = data.name;
-            document.getElementById('pageTitle').textContent = data.name;
-            document.getElementById('buyButtonLink').href = data.link;
-
-            // 2. Insere as imagens dinamicamente
-            const container = document.getElementById('imageContainer');
-            container.innerHTML = ''; 
-            // Garante que images seja um array e itera sobre ele
-            (Array.isArray(data.images) ? data.images : [data.images]).forEach((url, index) => {
-                if (url && url.trim() !== '') {
-                    const img = document.createElement('img');
-                    img.className = 'product-image';
-                    img.src = url.trim();
-                    img.alt = `Foto ${index + 1} do Produto`;
-                    container.appendChild(img);
-                }
+            products.forEach((product, index) => {
+                gallery.appendChild(createProductCard(product, index));
+                carouselStates[index] = 0; // Inicializa o estado do carrossel
             });
-
-            // 3. Inicializa o carrossel após carregar as imagens
-            initCarousel(); 
         }
-
-        // Lógica do Carrossel (Ajustada para ser recarregada)
-        let currentIndex = 0;
-        let images = [];
-        let container;
-
-        function initCarousel() {
-            container = document.getElementById('imageContainer');
-            images = container.querySelectorAll('.product-image');
-            currentIndex = 0;
-            container.style.transform = `translateX(0%)`; // Reseta a posição
+        
+        // Função que cria o HTML para um único cartão de produto
+        function createProductCard(product, index) {
+            const card = document.createElement('div');
+            card.className = 'product-card';
             
-             // Esconde botões se houver apenas 1 imagem
-            document.querySelectorAll('.nav-button').forEach(button => {
-                button.style.display = images.length > 1 ? 'block' : 'none';
-            });
+            const imagesHTML = product.images.map((url, imgIndex) => 
+                `<img class="product-image" src="${url}" alt="${product.name} - Foto ${imgIndex + 1}">`
+            ).join('');
+
+            const hasMultipleImages = product.images.length > 1;
+
+            card.innerHTML = `
+                <h2 class="product-title">${product.name}</h2>
+                <div class="image-carousel">
+                    <div class="image-container" id="container-${index}">
+                        ${imagesHTML}
+                    </div>
+                    ${hasMultipleImages ? `
+                        <button class="nav-button prev" onclick="navigateCarousel(${index}, -1)">&#10094;</button>
+                        <button class="nav-button next" onclick="navigateCarousel(${index}, 1)">&#10095;</button>
+                    ` : ''}
+                </div>
+                <a 
+                    class="buy-button" 
+                    href="${product.link}" 
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    🛒 Comprar no TikTok Shop
+                </a>
+            `;
+            
+            return card;
         }
 
-        function navigateCarousel(direction) {
+        // Lógica do Carrossel (agora específica para cada cartão)
+        window.navigateCarousel = function(productIndex, direction) {
+            const container = document.getElementById(`container-${productIndex}`);
+            if (!container) return;
+            
+            const images = container.querySelectorAll('.product-image');
+            let currentIndex = carouselStates[productIndex];
+            
             if (images.length <= 1) return;
 
             currentIndex += direction;
@@ -191,12 +195,13 @@
                 currentIndex = 0;
             }
 
+            // Salva o novo estado
+            carouselStates[productIndex] = currentIndex;
+            
+            // Aplica a transformação
             const offset = -currentIndex * 100;
             container.style.transform = `translateX(${offset}%)`;
         }
-
-        // Carrega os dados quando a página é aberta
-        window.onload = loadProductData;
     </script>
 
 </body>
