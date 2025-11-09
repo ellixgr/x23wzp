@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minha Loja TikTok Shop</title>
+    <title id="pageTitle">Carregando Minha Loja...</title>
     <style>
         body {
             font-family: sans-serif;
@@ -48,7 +48,6 @@
             min-width: 100%;
             height: auto;
             display: block;
-            /* Defina uma altura para as imagens, se necessário, ou use 'max-height' */
         }
 
         .nav-button {
@@ -76,7 +75,7 @@
 
         .buy-button {
             display: inline-block;
-            background-color: #fe2c55; /* Cor vermelha/rosa do TikTok */
+            background-color: #fe2c55;
             color: white;
             padding: 12px 25px;
             text-decoration: none;
@@ -96,14 +95,11 @@
 <body>
 
     <div class="product-card">
-        <h2 class="product-title">Nome do Seu Produto Aqui</h2>
+        <h2 class="product-title" id="productNameDisplay">Carregando...</h2>
 
         <div class="image-carousel">
             <div class="image-container" id="imageContainer">
-                <img class="product-image" src="LINK_DA_SUA_PRIMEIRA_FOTO_AQUI" alt="Foto 1 do Produto">
-                <img class="product-image" src="LINK_DA_SUA_SEGUNDA_FOTO_AQUI" alt="Foto 2 do Produto">
-                <img class="product-image" src="LINK_DA_SUA_TERCEIRA_FOTO_AQUI" alt="Foto 3 do Produto">
-            </div>
+                </div>
             
             <button class="nav-button prev" onclick="navigateCarousel(-1)">&#10094;</button>
             <button class="nav-button next" onclick="navigateCarousel(1)">&#10095;</button>
@@ -111,33 +107,96 @@
 
         <a 
             class="buy-button" 
-            href="https://vm.tiktok.com/ZMHc3BuPaA6FP-oYSaV/" 
+            href="#" 
             target="_blank"
             rel="noopener noreferrer"
-        >
+            id="buyButtonLink" >
             🛒 Comprar no TikTok Shop
         </a>
     </div>
 
     <script>
-        const container = document.getElementById('imageContainer');
-        const images = document.querySelectorAll('.product-image');
+        // Lógica de Carregamento de Dados
+        function loadProductData() {
+            const storedData = localStorage.getItem('tiktokShopProduct');
+            let data;
+            
+            if (storedData) {
+                try {
+                    data = JSON.parse(storedData);
+                } catch (e) {
+                    console.error("Erro ao analisar dados salvos:", e);
+                    // Fallback se houver erro nos dados
+                    data = null; 
+                }
+            }
+            
+            if (!data || !data.name || !data.link || !data.images) {
+                // Dados padrão se não houver nada salvo ou se houver erro
+                data = {
+                    name: 'PRODUTO NÃO CONFIGURADO',
+                    link: 'admin.html',
+                    images: ['https://via.placeholder.com/400x400?text=ADICIONE+FOTOS+NO+ADM']
+                };
+            }
+
+            // 1. Atualiza o texto e links
+            document.getElementById('productNameDisplay').textContent = data.name;
+            document.getElementById('pageTitle').textContent = data.name;
+            document.getElementById('buyButtonLink').href = data.link;
+
+            // 2. Insere as imagens dinamicamente
+            const container = document.getElementById('imageContainer');
+            container.innerHTML = ''; 
+            // Garante que images seja um array e itera sobre ele
+            (Array.isArray(data.images) ? data.images : [data.images]).forEach((url, index) => {
+                if (url && url.trim() !== '') {
+                    const img = document.createElement('img');
+                    img.className = 'product-image';
+                    img.src = url.trim();
+                    img.alt = `Foto ${index + 1} do Produto`;
+                    container.appendChild(img);
+                }
+            });
+
+            // 3. Inicializa o carrossel após carregar as imagens
+            initCarousel(); 
+        }
+
+        // Lógica do Carrossel (Ajustada para ser recarregada)
         let currentIndex = 0;
+        let images = [];
+        let container;
+
+        function initCarousel() {
+            container = document.getElementById('imageContainer');
+            images = container.querySelectorAll('.product-image');
+            currentIndex = 0;
+            container.style.transform = `translateX(0%)`; // Reseta a posição
+            
+             // Esconde botões se houver apenas 1 imagem
+            document.querySelectorAll('.nav-button').forEach(button => {
+                button.style.display = images.length > 1 ? 'block' : 'none';
+            });
+        }
 
         function navigateCarousel(direction) {
+            if (images.length <= 1) return;
+
             currentIndex += direction;
 
-            // Lógica para voltar ao início/fim
             if (currentIndex < 0) {
                 currentIndex = images.length - 1;
             } else if (currentIndex >= images.length) {
                 currentIndex = 0;
             }
 
-            // Move o container horizontalmente
             const offset = -currentIndex * 100;
             container.style.transform = `translateX(${offset}%)`;
         }
+
+        // Carrega os dados quando a página é aberta
+        window.onload = loadProductData;
     </script>
 
 </body>
