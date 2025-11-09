@@ -13,16 +13,28 @@
             align-items: flex-start;
             min-height: 100vh;
             margin: 0;
-            padding-top: 50px;
+            padding-top: 30px;
         }
 
         .admin-container {
             background-color: #fff;
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            max-width: 600px;
-            width: 90%;
+            max-width: 900px; /* Mais largo para a lista */
+            width: 95%;
             padding: 30px;
+            display: flex;
+            gap: 30px;
+        }
+
+        .product-list-panel {
+            flex: 1;
+            padding-right: 20px;
+            border-right: 1px solid #eee;
+        }
+
+        .form-panel {
+            flex: 2;
         }
 
         h2 {
@@ -39,10 +51,10 @@
             color: #555;
         }
 
-        input[type="text"], input[type="url"], textarea { /* Adicionado input[type="url"] */
+        input[type="text"], input[type="url"], textarea {
             width: 100%;
             padding: 10px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             border: 1px solid #ccc;
             border-radius: 6px;
             box-sizing: border-box;
@@ -53,31 +65,68 @@
             resize: vertical;
         }
 
+        .save-button, .new-button, .edit-button, .delete-button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
         .save-button {
             display: block;
             width: 100%;
             background-color: #007bff;
             color: white;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 6px;
-            font-size: 1.1em;
-            cursor: pointer;
-            transition: background-color 0.3s;
+            margin-top: 20px;
         }
 
         .save-button:hover {
             background-color: #0056b3;
         }
 
-        .helper-text {
-            font-size: 0.9em;
-            color: #888;
-            margin-top: -15px;
+        .new-button {
+            background-color: #28a745;
+            color: white;
             margin-bottom: 20px;
         }
         
-        /* Estilo para a mensagem de sucesso */
+        .new-button:hover {
+            background-color: #1e7e34;
+        }
+
+        .product-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px dashed #eee;
+            cursor: pointer;
+        }
+        
+        .product-item:hover {
+            background-color: #f7f7f7;
+        }
+
+        .product-item-name {
+            font-weight: bold;
+        }
+
+        .actions button {
+            margin-left: 5px;
+        }
+
+        .edit-button {
+            background-color: #ffc107;
+            color: #333;
+        }
+
+        .delete-button {
+            background-color: #dc3545;
+            color: white;
+        }
+
         .message {
             margin-top: 20px;
             padding: 10px;
@@ -85,85 +134,159 @@
             color: #155724;
             border: 1px solid #c3e6cb;
             border-radius: 5px;
-            display: none; /* Escondido por padrão */
+            display: none;
         }
     </style>
 </head>
 <body>
 
     <div class="admin-container">
-        <h2>Painel Administrativo da Loja TikTok</h2>
         
-        <form id="adminForm"> 
-            
-            <label for="product_name">Nome do Produto:</label>
-            <input type="text" id="product_name" name="product_name" placeholder="Ex: Mini Fone Bluetooth TWS" required>
-
-            <label for="tiktok_link">Link do Produto no TikTok Shop:</label>
-            <input type="url" id="tiktok_link" name="tiktok_link" placeholder="https://vm.tiktok.com/ZMHc3BuPaA6FP-oYSaV/" required>
-            <p class="helper-text">Insira o link completo do produto.</p>
-
-            <label for="image_urls">URLs das Imagens (uma por linha):</label>
-            <textarea id="image_urls" name="image_urls" placeholder="https://exemplo.com/foto1.jpg&#10;https://exemplo.com/foto2.jpg&#10;https://exemplo.com/foto3.jpg" required></textarea>
-            <p class="helper-text">Coloque a URL completa de cada imagem, uma em cada linha, para o carrossel.</p>
-
-            <button type="submit" class="save-button">Salvar e Atualizar Site</button>
-            
+        <div class="product-list-panel">
+            <h2>Lista de Produtos</h2>
+            <button class="new-button" onclick="loadProductForm(-1)">+ Adicionar Novo Produto</button>
+            <div id="productList">
+                <p>Nenhum produto cadastrado.</p>
+            </div>
             <p class="message" id="saveMessage">
-                Produto atualizado no seu navegador! Visite a <a href="index.html">página principal</a> para ver as mudanças.
+                Loja atualizada! Visite a <a href="index.html">página principal</a>.
             </p>
-        </form>
+        </div>
+
+        <div class="form-panel">
+            <h2><span id="formTitle">Adicionar Novo Produto</span></h2>
+            
+            <form id="productForm"> 
+                <input type="hidden" id="productId" value="-1">
+                
+                <label for="product_name">Nome do Produto:</label>
+                <input type="text" id="product_name" name="product_name" required>
+
+                <label for="tiktok_link">Link do Produto no TikTok Shop:</label>
+                <input type="url" id="tiktok_link" name="tiktok_link" required>
+
+                <label for="image_urls">URLs das Imagens (uma por linha):</label>
+                <textarea id="image_urls" name="image_urls" required></textarea>
+                <p class="helper-text">Coloque a URL completa de cada imagem, uma em cada linha.</p>
+
+                <button type="submit" class="save-button">Salvar Produto</button>
+            </form>
+        </div>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const form = document.getElementById('adminForm');
-            const message = document.getElementById('saveMessage');
-            
-            // Elementos do formulário
-            const productNameInput = document.getElementById('product_name');
-            const tiktokLinkInput = document.getElementById('tiktok_link');
-            const imageUrlsTextarea = document.getElementById('image_urls');
+        const STORAGE_KEY = 'tiktokShopProducts';
+        let products = [];
+        let currentEditIndex = -1;
 
-            // 1. Tenta carregar dados existentes no formulário ao abrir
-            const storedData = localStorage.getItem('tiktokShopProduct');
+        document.addEventListener('DOMContentLoaded', () => {
+            loadProducts();
+            document.getElementById('productForm').addEventListener('submit', handleFormSubmit);
+        });
+
+        function loadProducts() {
+            const storedData = localStorage.getItem(STORAGE_KEY);
             if (storedData) {
                 try {
-                    const data = JSON.parse(storedData);
-                    productNameInput.value = data.name || '';
-                    tiktokLinkInput.value = data.link || '';
-                    imageUrlsTextarea.value = data.images.join('\n') || '';
+                    products = JSON.parse(storedData);
                 } catch (e) {
-                    console.error("Erro ao carregar dados do Local Storage:", e);
+                    console.error("Erro ao carregar lista de produtos:", e);
+                    products = [];
                 }
             }
+            renderProductList();
+            loadProductForm(-1); // Reseta o formulário
+        }
 
-            // 2. Lógica para salvar dados no Local Storage
-            form.addEventListener('submit', function(e) {
-                e.preventDefault(); // Impede o envio padrão que causava o erro 405
+        function renderProductList() {
+            const listElement = document.getElementById('productList');
+            listElement.innerHTML = ''; 
 
-                const imageUrls = imageUrlsTextarea.value
-                    .split('\n')
-                    .map(url => url.trim())
-                    .filter(url => url !== '');
+            if (products.length === 0) {
+                listElement.innerHTML = '<p>Nenhum produto cadastrado.</p>';
+                return;
+            }
 
-                // Objeto com os dados a serem salvos
-                const productData = {
-                    name: productNameInput.value,
-                    link: tiktokLinkInput.value,
-                    images: imageUrls
-                };
-
-                // Salva os dados no Local Storage
-                localStorage.setItem('tiktokShopProduct', JSON.stringify(productData));
-
-                // Exibe mensagem de sucesso
-                message.style.display = 'block';
-                setTimeout(() => {
-                    message.style.display = 'none';
-                }, 5000); // Esconde a mensagem após 5 segundos
+            products.forEach((product, index) => {
+                const item = document.createElement('div');
+                item.className = 'product-item';
+                item.innerHTML = `
+                    <span class="product-item-name">${product.name}</span>
+                    <div class="actions">
+                        <button class="edit-button" onclick="loadProductForm(${index})">Editar</button>
+                        <button class="delete-button" onclick="deleteProduct(${index})">Excluir</button>
+                    </div>
+                `;
+                listElement.appendChild(item);
             });
-        });
+        }
+
+        function loadProductForm(index) {
+            const formTitle = document.getElementById('formTitle');
+            const form = document.getElementById('productForm');
+            
+            currentEditIndex = index;
+            form.reset(); 
+
+            if (index === -1) {
+                formTitle.textContent = 'Adicionar Novo Produto';
+            } else {
+                formTitle.textContent = 'Editar Produto';
+                const product = products[index];
+                document.getElementById('product_name').value = product.name || '';
+                document.getElementById('tiktok_link').value = product.link || '';
+                document.getElementById('image_urls').value = Array.isArray(product.images) ? product.images.join('\n') : '';
+            }
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault(); 
+            
+            const newProductName = document.getElementById('product_name').value;
+            const newTiktokLink = document.getElementById('tiktok_link').value;
+            const newImageUrlsText = document.getElementById('image_urls').value;
+            
+            const newImageUrls = newImageUrlsText
+                .split('\n')
+                .map(url => url.trim())
+                .filter(url => url !== '');
+
+            const newProductData = {
+                name: newProductName,
+                link: newTiktokLink,
+                images: newImageUrls
+            };
+            
+            if (currentEditIndex === -1) {
+                // Adicionar
+                products.push(newProductData);
+            } else {
+                // Editar
+                products[currentEditIndex] = newProductData;
+            }
+
+            saveProducts();
+            loadProductForm(-1); // Reseta o formulário para 'Adicionar Novo'
+        }
+
+        function deleteProduct(index) {
+            if (confirm(`Tem certeza que deseja excluir o produto "${products[index].name}"?`)) {
+                products.splice(index, 1);
+                saveProducts();
+            }
+        }
+
+        function saveProducts() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
+            renderProductList(); // Atualiza a lista na tela ADM
+            
+            // Exibe mensagem de sucesso
+            const message = document.getElementById('saveMessage');
+            message.style.display = 'block';
+            setTimeout(() => {
+                message.style.display = 'none';
+            }, 5000); 
+        }
     </script>
 
 </body>
