@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADM - Gerenciar Produtos TikTok Shop</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            padding-top: 50px;
+        }
+
+        .admin-container {
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 90%;
+            padding: 30px;
+        }
+
+        h2 {
+            color: #333;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box; /* Inclui padding e borda na largura total */
+        }
+
+        textarea {
+            height: 100px;
+            resize: vertical;
+        }
+
+        .save-button {
+            display: block;
+            width: 100%;
+            background-color: #007bff; /* Cor de ADM (azul) */
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .save-button:hover {
+            background-color: #0056b3;
+        }
+
+        .helper-text {
+            font-size: 0.9em;
+            color: #888;
+            margin-top: -15px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="admin-container">
+        <h2>Painel Administrativo da Loja TikTok</h2>
+        
+        <form action="#" method="POST"> 
+            
+            <label for="product_name">Nome do Produto:</label>
+            <input type="text" id="product_name" name="product_name" placeholder="Ex: Mini Fone Bluetooth TWS">
+
+            <label for="tiktok_link">Link do Produto no TikTok Shop:</label>
+            <input type="text" id="tiktok_link" name="tiktok_link" placeholder="https://vm.tiktok.com/ZMHc3BuPaA6FP-oYSaV/">
+            <p class="helper-text">Insira o link completo do produto.</p>
+
+            <label for="image_urls">URLs das Imagens (uma por linha):</label>
+            <textarea id="image_urls" name="image_urls" placeholder="https://exemplo.com/foto1.jpg&#10;https://exemplo.com/foto2.jpg&#10;https://exemplo.com/foto3.jpg"></textarea>
+            <p class="helper-text">Coloque a URL completa de cada imagem, uma em cada linha, para o carrossel.</p>
+
+            <button type="submit" class="save-button">Salvar e Atualizar Site</button>
+        </form>
+    </div>
+
+</body>
+</html>
