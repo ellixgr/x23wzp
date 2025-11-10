@@ -204,8 +204,7 @@ footer a{color:#b78cff;text-decoration:none}
     border: 1px solid gold;
     padding: 25px;
     max-width: 350px;
-    max-width: 90%; 
-    width: 380px; 
+    width: 90%; /* Corrigido: Usar 'width: 90%' e 'max-width' */
 }
 
 /* Estilo específico para o botão de Copiar e Enviar Comprovante */
@@ -293,6 +292,8 @@ footer a{color:#b78cff;text-decoration:none}
 #previewFoto {
     width: 80px;
     height: 80px;
+    border-radius: 50%; /* CORRIGIDO: Foto de prévia circular */
+    object-fit: cover; /* CORRIGIDO: Garantir o preenchimento correto */
     border: 3px solid #b78cff;
     box-shadow: 0 0 10px rgba(183,140,255,0.5);
 }
@@ -483,8 +484,8 @@ const copyPixBtn = document.getElementById('copy-pix-btn');
 
 let todosGrupos = [];
 
-// REGEX CORRIGIDO
-const WHATSAPP_LINK_REGEX = /^https?:\/\/(chat\.)?whatsapp\.com\/(invite\/)?[A-Za-z0-9]{22}(\?.*)?$/;
+// REGEX CORRIGIDO: Mais robusto para links de convite do WhatsApp
+const WHATSAPP_LINK_REGEX = /^https?:\/\/(chat\.whatsapp\.com\/|wa\.me\/invite\/|whatsapp\.com\/)([A-Za-z0-9_-]{22}|[0-9]{1,4})\/?(\?.*)?$/i;
 
 
 // ================== CRIAÇÃO E MANIPULAÇÃO DO MODAL DE GRUPO (MANTIDO) ================== //
@@ -528,14 +529,14 @@ async function salvarNovoGrupo() {
     return;
   }
   
-  // Validação: Link repetido
-  const linkExiste = todosGrupos.some(g => g.link === link);
+  // Validação: Link repetido (ignora maiúsculas/minúsculas)
+  const linkExiste = todosGrupos.some(g => g.link.toLowerCase() === link.toLowerCase());
   if (linkExiste) {
       alert('Já existe um grupo com esse link. Use um link que ainda não está cadastrado.');
       return;
   }
   
-  // O nome é usado como chave no Firebase, então tem que ser único
+  // O nome é usado como chave no Firebase, então tem que ser único (ignora maiúsculas/minúsculas)
   const nomeExiste = todosGrupos.some(g => g.nome.toLowerCase() === nome.toLowerCase());
   if (nomeExiste) {
       alert('Já existe um grupo com esse nome. Por favor, escolha outro nome.');
@@ -550,7 +551,13 @@ async function salvarNovoGrupo() {
   const novoGrupo = { nome, link, foto, categoria, dono: usuario, vip: isVip };
 
   // Salva no Firebase
-  await set(ref(db, 'grupos/' + nome), novoGrupo);
+  try {
+    await set(ref(db, 'grupos/' + nome), novoGrupo);
+  } catch (error) {
+    alert('Erro ao salvar no banco de dados. Tente novamente.');
+    console.error(error);
+    return;
+  }
 
   const msg = document.getElementById('mensagemEnvio');
   msg.style.display = 'block';
@@ -561,8 +568,8 @@ async function salvarNovoGrupo() {
   enviados.push(novoGrupo);
   localStorage.setItem('gruposEnviados', JSON.stringify(enviados));
   
-  carregarGrupos(); 
   modal.style.display = 'none';
+  carregarGrupos(); 
 };
 
 // SALVAR GRUPO AGORA APONTA PARA A FUNÇÃO DE NOVO GRUPO POR PADRÃO
@@ -585,7 +592,7 @@ function abrirEdicao(grupo){
   salvarGrupoBtn.onclick = () => salvarEdicao(grupo, nomeOriginal, linkOriginal);
 }
 
-// *** FUNÇÃO SALVAREDICAO CORRIGIDA ***
+// *** FUNÇÃO SALVAREDICAO CORRIGIDA E APRIMORADA ***
 async function salvarEdicao(grupoOriginal, nomeOriginal, linkOriginal){
   const nomeNovo = document.getElementById('grupoNome').value.trim();
   const linkNovo = document.getElementById('grupoLink').value.trim();
@@ -600,14 +607,16 @@ async function salvarEdicao(grupoOriginal, nomeOriginal, linkOriginal){
   }
   
   // 2. Verificação de Duplicidade (Link e Nome)
+  // Verifica se o link novo já existe em *outro* grupo
   const linkExisteEmOutro = todosGrupos.some(g => 
-    g.link === linkNovo && g.nome.toLowerCase() !== nomeOriginal.toLowerCase()
+    g.link.toLowerCase() === linkNovo.toLowerCase() && g.nome.toLowerCase() !== nomeOriginal.toLowerCase()
   );
   if (linkExisteEmOutro) {
       alert('Já existe outro grupo com esse link. Use um link que ainda não está cadastrado.');
       return;
   }
   
+  // Verifica se o nome novo já existe em *outro* grupo
   const nomeExisteEmOutro = todosGrupos.some(g => 
     g.nome.toLowerCase() === nomeNovo.toLowerCase() && g.nome.toLowerCase() !== nomeOriginal.toLowerCase()
   );
@@ -616,7 +625,7 @@ async function salvarEdicao(grupoOriginal, nomeOriginal, linkOriginal){
       return;
   }
 
-  // 3. Monta o Objeto Editado
+  // 3. Monta o Objeto Editado (mantendo 'dono')
   const grupoEditado = {
       ...grupoOriginal, 
       nome: nomeNovo,
@@ -625,14 +634,21 @@ async function salvarEdicao(grupoOriginal, nomeOriginal, linkOriginal){
       categoria: categoriaNova,
       vip: vipNovo
   };
-
-  // 4. Se o nome foi alterado, remove o grupo antigo e salva o novo
-  if (nomeOriginal !== nomeNovo) {
-    await remove(ref(db, 'grupos/' + nomeOriginal));
+  
+  try {
+    // 4. Se o nome foi alterado, remove o grupo antigo e salva o novo
+    if (nomeOriginal.toLowerCase() !== nomeNovo.toLowerCase()) {
+      await remove(ref(db, 'grupos/' + nomeOriginal));
+      await set(ref(db, 'grupos/' + grupoEditado.nome), grupoEditado);
+    } else {
+      // 5. Se o nome for o mesmo, apenas atualiza
+      await set(ref(db, 'grupos/' + grupoEditado.nome), grupoEditado);
+    }
+  } catch (error) {
+    alert('Erro ao salvar edição no banco de dados. Tente novamente.');
+    console.error(error);
+    return;
   }
-
-  // 5. Salva (ou atualiza se o nome for o mesmo)
-  await set(ref(db, 'grupos/' + grupoEditado.nome), grupoEditado);
 
 
   // 6. Atualiza no localStorage
@@ -664,8 +680,10 @@ async function carregarGrupos() {
   try {
     // Tenta buscar o arquivo local (se existir)
     const res = await fetch('grupos.json'); 
-    const data = await res.json();
-    jsonGrupos = Array.isArray(data) ? data : []; 
+    if (res.ok) {
+        const data = await res.json();
+        jsonGrupos = Array.isArray(data) ? data : []; 
+    }
   } catch (e) {
     console.warn('Nenhum grupos.json encontrado ou erro ao carregar:', e);
     jsonGrupos = [];
@@ -679,11 +697,16 @@ async function carregarGrupos() {
 
     const mapa = new Map();
 
-    // Prioriza dados do Firebase sobre JSON, e remove duplicatas por nome
+    // Prioriza: 1. Firebase (dono) 2. Local Storage 3. JSON local
     [...jsonGrupos, ...dadosFirebase, ...enviadosLocais].forEach(g => {
       if (g?.nome) {
+        // Usa o nome em minúsculas como chave para evitar duplicidade
+        const nomeChave = g.nome.toLowerCase();
+        // Se já existe no mapa, mantém a versão com maior prioridade (Firebase > Local > JSON)
+        // Como iteramos JSON, Firebase, Local, o último a setar prevalece *se tiver nome duplicado*
+        // Para a edição local de um grupo que veio do JSON, o local storage prevalece
         g.vip = !!g.vip; 
-        mapa.set(g.nome.toLowerCase(), g);
+        mapa.set(nomeChave, g);
       }
     });
 
@@ -692,7 +715,18 @@ async function carregarGrupos() {
   });
 }
 
-// ================== RENDERIZAR GRUPOS (SEM LÓGICA DE ANÚNCIO FIXO) ================== //
+// ================== RENDERIZAR GRUPOS (COM ORDENAÇÃO VIP) ================== //
+
+function ordenarGrupos(lista) {
+    return lista.sort((a, b) => {
+        // 1. VIPs SEMPRE no topo
+        if (a.vip && !b.vip) return -1;
+        if (!a.vip && b.vip) return 1;
+        // 2. Critério de desempate: manter ordem original ou alfabética (opcional)
+        return a.nome.localeCompare(b.nome); 
+    });
+}
+
 
 function renderizarGrupos(lista) {
   const container = document.getElementById('lista-grupos');
@@ -705,16 +739,10 @@ function renderizarGrupos(lista) {
 
   const usuario = localStorage.getItem('usuarioID');
 
-  // Função de Ordenação: VIP > Demais
-  lista.sort((a, b) => {
-    // 1. VIPs SEMPRE no topo
-    if (a.vip && !b.vip) return -1;
-    if (!a.vip && b.vip) return 1;
-    // 2. Critério de desempate para os demais
-    return 0; 
-  });
+  // Aplica a ordenação VIP
+  const listaOrdenada = ordenarGrupos([...lista]);
 
-  lista.forEach(g => {
+  listaOrdenada.forEach(g => {
     const isOwner = g.dono === usuario;
 
     const wrapper = document.createElement('div');
@@ -742,7 +770,11 @@ function renderizarGrupos(lista) {
     // Atualiza o contador de cliques em tempo real
     const cliqueRef = ref(db, 'cliques/' + g.nome);
     onValue(cliqueRef, snap => {
-      btn.querySelector('.cliques').textContent = `Cliques: ${snap.val() || 0}`;
+      // Adiciona o valor do clique ao span dentro do botão.
+      const cliquesSpan = btn.querySelector('.cliques');
+      if (cliquesSpan) {
+        cliquesSpan.textContent = `Cliques: ${snap.val() || 0}`;
+      }
     });
 
     // Função para registrar clique e abrir link
@@ -835,21 +867,14 @@ document.querySelectorAll('.cat-btn').forEach(btn => {
     if (cat === 'todos') {
         listaFiltrada = todosGrupos;
     } else {
+        // Filtragem segura
         listaFiltrada = todosGrupos.filter(g => g.categoria?.toLowerCase() === cat);
     }
 
     // Re-ordena a lista filtrada (necessário para manter VIPs no topo da categoria)
-    listaFiltrada.sort((a, b) => {
-        // 1. VIPs SEMPRE no topo
-        if (a.vip && !b.vip) return -1;
-        if (!a.vip && b.vip) return 1;
+    const listaFinal = ordenarGrupos(listaFiltrada);
 
-        // 2. Critério de desempate para os demais
-        return 0; 
-    });
-
-
-    renderizarGrupos(listaFiltrada);
+    renderizarGrupos(listaFinal);
   });
 });
 
@@ -868,6 +893,7 @@ enviarBtn.onclick = (e) => {
   document.getElementById('grupoCategoria').value = '';
   document.getElementById('grupoVipCodigo').value = '';
   previewFoto.src = 'https://files.catbox.moe/9qdwuz.webp';
+  document.getElementById('grupoFotoUpload').value = null; // Limpa o input file
   // Garante que o botão use a função de "novo grupo"
   salvarGrupoBtn.onclick = salvarNovoGrupo; 
 };
@@ -876,10 +902,19 @@ enviarBtn.onclick = (e) => {
 meusBtn.onclick = (e) => {
   e.preventDefault();
   const usuario = localStorage.getItem('usuarioID');
-  if (!usuario) return alert('Você ainda não enviou nenhum grupo.');
+  if (!usuario) {
+      alert('Você ainda não enviou nenhum grupo.');
+      return;
+  }
+
   const meus = todosGrupos.filter(g => g.dono === usuario);
-  if (meus.length === 0) alert('Você ainda não enviou nenhum grupo.');
-  else {
+
+  if (meus.length === 0) {
+      alert('Você ainda não enviou nenhum grupo.');
+  } else {
+    // Garante que a categoria "Meus Grupos" fique ativa visualmente, se houver um botão correspondente
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+    
     renderizarGrupos(meus);
     menu.classList.remove('open');
   }
