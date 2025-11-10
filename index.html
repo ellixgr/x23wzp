@@ -515,7 +515,7 @@ async function salvarNovoGrupo() {
   const categoria = document.getElementById('grupoCategoria').value;
   const vipCodigo = document.getElementById('grupoVipCodigo').value.trim();
 
-  // Validação CORRIGIDA usando o novo Regex
+  // Validação
   if (!nome) {
     alert('O nome do grupo é obrigatório.');
     return;
@@ -529,20 +529,26 @@ async function salvarNovoGrupo() {
     return;
   }
   
-  // Validação: Link repetido (ignora maiúsculas/minúsculas)
-  const linkExiste = todosGrupos.some(g => g.link.toLowerCase() === link.toLowerCase());
-  if (linkExiste) {
-      alert('Já existe um grupo com esse link. Use um link que ainda não está cadastrado.');
-      return;
-  }
-  
-  // O nome é usado como chave no Firebase, então tem que ser único (ignora maiúsculas/minúsculas)
-  const nomeExiste = todosGrupos.some(g => g.nome.toLowerCase() === nome.toLowerCase());
+  // ⛔ VALIDAÇÃO DE DUPLICIDADE (NOVO GRUPO)
+  const nomeLowerCase = nome.toLowerCase();
+  const linkLowerCase = link.toLowerCase();
+
+  // Se o nome ou link existe em QUALQUER grupo, alerta.
+  const nomeExiste = todosGrupos.some(g => g.nome.toLowerCase() === nomeLowerCase);
   if (nomeExiste) {
       alert('Já existe um grupo com esse nome. Por favor, escolha outro nome.');
       return;
   }
   
+  const linkExiste = todosGrupos.some(g => g.link.toLowerCase() === linkLowerCase);
+  if (linkExiste) {
+      alert('Já existe um grupo com esse link. Use um link que ainda não está cadastrado.');
+      return;
+  }
+  
+  
+  // Fim da validação
+
   // Gera ID de usuário se não existir
   const isVip = vipCodigo === "21977"; 
   const usuario = localStorage.getItem('usuarioID') || crypto.randomUUID();
@@ -592,7 +598,7 @@ function abrirEdicao(grupo){
   salvarGrupoBtn.onclick = () => salvarEdicao(grupo, nomeOriginal, linkOriginal);
 }
 
-// *** FUNÇÃO SALVAREDICAO CORRIGIDA E APRIMORADA ***
+// *** FUNÇÃO SALVAREDICAO CORRIGIDA E APRIMORADA PARA IGNORAR O PRÓPRIO GRUPO ***
 async function salvarEdicao(grupoOriginal, nomeOriginal, linkOriginal){
   const nomeNovo = document.getElementById('grupoNome').value.trim();
   const linkNovo = document.getElementById('grupoLink').value.trim();
@@ -606,24 +612,29 @@ async function salvarEdicao(grupoOriginal, nomeOriginal, linkOriginal){
     return;
   }
   
-  // 2. Verificação de Duplicidade (Link e Nome)
-  // Verifica se o link novo já existe em *outro* grupo
-  const linkExisteEmOutro = todosGrupos.some(g => 
-    g.link.toLowerCase() === linkNovo.toLowerCase() && g.nome.toLowerCase() !== nomeOriginal.toLowerCase()
-  );
-  if (linkExisteEmOutro) {
-      alert('Já existe outro grupo com esse link. Use um link que ainda não está cadastrado.');
-      return;
-  }
-  
-  // Verifica se o nome novo já existe em *outro* grupo
+  // 2. ⛔ VERIFICAÇÃO DE DUPLICIDADE (EDIÇÃO)
+  const nomeOriginalLower = nomeOriginal.toLowerCase();
+  const nomeNovoLower = nomeNovo.toLowerCase();
+  const linkNovoLower = linkNovo.toLowerCase();
+
+  // Verifica se o nome novo já existe em *outro* grupo (ignora se o nome for o original, mesmo que capitalizado diferente)
   const nomeExisteEmOutro = todosGrupos.some(g => 
-    g.nome.toLowerCase() === nomeNovo.toLowerCase() && g.nome.toLowerCase() !== nomeOriginal.toLowerCase()
+    g.nome.toLowerCase() === nomeNovoLower && g.nome.toLowerCase() !== nomeOriginalLower
   );
   if (nomeExisteEmOutro) {
       alert('Já existe outro grupo com esse nome. Por favor, escolha outro nome.');
       return;
   }
+  
+  // Verifica se o link novo já existe em *outro* grupo (ignora se o link for o original, mesmo que capitalizado diferente)
+  const linkExisteEmOutro = todosGrupos.some(g => 
+    g.link.toLowerCase() === linkNovoLower && g.nome.toLowerCase() !== nomeOriginalLower
+  );
+  if (linkExisteEmOutro) {
+      alert('Já existe outro grupo com esse link. Use um link que ainda não está cadastrado.');
+      return;
+  }
+  // Fim da validação
 
   // 3. Monta o Objeto Editado (mantendo 'dono')
   const grupoEditado = {
@@ -637,7 +648,7 @@ async function salvarEdicao(grupoOriginal, nomeOriginal, linkOriginal){
   
   try {
     // 4. Se o nome foi alterado, remove o grupo antigo e salva o novo
-    if (nomeOriginal.toLowerCase() !== nomeNovo.toLowerCase()) {
+    if (nomeOriginalLower !== nomeNovoLower) {
       await remove(ref(db, 'grupos/' + nomeOriginal));
       await set(ref(db, 'grupos/' + grupoEditado.nome), grupoEditado);
     } else {
@@ -657,7 +668,7 @@ async function salvarEdicao(grupoOriginal, nomeOriginal, linkOriginal){
   localStorage.setItem('gruposEnviados', JSON.stringify(enviados));
 
   modal.style.display = 'none';
-  // Restaura a função de salvar para o padrão de "novo grupo"
+  // 7. Restaura a função de salvar para o padrão de "novo grupo"
   salvarGrupoBtn.onclick = salvarNovoGrupo; 
   carregarGrupos();
 }
@@ -702,9 +713,7 @@ async function carregarGrupos() {
       if (g?.nome) {
         // Usa o nome em minúsculas como chave para evitar duplicidade
         const nomeChave = g.nome.toLowerCase();
-        // Se já existe no mapa, mantém a versão com maior prioridade (Firebase > Local > JSON)
-        // Como iteramos JSON, Firebase, Local, o último a setar prevalece *se tiver nome duplicado*
-        // Para a edição local de um grupo que veio do JSON, o local storage prevalece
+        
         g.vip = !!g.vip; 
         mapa.set(nomeChave, g);
       }
