@@ -440,7 +440,8 @@ footer a{color:#b78cff;text-decoration:none}
 <script type="module">
 // Versões mais recentes e modulares do Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getDatabase, ref, onValue, runTransaction, set, remove } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+// ATENÇÃO: Adicionado o método 'push' do Firebase
+import { getDatabase, ref, onValue, runTransaction, set, remove, push } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
 // Credenciais do Firebase (MANTIDAS)
 const firebaseConfig = {
@@ -507,7 +508,7 @@ fotoInput.addEventListener("change", (e) => {
   }
 });
 
-// ================== SALVAR NOVO GRUPO (AGORA SEM RESTRIÇÃO DE NOME/LINK) ================== //
+// ================== SALVAR NOVO GRUPO (AGORA COM ID ÚNICO: CORREÇÃO CRÍTICA) ================== //
 async function salvarNovoGrupo() {
   const nome = document.getElementById('grupoNome').value.trim();
   const link = document.getElementById('grupoLink').value.trim();
@@ -529,10 +530,10 @@ async function salvarNovoGrupo() {
     return;
   }
   
-  // NOVO: Validação de DUPLICIDADE de link
+  // CORRIGIDO: Validação de DUPLICIDADE de link
   if (todosGrupos.some(g => g.link === link)) {
     alert('Este link de grupo já foi enviado. Não é permitido links repetidos.');
-    return; // Para a execução da função se for duplicado
+    return; 
   }
   
   // Gera ID de usuário se não existir
@@ -542,9 +543,10 @@ async function salvarNovoGrupo() {
 
   const novoGrupo = { nome, link, foto, categoria, dono: usuario, vip: isVip };
 
-  // Salva no Firebase. ATENÇÃO: Se o nome já existir, o grupo antigo será **substituído**.
+  // CORREÇÃO CRÍTICA: Salva no Firebase com um ID ÚNICO e AUTOMÁTICO usando 'push()'.
   try {
-    await set(ref(db, 'grupos/' + nome), novoGrupo);
+    const gruposRef = ref(db, 'grupos');
+    await push(gruposRef, novoGrupo);
   } catch (error) {
     alert('Erro ao salvar no banco de dados. Tente novamente.');
     console.error(error);
@@ -567,7 +569,7 @@ async function salvarNovoGrupo() {
 // SALVAR GRUPO AGORA APONTA PARA A FUNÇÃO DE NOVO GRUPO POR PADRÃO
 salvarGrupoBtn.onclick = salvarNovoGrupo;
 
-// ================== FUNÇÕES DE EDIÇÃO/EXCLUSÃO, CARREGAR GRUPOS ================== //
+// ================== FUNÇÕES DE EDIÇÃO/EXCLUSÃO, CARREGAR GRUPOS (CORRIGIDAS) ================== //
 
 function abrirEdicao(grupo){
   modal.style.display = 'flex';
@@ -577,14 +579,14 @@ function abrirEdicao(grupo){
   document.getElementById('grupoCategoria').value = grupo.categoria;
   document.getElementById('grupoVipCodigo').value = grupo.vip ? "21977" : "";
   
-  const nomeOriginal = grupo.nome; 
-  const linkOriginal = grupo.link; 
+  const nomeOriginal = grupo.nome; // Mantido para o localStorage
+  const linkOriginal = grupo.link; // Mantido para a validação
 
   // Define a função de salvar para a edição
   salvarGrupoBtn.onclick = () => salvarEdicao(grupo, nomeOriginal, linkOriginal);
 }
 
-// *** FUNÇÃO SALVAREDICAO (AGORA SEM RESTRIÇÃO DE NOME/LINK) ***
+// *** FUNÇÃO SALVAREDICAO (CORRIGIDA PARA USAR A CHAVE ÚNICA/KEY) ***
 async function salvarEdicao(grupoOriginal, nomeOriginal, linkOriginal){
   const nomeNovo = document.getElementById('grupoNome').value.trim();
   const linkNovo = document.getElementById('grupoLink').value.trim();
@@ -598,10 +600,10 @@ async function salvarEdicao(grupoOriginal, nomeOriginal, linkOriginal){
     return;
   }
   
-  // NOVO: Validação de DUPLICIDADE de link (Ignora o link original do grupo em edição)
+  // CORRIGIDO: Validação de DUPLICIDADE de link (Ignora o link original do grupo em edição)
   const isLinkRepetido = todosGrupos.some(g => 
-      g.link === linkNovo && // O link é o mesmo
-      g.nome.toLowerCase() !== nomeOriginal.toLowerCase() // Mas não é o próprio grupo que está sendo editado
+      g.link === linkNovo && 
+      g.key !== grupoOriginal.key // Usa a CHAVE/ID única para ignorar o próprio grupo em edição
   );
 
   if (isLinkRepetido) {
@@ -609,10 +611,7 @@ async function salvarEdicao(grupoOriginal, nomeOriginal, linkOriginal){
     return;
   }
   
-  // 3. Monta o Objeto Editado (mantendo 'dono')
-  const nomeOriginalLower = nomeOriginal.toLowerCase();
-  const nomeNovoLower = nomeNovo.toLowerCase();
-
+  // 3. Monta o Objeto Editado (mantendo 'dono' e 'key')
   const grupoEditado = {
       ...grupoOriginal, 
       nome: nomeNovo,
@@ -623,15 +622,8 @@ async function salvarEdicao(grupoOriginal, nomeOriginal, linkOriginal){
   };
   
   try {
-    // 4. Se o nome foi alterado, remove o grupo antigo e salva o novo
-    if (nomeOriginalLower !== nomeNovoLower) {
-      await remove(ref(db, 'grupos/' + nomeOriginal));
-      // Se o nome novo for um nome já existente, ele irá substituir o grupo com esse nome.
-      await set(ref(db, 'grupos/' + grupoEditado.nome), grupoEditado);
-    } else {
-      // 5. Se o nome for o mesmo, apenas atualiza
-      await set(ref(db, 'grupos/' + grupoEditado.nome), grupoEditado);
-    }
+    // CORRIGIDO: Apenas ATUALIZA o grupo no Firebase usando sua CHAVE ÚNICA (grupoOriginal.key)
+    await set(ref(db, 'grupos/' + grupoOriginal.key), grupoEditado);
   } catch (error) {
     alert('Erro ao salvar edição no banco de dados. Tente novamente.');
     console.error(error);
@@ -641,7 +633,7 @@ async function salvarEdicao(grupoOriginal, nomeOriginal, linkOriginal){
 
   // 6. Atualiza no localStorage
   let enviados = JSON.parse(localStorage.getItem('gruposEnviados') || '[]');
-  enviados = enviados.map(g => g.nome === nomeOriginal ? grupoEditado : g);
+  enviados = enviados.map(g => g.nome === nomeOriginal ? grupoEditado : g); // Usa nome para mapear no local storage
   localStorage.setItem('gruposEnviados', JSON.stringify(enviados));
 
   modal.style.display = 'none';
@@ -650,10 +642,13 @@ async function salvarEdicao(grupoOriginal, nomeOriginal, linkOriginal){
   carregarGrupos();
 }
 
+// *** FUNÇÃO EXCLUIR GRUPO (CORRIGIDA PARA USAR A CHAVE ÚNICA/KEY) ***
 function excluirGrupo(grupo){
   if (!confirm('Deseja realmente excluir este grupo?')) return;
-  remove(ref(db, 'grupos/' + grupo.nome));
-  todosGrupos = todosGrupos.filter(g => g.nome !== grupo.nome);
+  // CORRIGIDO: Remove no Firebase usando a chave única
+  remove(ref(db, 'grupos/' + grupo.key));
+  // Remove da lista local usando a chave única
+  todosGrupos = todosGrupos.filter(g => g.key !== grupo.key);
 
   let enviados = JSON.parse(localStorage.getItem('gruposEnviados') || '[]');
   enviados = enviados.filter(g => g.nome !== grupo.nome);
@@ -662,7 +657,7 @@ function excluirGrupo(grupo){
   renderizarGrupos(todosGrupos);
 }
 
-// Carrega os grupos do arquivo local e do Firebase
+// *** FUNÇÃO CARREGAR GRUPOS (CORRIGIDA PARA LER A CHAVE/KEY DO FIREBASE) ***
 async function carregarGrupos() {
   let jsonGrupos = [];
   try {
@@ -680,19 +675,26 @@ async function carregarGrupos() {
   const gruposRef = ref(db, 'grupos');
   // Monitora mudanças no Firebase em tempo real
   onValue(gruposRef, snap => {
-    const dadosFirebase = snap.val() ? Object.values(snap.val()) : [];
+    // CORREÇÃO CRÍTICA: Mapeia as chaves únicas do Firebase para cada grupo
+    const dadosFirebase = [];
+    snap.forEach(childSnap => {
+        const grupo = childSnap.val();
+        grupo.key = childSnap.key; // Adiciona a chave única do Firebase
+        dadosFirebase.push(grupo);
+    });
+    
     const enviadosLocais = JSON.parse(localStorage.getItem('gruposEnviados') || '[]');
 
     const mapa = new Map();
 
-    // Prioriza: 1. Firebase (dono) 2. Local Storage 3. JSON local
+    // Cria o mapa de grupos, usando a CHAVE/KEY do Firebase, ou o nome (para locais/json)
     [...jsonGrupos, ...dadosFirebase, ...enviadosLocais].forEach(g => {
       if (g?.nome) {
-        // Usa o nome em minúsculas como chave para evitar duplicidade
-        const nomeChave = g.nome.toLowerCase();
+        // Usa a chave do Firebase, ou o nome em minúsculas como fallback
+        const key = g.key || g.nome.toLowerCase();
         
         g.vip = !!g.vip; 
-        mapa.set(nomeChave, g);
+        mapa.set(key, g);
       }
     });
 
@@ -701,7 +703,7 @@ async function carregarGrupos() {
   });
 }
 
-// ================== RENDERIZAR GRUPOS (COM ORDENAÇÃO VIP) ================== //
+// ================== RENDERIZAR GRUPOS (MANTIDO) ================== //
 
 function ordenarGrupos(lista) {
     return lista.sort((a, b) => {
@@ -815,7 +817,7 @@ copyPixBtn.onclick = async () => {
 };
 
 
-// ================== INICIALIZAÇÃO DE EVENTOS ================== //
+// ================== INICIALIZAÇÃO DE EVENTOS (MANTIDO) ================== //
 
 const comprarVipBtn = document.getElementById('comprarVipBtn');
 
@@ -826,7 +828,7 @@ comprarVipBtn.addEventListener("click", (e) => {
   menu.classList.remove("open");
 });
 
-// Outros Eventos (MANTIDOS)
+// Outros Eventos 
 document.getElementById('menuBtn').addEventListener('click',()=>menu.classList.add('open'));
 document.getElementById('closeBtn').addEventListener('click',()=>menu.classList.remove('open'));
 
@@ -906,7 +908,7 @@ meusBtn.onclick = (e) => {
   }
 };
 
-// TERMOS E PRIVACIDADE (AJUSTADO)
+// TERMOS E PRIVACIDADE (MANTIDO)
 document.getElementById('termosLink').onclick = (e) => {
   e.preventDefault();
   modalTitulo.textContent = "Termos de Uso";
