@@ -174,20 +174,18 @@ header p{margin-top:4px;text-shadow:1px 1px 3px #000}
 
 /* --- Rodapé (FOOTER) CORRIGIDO --- */
 footer{
-    position:fixed;
-    bottom:0;
-    left:0;
-    width:100%;
-    /* CORREÇÃO AQUI: Fundo semi-transparente para o texto não misturar */
-    background:rgba(0,0,0,0.8); 
+    /* Removidas as propriedades 'position: fixed' e 'background', conforme solicitado. */
+    /* Agora o footer é transparente e aparece no fluxo normal do conteúdo (ao rolar). */
     color:#ccc;
     text-align:center;
     padding:14px 10px;
     font-size:14px;
     line-height:1.6;
-    /* MANTIDO ALTO para garantir que fique sobre o anúncio */
     z-index:2000; 
     text-shadow: 1px 1px 3px #000;
+    /* Novo: Garante que ocupe o espaço necessário */
+    display: block; 
+    margin-top: 25px; /* Espaço para separar do último elemento */
 }
 footer a{color:#b78cff;text-decoration:none}
 
@@ -342,6 +340,12 @@ footer a{color:#b78cff;text-decoration:none}
         <img src="https://files.catbox.moe/755rh6.jpg" alt="Anúncio - Compre Seguidores e Curtidas" loading="lazy">
     </a>
 
+    <footer>
+      <a href="#" id="termosLink">Termos de Uso</a>
+      <a href="#" id="privacidadeLink">Politica de Privacidade</a><br>
+      © COPYRIGHT 2025 - <a href="https://saniofc.github.io/griffinoria/" target="_blank">saniofc.github.io/griffinoria/</a>
+    </footer>
+
 </div>
 
 
@@ -431,11 +435,6 @@ footer a{color:#b78cff;text-decoration:none}
   </div>
 </div>
 
-<footer>
-  <a href="#" id="termosLink">Termos de Uso</a>
-  <a href="#" id="privacidadeLink">Politica de Privacidade</a><br>
-  © COPYRIGHT 2025 - <a href="https://saniofc.github.io/griffinoria/" target="_blank">saniofc.github.io/griffinoria/</a>
-</footer>
 
 <script type="module">
 // Versões mais recentes e modulares do Firebase
