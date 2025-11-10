@@ -34,7 +34,7 @@ header p{margin-top:4px;text-shadow:1px 1px 3px #000}
 .cat-btn.active{background:#b78cff;border-color:#b78cff}
 
 /* --- Menu Lateral (Ícone Hambúrguer) --- */
-.menu-icon{position:fixed;top:20px;right:20px;font-size:28px;z-index:1100;background:rgba(0,0,0,0.6);padding:6px 12px;border-radius:10px;cursor:pointer; line-height: 1;} /* Ajuste de line-height para o ícone */
+.menu-icon{position:fixed;top:20px;right:20px;font-size:28px;z-index:1100;background:rgba(0,0,0,0.6);padding:6px 12px;border-radius:10px;cursor:pointer; line-height: 1;}
 .menu{position:fixed;top:0;right:-300px;width:250px;height:100%;background:rgba(0,0,0,0.9);padding:30px 20px;transition:right .3s;z-index:1200}
 .menu.open{right:0}
 .menu .close-btn{position:absolute;top:15px;right:20px;background:none;border:none;color:#fff;font-size:26px;cursor:pointer}
@@ -42,49 +42,43 @@ header p{margin-top:4px;text-shadow:1px 1px 3px #000}
 .menu a{display:block;text-decoration:none;color:#fff;background:rgba(183,140,255,0.12);padding:12px;border-radius:10px;margin-top:15px;text-align:left;font-size:18px}
 .menu a:hover{background:rgba(183,140,255,0.25)}
 
-/* --- Lista de Grupos (Estilo NOVO - Como no Print) --- */
+/* --- Lista de Grupos --- */
 #lista-grupos{width:100%;max-width:420px;padding:30px 20px 60px;display:flex;flex-direction:column;align-items:center;gap:22px}
 
-/* NOVO ESTILO PARA O ANÚNCIO (CORRIGIDO) */
+/* ESTILO DO ANÚNCIO */
 #anuncio-afiliado {
     width: 100%;
-    max-width: 420px; /* Limita a largura para ficar junto aos botões */
-    margin: 25px auto; /* Margem para separar dos grupos */
+    max-width: 420px; 
+    margin: 25px auto; 
     display: block;
     border-radius: 15px;
-    overflow: hidden; /* Garante que a imagem fique dentro da borda arredondada */
+    overflow: hidden; 
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.7);
     transition: transform 0.2s;
-    background: none; /* Garante que o contêiner não tenha fundo */
+    background: none; 
 }
 
 #anuncio-afiliado:hover {
     transform: scale(1.03);
-    box-shadow: 0 6px 20px rgba(183,140,255,0.6); /* Efeito de destaque ao passar o mouse */
+    box-shadow: 0 6px 20px rgba(183,140,255,0.6);
 }
 
 #anuncio-afiliado img {
-    /* CORREÇÃO AQUI: Deixa a imagem menor (80% da largura do contêiner) */
     width: 80%; 
     max-width: 100%;
     height: auto; 
     display: block;
-    /* CORREÇÃO AQUI: Centraliza a imagem e remove a borda preta de fundo */
     margin: 0 auto;
-    /* Removido: max-height: 180px; */ 
-    /* Removido: object-fit: contain; */ 
-    /* Removido: background: #000; */ 
 }
 
 
-/* Aprimoramento do Cartão do Grupo (Baseado no Print) */
+/* Aprimoramento do Cartão do Grupo */
 .grupo{
     width:100%;
     max-width:380px;
     display:flex;
     align-items:center;
     gap:14px;
-    /* Fundo mais claro e arredondado */
     background:rgba(255,255,255,0.05);
     padding:16px 20px;
     border-radius:25px; 
@@ -110,18 +104,16 @@ header p{margin-top:4px;text-shadow:1px 1px 3px #000}
 .grupo span.nome{font-size:18px;font-weight:bold;line-height:1.2; text-shadow: 0 0 3px #000;}
 .grupo .categoria{font-size:13px;color:#ccc;margin-top:2px; padding: 2px 8px; border-radius: 10px; background: rgba(183,140,255, 0.2); text-transform: capitalize;}
 
-/* Estilo VIP (Estrela e Fundo Dourado - NOVO) */
+/* Estilo VIP */
 .grupo.vip{
-    /* Fundo com gradiente sutil para destaque */
     background: linear-gradient(90deg, rgba(255,215,0,0.1), rgba(255,215,0,0.05));
     border:1px solid rgba(255,215,0,0.35);
     box-shadow: 0 0 10px 4px rgba(255,215,0,0.2), 0 4px 12px rgba(0,0,0,0.5);
 }
-/* Estrela no Canto Superior Esquerdo */
 .grupo.vip::before{
     content:"⭐";
     position:absolute;
-    left:10px; /* Posicionamento dentro da caixa */
+    left:10px; 
     top:10px;
     transform: none;
     font-size:18px; 
@@ -131,51 +123,44 @@ header p{margin-top:4px;text-shadow:1px 1px 3px #000}
 }
 .grupo.vip .categoria{color: #ffd700; background: rgba(255,215,0,0.2);}
 
-/* REMOVIDO: Estilos para Grupos IMPULSIONADOS */
-.grupo.boosted { display: none; } /* Oculta caso a classe ainda seja usada, mas a lógica foi removida */
-
 /* Estilos para Botões de Ação (Editar/Excluir) */
-.grupo-acoes-wrapper { /* Classe para o wrapper onde ficam os botões */
+.grupo-acoes-wrapper { 
     display: flex; 
     gap: 8px; 
     margin-top: 10px; 
     width: 100%;
-    justify-content: center; /* Centraliza as ações */
-    flex-wrap: wrap; /* Permite quebrar linha se for necessário */
+    justify-content: center; 
+    flex-wrap: wrap; 
 }
 .grupo-acoes-wrapper button {
     border: none;
     padding: 6px 15px;
-    border-radius: 20px; /* Borda mais arredondada como no print */
+    border-radius: 20px; 
     cursor: pointer;
     font-size: 14px;
     font-weight: bold;
     transition: background 0.2s;
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    min-width: 95px; /* Garante que todos tenham um tamanho mínimo */
+    min-width: 95px; 
 }
 .grupo-acoes-wrapper button:hover {
     box-shadow: 0 4px 8px rgba(0,0,0,0.3);
 }
 
-/* Estilo Específico para o botão Editar */
 .grupo-acoes-wrapper button.edit-btn {
-    background: rgba(46, 204, 113, 0.8); /* Verde suave */
+    background: rgba(46, 204, 113, 0.8); 
     color: #fff;
 }
 .grupo-acoes-wrapper button.edit-btn:hover {
     background: rgba(46, 204, 113, 1);
 }
-/* Estilo Específico para o botão Excluir */
 .grupo-acoes-wrapper button.delete-btn {
-    background: rgba(231, 76, 60, 0.8); /* Vermelho suave */
+    background: rgba(231, 76, 60, 0.8); 
     color: #fff;
 }
 .grupo-acoes-wrapper button.delete-btn:hover {
     background: rgba(231, 76, 60, 1);
 }
-/* REMOVIDO: Estilo Específico para o botão Impulsionar */
-
 
 /* Ajuste no estilo dos cliques */
 .grupo .cliques {
@@ -187,12 +172,23 @@ header p{margin-top:4px;text-shadow:1px 1px 3px #000}
     text-shadow: 0 0 4px rgba(0,0,0,0.8);
 }
 
-/* Botão de Renda Extra */
-.botao{background:rgba(0,0,0,0.7);color:#fff;border:2px solid #fff;border-radius:30px;padding:12px 28px;margin-top:20px;text-decoration:none;font-size:18px;transition:transform .18s,box-shadow .18s;display:inline-block}
-.botao:hover{transform:scale(1.04)}
-
-/* Footer - Fundo Transparente */
-footer{position:fixed;bottom:0;left:0;width:100%;background:rgba(0,0,0,0.0);color:#ccc;text-align:center;padding:14px 10px;font-size:14px;line-height:1.6;z-index:2000;text-shadow: 1px 1px 3px #000;}
+/* --- Rodapé (FOOTER) CORRIGIDO --- */
+footer{
+    position:fixed;
+    bottom:0;
+    left:0;
+    width:100%;
+    /* CORREÇÃO AQUI: Fundo semi-transparente para o texto não misturar */
+    background:rgba(0,0,0,0.8); 
+    color:#ccc;
+    text-align:center;
+    padding:14px 10px;
+    font-size:14px;
+    line-height:1.6;
+    /* MANTIDO ALTO para garantir que fique sobre o anúncio */
+    z-index:2000; 
+    text-shadow: 1px 1px 3px #000;
+}
 footer a{color:#b78cff;text-decoration:none}
 
 /* Modal Geral e Termos (MANTIDOS) */
@@ -204,7 +200,7 @@ footer a{color:#b78cff;text-decoration:none}
 .modal-content button:hover{background:#a56be0}
 .modal .close-modal{position:absolute;top:10px;right:15px;font-size:22px;cursor:pointer}
 
-/* Estilo para o conteúdo do Modal VIP (MANTIDO) */
+/* Estilo para o conteúdo do Modal VIP */
 #vipModal > .modal-content {
     animation: fadeZoom 0.25s ease;
     border: 1px solid gold;
@@ -214,9 +210,9 @@ footer a{color:#b78cff;text-decoration:none}
     width: 380px; 
 }
 
-/* Estilo específico para o botão de Copiar e Enviar Comprovante (MANTIDO) */
+/* Estilo específico para o botão de Copiar e Enviar Comprovante */
 .pix-copy-btn {
-    background: #00bfff; /* Cor do Pix */
+    background: #00bfff; 
     color: #fff;
     font-weight: bold;
     margin-top: 15px;
@@ -231,7 +227,7 @@ footer a{color:#b78cff;text-decoration:none}
 }
 
 .whatsapp-btn {
-    background: #25d366; /* Cor do WhatsApp */
+    background: #25d366; 
     color: #fff;
     font-weight: bold;
     margin-top: 15px;
@@ -250,7 +246,7 @@ footer a{color:#b78cff;text-decoration:none}
     background: #1eaa54;
 }
 
-/* NOVO ESTILO PARA O FORMULÁRIO DE ENVIO (MANTIDO) */
+/* Estilo para o formulário de envio */
 #modalEnvioGrupo .modal-content {
     background: linear-gradient(145deg, #1a1a1a, #0d0d0d);
     border: 1px solid #b78cff;
@@ -288,7 +284,7 @@ footer a{color:#b78cff;text-decoration:none}
     background: #777;
 }
 #grupoFotoUpload {
-    display: none; /* Esconde o input file original */
+    display: none; 
 }
 #previewContainer {
     display: flex;
@@ -452,7 +448,7 @@ const firebaseConfig = {
   authDomain: "cliques-4a2c1.firebaseapp.com",
   databaseURL: "https://cliques-4a2c1-default-rtdb.firebaseio.com",
   projectId: "cliques-4a2c1",
-  storageBucket: "cliques-4a2c1.firebasestorage.app",
+  storageBucket: "cliques-4a2c1.firebase storage.app",
   messagingSenderId: "903875153255",
   appId: "1:903875153255:web:ff3cf25e059b10d665b3c2",
   measurementId: "G-BQ7FWRJD"
@@ -552,7 +548,6 @@ async function salvarNovoGrupo() {
   const usuario = localStorage.getItem('usuarioID') || crypto.randomUUID();
   localStorage.setItem('usuarioID', usuario);
 
-  // Removido boostEndTime e boostCooldown
   const novoGrupo = { nome, link, foto, categoria, dono: usuario, vip: isVip };
 
   // Salva no Firebase
@@ -572,11 +567,7 @@ async function salvarNovoGrupo() {
 };
 
 // SALVAR GRUPO AGORA APONTA PARA A FUNÇÃO DE NOVO GRUPO POR PADRÃO
-// ELA SERÁ SOBRESCRITA PELA FUNÇÃO DE EDIÇÃO QUANDO NECESSÁRIO
 salvarGrupoBtn.onclick = salvarNovoGrupo;
-
-// ================== FUNÇÃO PARA IMPULSIONAR GRUPO (REMOVIDA) ================== //
-
 
 // ================== FUNÇÕES DE EDIÇÃO/EXCLUSÃO, CARREGAR GRUPOS ================== //
 
@@ -589,7 +580,7 @@ function abrirEdicao(grupo){
   document.getElementById('grupoVipCodigo').value = grupo.vip ? "21977" : "";
   
   const nomeOriginal = grupo.nome; 
-  const linkOriginal = grupo.link; // Salva o link original também
+  const linkOriginal = grupo.link; 
 
   // Define a função de salvar para a edição
   salvarGrupoBtn.onclick = () => salvarEdicao(grupo, nomeOriginal, linkOriginal);
@@ -599,7 +590,6 @@ function abrirEdicao(grupo){
 async function salvarEdicao(grupoOriginal, nomeOriginal, linkOriginal){
   const nomeNovo = document.getElementById('grupoNome').value.trim();
   const linkNovo = document.getElementById('grupoLink').value.trim();
-  // Se a foto não foi alterada, mantém a original. Se sim, usa a nova prévia.
   const fotoNova = previewFoto.src.trim() || 'https://files.catbox.moe/ls07y5.jpg'; 
   const categoriaNova = document.getElementById('grupoCategoria').value;
   const vipNovo = document.getElementById('grupoVipCodigo').value.trim() === "21977"; 
@@ -609,13 +599,6 @@ async function salvarEdicao(grupoOriginal, nomeOriginal, linkOriginal){
     alert('Preencha corretamente o nome, link válido do WhatsApp e a categoria!');
     return;
   }
-  
-  // Aviso sobre o upload de foto (REMOVIDO/COMENTADO)
-  /*
-  if(fotoInput.files.length > 0) {
-      alert("ATENÇÃO: A foto foi carregada apenas localmente. Para que ela persista após o carregamento, você precisa implementar o upload para o Firebase Storage ou outro serviço.");
-  }
-  */
   
   // 2. Verificação de Duplicidade (Link e Nome)
   const linkExisteEmOutro = todosGrupos.some(g => 
@@ -629,14 +612,14 @@ async function salvarEdicao(grupoOriginal, nomeOriginal, linkOriginal){
   const nomeExisteEmOutro = todosGrupos.some(g => 
     g.nome.toLowerCase() === nomeNovo.toLowerCase() && g.nome.toLowerCase() !== nomeOriginal.toLowerCase()
   );
-  if (nomeExisteEmOtro) {
+  if (nomeExisteEmOutro) {
       alert('Já existe outro grupo com esse nome. Por favor, escolha outro nome.');
       return;
   }
 
   // 3. Monta o Objeto Editado
   const grupoEditado = {
-      ...grupoOriginal, // Mantém o dono, (boostEndTime e boostCooldown agora não existem)
+      ...grupoOriginal, 
       nome: nomeNovo,
       link: linkNovo,
       foto: fotoNova,
@@ -700,8 +683,7 @@ async function carregarGrupos() {
     // Prioriza dados do Firebase sobre JSON, e remove duplicatas por nome
     [...jsonGrupos, ...dadosFirebase, ...enviadosLocais].forEach(g => {
       if (g?.nome) {
-        g.vip = !!g.vip; // Garante que 'vip' é booleano
-        // Campos de boost não são mais relevantes, mas mantidos se vierem do Firebase
+        g.vip = !!g.vip; 
         mapa.set(g.nome.toLowerCase(), g);
       }
     });
@@ -711,17 +693,11 @@ async function carregarGrupos() {
   });
 }
 
-// ================== FUNÇÃO PARA FORMATAR TEMPO (REMOVIDA) ================== //
-
-
-// ================== RENDERIZAR GRUPOS (ATUALIZADO SEM LÓGICA DE BOOST) ================== //
-// Variável para armazenar os IDs dos intervalos de contagem regressiva (REMOVIDA)
+// ================== RENDERIZAR GRUPOS (SEM LÓGICA DE ANÚNCIO FIXO) ================== //
 
 function renderizarGrupos(lista) {
   const container = document.getElementById('lista-grupos');
   container.innerHTML = '';
-
-  // NENHUM INTERVALO DE RECARGA/CONTADOR É INICIADO AQUI
 
   if (lista.length === 0) {
     container.innerHTML = '<p style="color:#ccc;">Nenhum grupo encontrado.</p>';
@@ -735,13 +711,11 @@ function renderizarGrupos(lista) {
     // 1. VIPs SEMPRE no topo
     if (a.vip && !b.vip) return -1;
     if (!a.vip && b.vip) return 1;
-
-    // 2. Critério de desempate para os demais (ordem normal do Firebase/JSON)
+    // 2. Critério de desempate para os demais
     return 0; 
   });
 
   lista.forEach(g => {
-    // Status de boost e recarga não são mais verificados
     const isOwner = g.dono === usuario;
 
     const wrapper = document.createElement('div');
@@ -753,7 +727,6 @@ function renderizarGrupos(lista) {
     const btn = document.createElement('a');
     let classNames = ['grupo'];
     if (g.vip) classNames.push('vip');
-    // A classe 'boosted' não é mais aplicada
     
     btn.className = classNames.join(' ');
     btn.href = g.link;
@@ -773,14 +746,13 @@ function renderizarGrupos(lista) {
       btn.querySelector('.cliques').textContent = `Cliques: ${snap.val() || 0}`;
     });
 
-    // Função para registrar clique e abrir link (CORRIGIDA - usava sintaxe antiga)
+    // Função para registrar clique e abrir link
     btn.addEventListener('click', e => {
       e.preventDefault();
-      // Usa a sintaxe correta do runTransaction modular
       runTransaction(cliqueRef, (currentData) => {
         return (currentData || 0) + 1;
       }).then(() => {
-        window.open(g.link, '_blank'); // Abre o link após o clique ser registrado
+        window.open(g.link, '_blank');
       });
     });
 
@@ -796,15 +768,12 @@ function renderizarGrupos(lista) {
       edit.className = 'edit-btn'; 
       edit.onclick = () => abrirEdicao(g);
       
-      // Botão IMPULSIONAR (REMOVIDO)
-      
       const del = document.createElement('button');
       del.textContent = 'Excluir';
       del.className = 'delete-btn'; 
       del.onclick = () => excluirGrupo(g);
 
       box.appendChild(edit);
-      // box.appendChild(boostBtn); // Impulsionar no meio (REMOVIDO)
       box.appendChild(del);
       wrapper.appendChild(box);
     }
@@ -844,7 +813,7 @@ comprarVipBtn.addEventListener("click", (e) => {
 document.getElementById('menuBtn').addEventListener('click',()=>menu.classList.add('open'));
 document.getElementById('closeBtn').addEventListener('click',()=>menu.classList.remove('open'));
 
-// Incrementa contador de visitas (CORRIGIDA - usava sintaxe antiga)
+// Incrementa contador de visitas 
 const visitasRef = ref(db, 'visitas');
 runTransaction(visitasRef, (currentData) => {
   return (currentData || 0) + 1;
@@ -899,7 +868,7 @@ enviarBtn.onclick = (e) => {
   document.getElementById('grupoLink').value = '';
   document.getElementById('grupoCategoria').value = '';
   document.getElementById('grupoVipCodigo').value = '';
-  previewFoto.src = 'https://files.catbox.moe/ls07y5.jpg';
+  previewFoto.src = 'https://files.catbox.moe/9qdwuz.webp';
   // Garante que o botão use a função de "novo grupo"
   salvarGrupoBtn.onclick = salvarNovoGrupo; 
 };
@@ -932,7 +901,7 @@ document.getElementById('termosLink').onclick = (e) => {
       <li>O uso do site é gratuito, mas o envio de grupos e pagamentos VIP seguem as regras aqui descritas.</li>
       </ul>
     <p>Se você não concorda com estes termos, por favor, não utilize o site.</p>
-  `; // Removido o item de Regra de Impulsionamento
+  `; 
   modalTermos.style.display = "flex";
 };
 
