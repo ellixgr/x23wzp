@@ -440,7 +440,7 @@ footer a{color:#b78cff;text-decoration:none}
 <script type="module">
 // Versões mais recentes e modulares do Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getDatabase, ref, onValue, runTransaction, set, remove } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+import { getDatabase, ref, onValue, runTransaction, set, remove, once } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
 // Credenciais do Firebase (MANTIDAS)
 const firebaseConfig = {
@@ -487,6 +487,46 @@ let todosGrupos = [];
 // REGEX CORRIGIDO: Mais robusto para links de convite do WhatsApp
 const WHATSAPP_LINK_REGEX = /^https?:\/\/(chat\.whatsapp\.com\/|wa\.me\/invite\/|whatsapp\.com\/)([A-Za-z0-9_-]{22}|[0-9]{1,4})\/?(\?.*)?$/i;
 
+// ================== FUNÇÃO DE VALIDAÇÃO DE DUPLICIDADE DE LINK (NOVA) ================== //
+
+/**
+ * Verifica se o link já existe no banco de dados, ignorando o grupo atual (se estiver em edição).
+ * @param {string} link - O link do WhatsApp a ser verificado.
+ * @param {string} [grupoNomeAtual=''] - O nome do grupo que está sendo editado (para ignorar a si mesmo).
+ * @returns {Promise<boolean>} - Retorna true se o link for duplicado, false caso contrário.
+ */
+async function verificarLinkDuplicado(link, grupoNomeAtual = '') {
+  const gruposRef = ref(db, 'grupos');
+  let isDuplicated = false;
+
+  try {
+    // Busca os dados uma única vez para verificar
+    const snapshot = await once(gruposRef, 'value');
+
+    if (snapshot.exists()) {
+      const grupos = snapshot.val();
+      const lowerLink = link.trim().toLowerCase();
+      const lowerNomeAtual = grupoNomeAtual.trim().toLowerCase();
+
+      for (const key in grupos) {
+        const grupo = grupos[key];
+        // Compara o link (ignorando maiúsculas/minúsculas e espaços)
+        if (grupo.link?.trim().toLowerCase() === lowerLink) {
+          // Se for uma edição, verifica se o grupo encontrado não é o que está sendo editado
+          if (grupo.nome?.trim().toLowerCase() !== lowerNomeAtual) {
+            isDuplicated = true;
+            break;
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Erro ao verificar link duplicado:", error);
+    // Em caso de erro, por segurança, permite o salvamento.
+  }
+  return isDuplicated;
+}
+
 
 // ================== CRIAÇÃO E MANIPULAÇÃO DO MODAL DE GRUPO (MANTIDO) ================== //
 
@@ -507,7 +547,7 @@ fotoInput.addEventListener("change", (e) => {
   }
 });
 
-// ================== SALVAR NOVO GRUPO (AGORA SEM RESTRIÇÃO DE NOME/LINK) ================== //
+// ================== SALVAR NOVO GRUPO (AGORA COM VALIDAÇÃO DE LINK) ================== //
 async function salvarNovoGrupo() {
   const nome = document.getElementById('grupoNome').value.trim();
   const link = document.getElementById('grupoLink').value.trim();
@@ -529,7 +569,12 @@ async function salvarNovoGrupo() {
     return;
   }
   
-  // ⛔ VALIDAÇÃO DE DUPLICIDADE REMOVIDA
+  // ✅ VALIDAÇÃO DE DUPLICIDADE DE LINK
+  const isDuplicated = await verificarLinkDuplicado(link);
+  if (isDuplicated) {
+    alert('Este link do WhatsApp já foi enviado e está ativo na nossa lista. Por favor, envie um link diferente.');
+    return;
+  }
   
   // Gera ID de usuário se não existir
   const isVip = vipCodigo === "21977"; 
@@ -580,7 +625,7 @@ function abrirEdicao(grupo){
   salvarGrupoBtn.onclick = () => salvarEdicao(grupo, nomeOriginal, linkOriginal);
 }
 
-// *** FUNÇÃO SALVAREDICAO (AGORA SEM RESTRIÇÃO DE NOME/LINK) ***
+// *** FUNÇÃO SALVAREDICAO (AGORA COM VALIDAÇÃO DE LINK) ***
 async function salvarEdicao(grupoOriginal, nomeOriginal, linkOriginal){
   const nomeNovo = document.getElementById('grupoNome').value.trim();
   const linkNovo = document.getElementById('grupoLink').value.trim();
@@ -594,7 +639,12 @@ async function salvarEdicao(grupoOriginal, nomeOriginal, linkOriginal){
     return;
   }
   
-  // ⛔ VERIFICAÇÃO DE DUPLICIDADE REMOVIDA
+  // ✅ VALIDAÇÃO DE DUPLICIDADE DE LINK (ignora o link do grupo original)
+  const isDuplicated = await verificarLinkDuplicado(linkNovo, nomeOriginal);
+  if (isDuplicated) {
+    alert('Este link do WhatsApp já está sendo usado por outro grupo em nossa lista. Por favor, use um link diferente.');
+    return;
+  }
   
   // 3. Monta o Objeto Editado (mantendo 'dono')
   const nomeOriginalLower = nomeOriginal.toLowerCase();
@@ -665,25 +715,43 @@ async function carregarGrupos() {
   }
 
   const gruposRef = ref(db, 'grupos');
-  // Monitora mudanças no Firebase em tempo real
+  
+  // Usa "once" para carregar os dados iniciais antes de configurar o listener
+  const snap = await once(gruposRef, 'value');
+  const dadosFirebase = snap.val() ? Object.values(snap.val()) : [];
+  const enviadosLocais = JSON.parse(localStorage.getItem('gruposEnviados') || '[]');
+
+  const mapa = new Map();
+
+  // Prioriza: 1. Firebase (dono) 2. Local Storage 3. JSON local
+  [...jsonGrupos, ...dadosFirebase, ...enviadosLocais].forEach(g => {
+    if (g?.nome) {
+      // Usa o nome em minúsculas como chave para evitar duplicidade
+      const nomeChave = g.nome.toLowerCase();
+      
+      g.vip = !!g.vip; 
+      mapa.set(nomeChave, g);
+    }
+  });
+
+  todosGrupos = Array.from(mapa.values());
+  renderizarGrupos(todosGrupos);
+
+  // Monitora mudanças no Firebase em tempo real (após a carga inicial)
   onValue(gruposRef, snap => {
-    const dadosFirebase = snap.val() ? Object.values(snap.val()) : [];
-    const enviadosLocais = JSON.parse(localStorage.getItem('gruposEnviados') || '[]');
-
-    const mapa = new Map();
-
-    // Prioriza: 1. Firebase (dono) 2. Local Storage 3. JSON local
-    [...jsonGrupos, ...dadosFirebase, ...enviadosLocais].forEach(g => {
-      if (g?.nome) {
-        // Usa o nome em minúsculas como chave para evitar duplicidade
-        const nomeChave = g.nome.toLowerCase();
-        
-        g.vip = !!g.vip; 
-        mapa.set(nomeChave, g);
-      }
+    // Re-calcula a lista completa em caso de alteração (para refletir edições/exclusões)
+    const dadosAtualizados = snap.val() ? Object.values(snap.val()) : [];
+    
+    const novoMapa = new Map();
+    [...jsonGrupos, ...dadosAtualizados, ...enviadosLocais].forEach(g => {
+        if (g?.nome) {
+            const nomeChave = g.nome.toLowerCase();
+            g.vip = !!g.vip; 
+            novoMapa.set(nomeChave, g);
+        }
     });
-
-    todosGrupos = Array.from(mapa.values());
+    
+    todosGrupos = Array.from(novoMapa.values());
     renderizarGrupos(todosGrupos);
   });
 }
