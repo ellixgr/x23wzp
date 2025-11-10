@@ -45,21 +45,22 @@ header p{margin-top:4px;text-shadow:1px 1px 3px #000}
 /* --- Lista de Grupos (Estilo NOVO - Como no Print) --- */
 #lista-grupos{width:100%;max-width:420px;padding:30px 20px 60px;display:flex;flex-direction:column;align-items:center;gap:22px}
 
-/* NOVO ESTILO PARA O ANÚNCIO (CORRIGIDO PARA O JS INSERIR) */
+/* NOVO ESTILO PARA O ANÚNCIO (CORRIGIDO) */
 #anuncio-afiliado {
-    /* CORREÇÃO: Removido o max-width: 420px; e width: 100% daqui, pois o elemento pai já limita */
+    width: 100%;
+    max-width: 420px; /* Limita a largura para ficar junto aos botões */
     margin: 25px auto; /* Margem para separar dos grupos */
     display: block;
     border-radius: 15px;
-    overflow: hidden; 
+    overflow: hidden; /* Garante que a imagem fique dentro da borda arredondada */
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.7);
     transition: transform 0.2s;
-    background: none; 
+    background: none; /* Garante que o contêiner não tenha fundo */
 }
 
 #anuncio-afiliado:hover {
     transform: scale(1.03);
-    box-shadow: 0 6px 20px rgba(183,140,255,0.6); 
+    box-shadow: 0 6px 20px rgba(183,140,255,0.6); /* Efeito de destaque ao passar o mouse */
 }
 
 #anuncio-afiliado img {
@@ -68,7 +69,11 @@ header p{margin-top:4px;text-shadow:1px 1px 3px #000}
     max-width: 100%;
     height: auto; 
     display: block;
+    /* CORREÇÃO AQUI: Centraliza a imagem e remove a borda preta de fundo */
     margin: 0 auto;
+    /* Removido: max-height: 180px; */ 
+    /* Removido: object-fit: contain; */ 
+    /* Removido: background: #000; */ 
 }
 
 
@@ -127,27 +132,27 @@ header p{margin-top:4px;text-shadow:1px 1px 3px #000}
 .grupo.vip .categoria{color: #ffd700; background: rgba(255,215,0,0.2);}
 
 /* REMOVIDO: Estilos para Grupos IMPULSIONADOS */
-.grupo.boosted { display: none; } 
+.grupo.boosted { display: none; } /* Oculta caso a classe ainda seja usada, mas a lógica foi removida */
 
 /* Estilos para Botões de Ação (Editar/Excluir) */
-.grupo-acoes-wrapper { 
+.grupo-acoes-wrapper { /* Classe para o wrapper onde ficam os botões */
     display: flex; 
     gap: 8px; 
     margin-top: 10px; 
     width: 100%;
-    justify-content: center; 
-    flex-wrap: wrap; 
+    justify-content: center; /* Centraliza as ações */
+    flex-wrap: wrap; /* Permite quebrar linha se for necessário */
 }
 .grupo-acoes-wrapper button {
     border: none;
     padding: 6px 15px;
-    border-radius: 20px; 
+    border-radius: 20px; /* Borda mais arredondada como no print */
     cursor: pointer;
     font-size: 14px;
     font-weight: bold;
     transition: background 0.2s;
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    min-width: 95px; 
+    min-width: 95px; /* Garante que todos tenham um tamanho mínimo */
 }
 .grupo-acoes-wrapper button:hover {
     box-shadow: 0 4px 8px rgba(0,0,0,0.3);
@@ -155,7 +160,7 @@ header p{margin-top:4px;text-shadow:1px 1px 3px #000}
 
 /* Estilo Específico para o botão Editar */
 .grupo-acoes-wrapper button.edit-btn {
-    background: rgba(46, 204, 113, 0.8); 
+    background: rgba(46, 204, 113, 0.8); /* Verde suave */
     color: #fff;
 }
 .grupo-acoes-wrapper button.edit-btn:hover {
@@ -163,12 +168,13 @@ header p{margin-top:4px;text-shadow:1px 1px 3px #000}
 }
 /* Estilo Específico para o botão Excluir */
 .grupo-acoes-wrapper button.delete-btn {
-    background: rgba(231, 76, 60, 0.8); 
+    background: rgba(231, 76, 60, 0.8); /* Vermelho suave */
     color: #fff;
 }
 .grupo-acoes-wrapper button.delete-btn:hover {
     background: rgba(231, 76, 60, 1);
 }
+/* REMOVIDO: Estilo Específico para o botão Impulsionar */
 
 
 /* Ajuste no estilo dos cliques */
@@ -186,10 +192,6 @@ header p{margin-top:4px;text-shadow:1px 1px 3px #000}
 .botao:hover{transform:scale(1.04)}
 
 /* Footer - Fundo Transparente */
-/* CORREÇÃO: Alterar de position: fixed para relativa se o conteúdo rolar. 
-   Para simplificar e manter a aparência no print: manter fixed e garantir 
-   que a lista de grupos tenha padding inferior suficiente. (padding: 0; padding-bottom: 60px; foi mantido)
-*/
 footer{position:fixed;bottom:0;left:0;width:100%;background:rgba(0,0,0,0.0);color:#ccc;text-align:center;padding:14px 10px;font-size:14px;line-height:1.6;z-index:2000;text-shadow: 1px 1px 3px #000;}
 footer a{color:#b78cff;text-decoration:none}
 
@@ -340,7 +342,11 @@ footer a{color:#b78cff;text-decoration:none}
     
     <div id="lista-grupos" style="padding: 0; padding-bottom: 60px;"></div>
 
-    </div>
+    <a href="https://soupopular.net/ref/bagau" target="_blank" id="anuncio-afiliado">
+        <img src="https://files.catbox.moe/755rh6.jpg" alt="Anúncio - Compre Seguidores e Curtidas" loading="lazy">
+    </a>
+
+</div>
 
 
 <div id="modalTermos" class="modal">
@@ -604,6 +610,13 @@ async function salvarEdicao(grupoOriginal, nomeOriginal, linkOriginal){
     return;
   }
   
+  // Aviso sobre o upload de foto (REMOVIDO/COMENTADO)
+  /*
+  if(fotoInput.files.length > 0) {
+      alert("ATENÇÃO: A foto foi carregada apenas localmente. Para que ela persista após o carregamento, você precisa implementar o upload para o Firebase Storage ou outro serviço.");
+  }
+  */
+  
   // 2. Verificação de Duplicidade (Link e Nome)
   const linkExisteEmOutro = todosGrupos.some(g => 
     g.link === linkNovo && g.nome.toLowerCase() !== nomeOriginal.toLowerCase()
@@ -616,14 +629,14 @@ async function salvarEdicao(grupoOriginal, nomeOriginal, linkOriginal){
   const nomeExisteEmOutro = todosGrupos.some(g => 
     g.nome.toLowerCase() === nomeNovo.toLowerCase() && g.nome.toLowerCase() !== nomeOriginal.toLowerCase()
   );
-  if (nomeExisteEmOutro) {
+  if (nomeExisteEmOtro) {
       alert('Já existe outro grupo com esse nome. Por favor, escolha outro nome.');
       return;
   }
 
   // 3. Monta o Objeto Editado
   const grupoEditado = {
-      ...grupoOriginal, // Mantém o dono
+      ...grupoOriginal, // Mantém o dono, (boostEndTime e boostCooldown agora não existem)
       nome: nomeNovo,
       link: linkNovo,
       foto: fotoNova,
@@ -688,6 +701,7 @@ async function carregarGrupos() {
     [...jsonGrupos, ...dadosFirebase, ...enviadosLocais].forEach(g => {
       if (g?.nome) {
         g.vip = !!g.vip; // Garante que 'vip' é booleano
+        // Campos de boost não são mais relevantes, mas mantidos se vierem do Firebase
         mapa.set(g.nome.toLowerCase(), g);
       }
     });
@@ -697,23 +711,20 @@ async function carregarGrupos() {
   });
 }
 
-// ================== RENDERIZAR GRUPOS (COM ANÚNCIO NO TOPO) ================== //
+// ================== FUNÇÃO PARA FORMATAR TEMPO (REMOVIDA) ================== //
+
+
+// ================== RENDERIZAR GRUPOS (ATUALIZADO SEM LÓGICA DE BOOST) ================== //
+// Variável para armazenar os IDs dos intervalos de contagem regressiva (REMOVIDA)
 
 function renderizarGrupos(lista) {
   const container = document.getElementById('lista-grupos');
-  container.innerHTML = ''; // Limpa o conteúdo anterior
+  container.innerHTML = '';
 
-  // 1. ANÚNCIO: Cria e insere o anúncio no topo
-  const anuncioHTML = `
-      <a href="https://soupopular.net/ref/bagau" target="_blank" id="anuncio-afiliado">
-          <img src="https://files.catbox.moe/755rh6.jpg" alt="Anúncio - Compre Seguidores e Curtidas" loading="lazy">
-      </a>
-  `;
-  container.insertAdjacentHTML('beforeend', anuncioHTML); // Insere o anúncio
+  // NENHUM INTERVALO DE RECARGA/CONTADOR É INICIADO AQUI
 
   if (lista.length === 0) {
-    container.innerHTML += '<p style="color:#ccc; margin-top: 20px;">Nenhum grupo encontrado.</p>';
-    // Se não houver grupos, o anúncio continua a ser o primeiro elemento
+    container.innerHTML = '<p style="color:#ccc;">Nenhum grupo encontrado.</p>';
     return;
   }
 
@@ -724,11 +735,13 @@ function renderizarGrupos(lista) {
     // 1. VIPs SEMPRE no topo
     if (a.vip && !b.vip) return -1;
     if (!a.vip && b.vip) return 1;
-    // 2. Critério de desempate para os demais
+
+    // 2. Critério de desempate para os demais (ordem normal do Firebase/JSON)
     return 0; 
   });
 
   lista.forEach(g => {
+    // Status de boost e recarga não são mais verificados
     const isOwner = g.dono === usuario;
 
     const wrapper = document.createElement('div');
@@ -740,6 +753,7 @@ function renderizarGrupos(lista) {
     const btn = document.createElement('a');
     let classNames = ['grupo'];
     if (g.vip) classNames.push('vip');
+    // A classe 'boosted' não é mais aplicada
     
     btn.className = classNames.join(' ');
     btn.href = g.link;
@@ -759,13 +773,14 @@ function renderizarGrupos(lista) {
       btn.querySelector('.cliques').textContent = `Cliques: ${snap.val() || 0}`;
     });
 
-    // Função para registrar clique e abrir link
+    // Função para registrar clique e abrir link (CORRIGIDA - usava sintaxe antiga)
     btn.addEventListener('click', e => {
       e.preventDefault();
+      // Usa a sintaxe correta do runTransaction modular
       runTransaction(cliqueRef, (currentData) => {
         return (currentData || 0) + 1;
       }).then(() => {
-        window.open(g.link, '_blank');
+        window.open(g.link, '_blank'); // Abre o link após o clique ser registrado
       });
     });
 
@@ -781,24 +796,21 @@ function renderizarGrupos(lista) {
       edit.className = 'edit-btn'; 
       edit.onclick = () => abrirEdicao(g);
       
+      // Botão IMPULSIONAR (REMOVIDO)
+      
       const del = document.createElement('button');
       del.textContent = 'Excluir';
       del.className = 'delete-btn'; 
       del.onclick = () => excluirGrupo(g);
 
       box.appendChild(edit);
+      // box.appendChild(boostBtn); // Impulsionar no meio (REMOVIDO)
       box.appendChild(del);
       wrapper.appendChild(box);
     }
 
     container.appendChild(wrapper);
   });
-  
-  // POSICIONAMENTO FINAL: Garante que o anúncio (agora existente no DOM) seja o primeiro filho.
-  const anuncioElement = document.getElementById('anuncio-afiliado');
-  if (anuncioElement && container.children.length > 0) {
-      container.insertBefore(anuncioElement, container.children[0]);
-  }
 }
 
 
@@ -832,7 +844,7 @@ comprarVipBtn.addEventListener("click", (e) => {
 document.getElementById('menuBtn').addEventListener('click',()=>menu.classList.add('open'));
 document.getElementById('closeBtn').addEventListener('click',()=>menu.classList.remove('open'));
 
-// Incrementa contador de visitas 
+// Incrementa contador de visitas (CORRIGIDA - usava sintaxe antiga)
 const visitasRef = ref(db, 'visitas');
 runTransaction(visitasRef, (currentData) => {
   return (currentData || 0) + 1;
@@ -887,7 +899,7 @@ enviarBtn.onclick = (e) => {
   document.getElementById('grupoLink').value = '';
   document.getElementById('grupoCategoria').value = '';
   document.getElementById('grupoVipCodigo').value = '';
-  previewFoto.src = 'https://files.catbox.moe/9qdwuz.webp';
+  previewFoto.src = 'https://files.catbox.moe/ls07y5.jpg';
   // Garante que o botão use a função de "novo grupo"
   salvarGrupoBtn.onclick = salvarNovoGrupo; 
 };
@@ -920,7 +932,7 @@ document.getElementById('termosLink').onclick = (e) => {
       <li>O uso do site é gratuito, mas o envio de grupos e pagamentos VIP seguem as regras aqui descritas.</li>
       </ul>
     <p>Se você não concorda com estes termos, por favor, não utilize o site.</p>
-  `; 
+  `; // Removido o item de Regra de Impulsionamento
   modalTermos.style.display = "flex";
 };
 
