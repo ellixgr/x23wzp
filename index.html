@@ -440,7 +440,7 @@ footer a{color:#b78cff;text-decoration:none}
 <script type="module">
 // Versões mais recentes e modulares do Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getDatabase, ref, onValue, runTransaction, set, remove, push } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+import { getDatabase, ref, onValue, runTransaction, set, remove } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
 // Credenciais do Firebase (MANTIDAS)
 const firebaseConfig = {
@@ -456,7 +456,6 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
-const gruposRef = ref(db, 'grupos'); // Referência para a pasta principal de grupos
 
 // Variáveis de Elementos (MANTIDAS)
 const menu = document.getElementById('sideMenu');
@@ -508,7 +507,7 @@ fotoInput.addEventListener("change", (e) => {
   }
 });
 
-// ================== SALVAR NOVO GRUPO (COM VERIFICAÇÃO DE LINK DUPLICADO) ================== //
+// ================== SALVAR NOVO GRUPO (AGORA SEM RESTRIÇÃO DE NOME/LINK) ================== //
 async function salvarNovoGrupo() {
   const nome = document.getElementById('grupoNome').value.trim();
   const link = document.getElementById('grupoLink').value.trim();
@@ -516,7 +515,7 @@ async function salvarNovoGrupo() {
   const categoria = document.getElementById('grupoCategoria').value;
   const vipCodigo = document.getElementById('grupoVipCodigo').value.trim();
 
-  // Validação Básica
+  // Validação
   if (!nome) {
     alert('O nome do grupo é obrigatório.');
     return;
@@ -530,29 +529,18 @@ async function salvarNovoGrupo() {
     return;
   }
   
-  // ❌ VERIFICAÇÃO DE LINK DUPLICADO (Prioridade: NÃO PODE)
-  const linkDuplicado = todosGrupos.find(g => g.link === link);
-  if (linkDuplicado) {
-    alert('ERRO: Este link de grupo já foi enviado e não pode ser repetido. NOMES podem, LINKS não.');
-    return; 
-  }
-
+  // ⛔ VALIDAÇÃO DE DUPLICIDADE REMOVIDA
+  
   // Gera ID de usuário se não existir
   const isVip = vipCodigo === "21977"; 
   const usuario = localStorage.getItem('usuarioID') || crypto.randomUUID();
   localStorage.setItem('usuarioID', usuario);
 
-  const novoGrupo = { nome, link, foto, categoria, dono: usuario, vip: isVip, cliques: 0 };
-  
-  // Salva no Firebase usando push() para gerar um ID único e garantir que NUNCA substitua
+  const novoGrupo = { nome, link, foto, categoria, dono: usuario, vip: isVip };
+
+  // Salva no Firebase. ATENÇÃO: Se o nome já existir, o grupo antigo será **substituído**.
   try {
-    // Usamos push() para gerar o ID único do Firebase
-    const newRef = await push(gruposRef);
-    novoGrupo.id = newRef.key; // Adiciona a chave gerada ao objeto localmente.
-    
-    // Salva o grupo
-    await set(newRef, novoGrupo);
-    
+    await set(ref(db, 'grupos/' + nome), novoGrupo);
   } catch (error) {
     alert('Erro ao salvar no banco de dados. Tente novamente.');
     console.error(error);
@@ -560,23 +548,22 @@ async function salvarNovoGrupo() {
   }
 
   const msg = document.getElementById('mensagemEnvio');
-  msg.textContent = 'Grupo enviado com sucesso!';
   msg.style.display = 'block';
   setTimeout(() => msg.style.display = 'none', 3000);
 
-  // Salva localmente para rastreio (Agora usando o ID gerado)
+  // Salva localmente para rastreio
   let enviados = JSON.parse(localStorage.getItem('gruposEnviados') || '[]');
   enviados.push(novoGrupo);
   localStorage.setItem('gruposEnviados', JSON.stringify(enviados));
   
   modal.style.display = 'none';
-  // A chamada a carregarGrupos() é feita automaticamente pelo onValue no carregarGrupos
+  carregarGrupos(); 
 };
 
 // SALVAR GRUPO AGORA APONTA PARA A FUNÇÃO DE NOVO GRUPO POR PADRÃO
 salvarGrupoBtn.onclick = salvarNovoGrupo;
 
-// ================== FUNÇÕES DE EDIÇÃO/EXCLUSÃO ================== //
+// ================== FUNÇÕES DE EDIÇÃO/EXCLUSÃO, CARREGAR GRUPOS ================== //
 
 function abrirEdicao(grupo){
   modal.style.display = 'flex';
@@ -586,12 +573,15 @@ function abrirEdicao(grupo){
   document.getElementById('grupoCategoria').value = grupo.categoria;
   document.getElementById('grupoVipCodigo').value = grupo.vip ? "21977" : "";
   
-  // Define a função de salvar para a edição, passando o ID original
-  salvarGrupoBtn.onclick = () => salvarEdicao(grupo);
+  const nomeOriginal = grupo.nome; 
+  const linkOriginal = grupo.link; 
+
+  // Define a função de salvar para a edição
+  salvarGrupoBtn.onclick = () => salvarEdicao(grupo, nomeOriginal, linkOriginal);
 }
 
-// *** FUNÇÃO SALVAREDICAO (COM VERIFICAÇÃO DE LINK DUPLICADO) ***
-async function salvarEdicao(grupoOriginal){
+// *** FUNÇÃO SALVAREDICAO (AGORA SEM RESTRIÇÃO DE NOME/LINK) ***
+async function salvarEdicao(grupoOriginal, nomeOriginal, linkOriginal){
   const nomeNovo = document.getElementById('grupoNome').value.trim();
   const linkNovo = document.getElementById('grupoLink').value.trim();
   const fotoNova = previewFoto.src.trim() || 'https://files.catbox.moe/ls07y5.jpg'; 
@@ -604,16 +594,14 @@ async function salvarEdicao(grupoOriginal){
     return;
   }
   
-  // 2. ❌ VERIFICAÇÃO DE LINK DUPLICADO (Se for um novo link, tem que ser único)
-  const linkDuplicado = todosGrupos.find(g => g.link === linkNovo && g.id !== grupoOriginal.id);
-  if (linkDuplicado) {
-    alert('ERRO: Este link de grupo já está sendo usado por outro grupo e não pode ser repetido. NOMES podem, LINKS não.');
-    return;
-  }
+  // ⛔ VERIFICAÇÃO DE DUPLICIDADE REMOVIDA
   
-  // 3. Monta o Objeto Editado (mantendo 'dono' e 'id')
+  // 3. Monta o Objeto Editado (mantendo 'dono')
+  const nomeOriginalLower = nomeOriginal.toLowerCase();
+  const nomeNovoLower = nomeNovo.toLowerCase();
+
   const grupoEditado = {
-      ...grupoOriginal, // Mantém dados como 'dono' e 'id'
+      ...grupoOriginal, 
       nome: nomeNovo,
       link: linkNovo,
       foto: fotoNova,
@@ -622,9 +610,15 @@ async function salvarEdicao(grupoOriginal){
   };
   
   try {
-    // 4. Salva a edição no caminho com o ID ORIGINAL
-    await set(ref(db, 'grupos/' + grupoOriginal.id), grupoEditado);
-    
+    // 4. Se o nome foi alterado, remove o grupo antigo e salva o novo
+    if (nomeOriginalLower !== nomeNovoLower) {
+      await remove(ref(db, 'grupos/' + nomeOriginal));
+      // Se o nome novo for um nome já existente, ele irá substituir o grupo com esse nome.
+      await set(ref(db, 'grupos/' + grupoEditado.nome), grupoEditado);
+    } else {
+      // 5. Se o nome for o mesmo, apenas atualiza
+      await set(ref(db, 'grupos/' + grupoEditado.nome), grupoEditado);
+    }
   } catch (error) {
     alert('Erro ao salvar edição no banco de dados. Tente novamente.');
     console.error(error);
@@ -632,32 +626,24 @@ async function salvarEdicao(grupoOriginal){
   }
 
 
-  // 5. Atualiza no localStorage
+  // 6. Atualiza no localStorage
   let enviados = JSON.parse(localStorage.getItem('gruposEnviados') || '[]');
-  enviados = enviados.map(g => g.id === grupoOriginal.id ? grupoEditado : g);
+  enviados = enviados.map(g => g.nome === nomeOriginal ? grupoEditado : g);
   localStorage.setItem('gruposEnviados', JSON.stringify(enviados));
 
-  const msg = document.getElementById('mensagemEnvio');
-  msg.textContent = 'Grupo editado com sucesso!';
-  msg.style.display = 'block';
-  setTimeout(() => msg.style.display = 'none', 3000);
-
   modal.style.display = 'none';
-  // 6. Restaura a função de salvar para o padrão de "novo grupo"
+  // 7. Restaura a função de salvar para o padrão de "novo grupo"
   salvarGrupoBtn.onclick = salvarNovoGrupo; 
-  // A chamada a carregarGrupos() é feita automaticamente pelo onValue no carregarGrupos
+  carregarGrupos();
 }
 
 function excluirGrupo(grupo){
   if (!confirm('Deseja realmente excluir este grupo?')) return;
-  // Remove usando o ID do grupo
-  remove(ref(db, 'grupos/' + grupo.id)); 
-  
-  // Atualiza a lista localmente
-  todosGrupos = todosGrupos.filter(g => g.id !== grupo.id);
+  remove(ref(db, 'grupos/' + grupo.nome));
+  todosGrupos = todosGrupos.filter(g => g.nome !== grupo.nome);
 
   let enviados = JSON.parse(localStorage.getItem('gruposEnviados') || '[]');
-  enviados = enviados.filter(g => g.id !== grupo.id);
+  enviados = enviados.filter(g => g.nome !== grupo.nome);
   localStorage.setItem('gruposEnviados', JSON.stringify(enviados));
 
   renderizarGrupos(todosGrupos);
@@ -678,32 +664,23 @@ async function carregarGrupos() {
     jsonGrupos = [];
   }
 
+  const gruposRef = ref(db, 'grupos');
   // Monitora mudanças no Firebase em tempo real
   onValue(gruposRef, snap => {
-    const dadosFirebase = snap.val();
+    const dadosFirebase = snap.val() ? Object.values(snap.val()) : [];
     const enviadosLocais = JSON.parse(localStorage.getItem('gruposEnviados') || '[]');
 
     const mapa = new Map();
-    let firebaseGruposComID = [];
-    
-    // Adiciona o ID (chave) do Firebase ao objeto do grupo
-    if (dadosFirebase) {
-        firebaseGruposComID = Object.keys(dadosFirebase).map(key => ({
-            ...dadosFirebase[key],
-            id: key, // CRUCIAL: Adiciona o ID único do Firebase
-            vip: !!dadosFirebase[key].vip 
-        }));
-    }
 
     // Prioriza: 1. Firebase (dono) 2. Local Storage 3. JSON local
-    // O critério de desempate agora é baseado no ID, e não no nome
-    [...jsonGrupos, ...enviadosLocais, ...firebaseGruposComID].forEach(g => {
-        // Gera um ID simples para JSON e grupos antigos que não tinham ID, usando o link como fallback
-        g.id = g.id || g.link; 
+    [...jsonGrupos, ...dadosFirebase, ...enviadosLocais].forEach(g => {
+      if (g?.nome) {
+        // Usa o nome em minúsculas como chave para evitar duplicidade
+        const nomeChave = g.nome.toLowerCase();
         
-        if (g?.id) {
-            mapa.set(g.id, g); // Usa o ID como chave
-        }
+        g.vip = !!g.vip; 
+        mapa.set(nomeChave, g);
+      }
     });
 
     todosGrupos = Array.from(mapa.values());
@@ -763,8 +740,8 @@ function renderizarGrupos(lista) {
       </div>
     `;
 
-    // Atualiza o contador de cliques em tempo real (agora usando o ID)
-    const cliqueRef = ref(db, 'cliques/' + g.id); 
+    // Atualiza o contador de cliques em tempo real
+    const cliqueRef = ref(db, 'cliques/' + g.nome);
     onValue(cliqueRef, snap => {
       // Adiciona o valor do clique ao span dentro do botão.
       const cliquesSpan = btn.querySelector('.cliques');
