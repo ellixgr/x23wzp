@@ -529,7 +529,11 @@ async function salvarNovoGrupo() {
     return;
   }
   
-  // ⛔ VALIDAÇÃO DE DUPLICIDADE REMOVIDA
+  // NOVO: Validação de DUPLICIDADE de link
+  if (todosGrupos.some(g => g.link === link)) {
+    alert('Este link de grupo já foi enviado. Não é permitido links repetidos.');
+    return; // Para a execução da função se for duplicado
+  }
   
   // Gera ID de usuário se não existir
   const isVip = vipCodigo === "21977"; 
@@ -594,7 +598,16 @@ async function salvarEdicao(grupoOriginal, nomeOriginal, linkOriginal){
     return;
   }
   
-  // ⛔ VERIFICAÇÃO DE DUPLICIDADE REMOVIDA
+  // NOVO: Validação de DUPLICIDADE de link (Ignora o link original do grupo em edição)
+  const isLinkRepetido = todosGrupos.some(g => 
+      g.link === linkNovo && // O link é o mesmo
+      g.nome.toLowerCase() !== nomeOriginal.toLowerCase() // Mas não é o próprio grupo que está sendo editado
+  );
+
+  if (isLinkRepetido) {
+    alert('Este link de grupo já está sendo usado por outro grupo. Não é permitido links repetidos.');
+    return;
+  }
   
   // 3. Monta o Objeto Editado (mantendo 'dono')
   const nomeOriginalLower = nomeOriginal.toLowerCase();
