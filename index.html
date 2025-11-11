@@ -24,25 +24,41 @@
 /* CORREÇÃO DO RODAPÉ: BODY com flex-direction: column e min-height: 100vh */
 body{
     font-family:Arial,sans-serif;
-    color:#000; /* Alterado de #fff para #000 */
+    color:#000; 
     min-height:100vh;
     display:flex;
     flex-direction:column;
     align-items:center;
     padding-top:120px;
-    background:#fff /* Alterado de #000 para #fff */
+    background:#fff 
 }
 /* REMOVIDO: #video-bg { ... } */
 
 /* --- Header e Categorias --- */
-header{position:fixed;top:0;left:0;width:100%;padding:12px 10px;background:rgba(255,255,255,0.9);color:#000;text-align:center;z-index:1000; box-shadow: 0 2px 4px rgba(0,0,0,0.1);}
-header h1{font-size:28px;text-shadow:none;} /* Removido text-shadow */
-header p{margin-top:4px;text-shadow:none;} /* Removido text-shadow */
-#contador{margin-top:4px;color:#b78cff;text-shadow:none;font-size:15px}
+header{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    padding:12px 10px;
+    background:none; /* ALTERADO: Fundo transparente */
+    color:#000;
+    text-align:center;
+    z-index:1000; 
+    box-shadow: none; /* ALTERADO: Removida a sombra */
+}
+/* ALTERADO: Cor do título para azul escuro */
+header h1{
+    font-size:28px;
+    text-shadow:none;
+    color:#00008b; /* ALTERADO: Azul escuro */
+} 
+header p{margin-top:4px;text-shadow:none;} 
+/* REMOVIDO: #contador { ... } */
 #categorias{margin-top:8px;display:flex;justify-content:center;gap:6px;flex-wrap:wrap}
 .cat-btn{background:rgba(0,0,0,0.05);border:1px solid rgba(0,0,0,0.1);border-radius:20px;color:#000;font-size:13px;padding:5px 11px;cursor:pointer;transition:all .2s}
 .cat-btn:hover{background:rgba(0,0,0,0.1)}
-.cat-btn.active{background:#b78cff;border-color:#b78cff;color:#fff;} /* Cor de texto alterada para branco para contraste */
+.cat-btn.active{background:#b78cff;border-color:#b78cff;color:#fff;} 
 
 /* --- Menu Lateral (Ícone Hambúrguer) --- */
 .menu-icon{position:fixed;top:20px;right:20px;font-size:28px;z-index:1100;background:rgba(255,255,255,0.8);color:#000;padding:6px 12px;border-radius:10px;cursor:pointer; line-height: 1; box-shadow: 0 2px 5px rgba(0,0,0,0.2);}
@@ -65,14 +81,14 @@ header p{margin-top:4px;text-shadow:none;} /* Removido text-shadow */
     display: block;
     border-radius: 15px;
     overflow: hidden; 
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); /* Sutilizado o box-shadow */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); 
     transition: transform 0.2s;
     background: none; 
 }
 
 #anuncio-afiliado:hover {
     transform: scale(1.03);
-    box-shadow: 0 6px 20px rgba(183,140,255,0.4); /* Sutilizado o box-shadow */
+    box-shadow: 0 6px 20px rgba(183,140,255,0.4); 
 }
 
 #anuncio-afiliado img {
@@ -91,14 +107,14 @@ header p{margin-top:4px;text-shadow:none;} /* Removido text-shadow */
     display:flex;
     align-items:center;
     gap:14px;
-    background:rgba(0,0,0,0.03); /* Fundo claro sutil */
+    background:rgba(0,0,0,0.03); 
     padding:16px 20px;
     border-radius:25px; 
     text-decoration:none;
-    color:#000; /* Cor do texto preta */
+    color:#000; 
     position:relative;
     transition:transform .18s,background .18s,box-shadow .18s;
-    border:1px solid rgba(0,0,0,0.1); /* Borda sutil */
+    border:1px solid rgba(0,0,0,0.1); 
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 .grupo:hover{transform:scale(1.02);background:rgba(0,0,0,0.08); box-shadow: 0 6px 12px rgba(0,0,0,0.15);}
@@ -109,11 +125,11 @@ header p{margin-top:4px;text-shadow:none;} /* Removido text-shadow */
     height:50px;
     border-radius:50%;
     object-fit:cover;
-    border:2px solid rgba(0,0,0,0.1); /* Borda clara */
+    border:2px solid rgba(0,0,0,0.1); 
 }
 /* Estilo do Texto */
 .grupo .info{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;text-align:left}
-.grupo span.nome{font-size:18px;font-weight:bold;line-height:1.2; text-shadow: none;} /* Removido text-shadow */
+.grupo span.nome{font-size:18px;font-weight:bold;line-height:1.2; text-shadow: none;} 
 .grupo .categoria{font-size:13px;color:#555;margin-top:2px; padding: 2px 8px; border-radius: 10px; background: rgba(183,140,255, 0.1); text-transform: capitalize;}
 
 /* Estilo VIP */
@@ -154,7 +170,7 @@ header p{margin-top:4px;text-shadow:none;} /* Removido text-shadow */
     transition: background 0.2s;
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     min-width: 95px; 
-    color: #fff; /* Cor do texto branca para contraste nos botões */
+    color: #fff; 
 }
 .grupo-acoes-wrapper button:hover {
     box-shadow: 0 4px 8px rgba(0,0,0,0.3);
@@ -179,18 +195,18 @@ header p{margin-top:4px;text-shadow:none;} /* Removido text-shadow */
     top: 10px; 
     right: 20px;
     font-size: 13px;
-    color: #b78cff; /* Cor alterada para contraste */
-    text-shadow: none; /* Removido text-shadow */
+    color: #b78cff; 
+    text-shadow: none; 
 }
 
 /* --- Rodapé (FOOTER) CORRIGIDO - Garante que o footer fique no final do conteúdo/tela --- */
 footer{
-    color:#666; /* Cor do texto alterada para contraste */
+    color:#666; 
     text-align:center;
     padding:14px 10px 40px;
     font-size:14px;
     line-height:1.6;
-    text-shadow: none; /* Removido text-shadow */
+    text-shadow: none; 
     width: 100%;
 }
 footer a{color:#b78cff;text-decoration:none}
@@ -316,7 +332,6 @@ footer a{color:#b78cff;text-decoration:none}
 <header>
   <h1>Grupos WhatsApp</h1>
   <p></p>
-  <p id="contador">Visitas: 0</p>
   <div id="categorias">
     <button class="cat-btn active" data-cat="Todos">Todos</button>
     <button class="cat-btn" data-cat="amizade">Amizade</button>
@@ -463,7 +478,7 @@ const db = getDatabase(app);
 const menu = document.getElementById('sideMenu');
 const enviarBtn = document.getElementById('enviarGrupo');
 const meusBtn = document.getElementById('meusGrupos');
-const contador = document.getElementById('contador');
+// REMOVIDO: const contador = document.getElementById('contador');
 const modalTermos = document.getElementById('modalTermos');
 const closeModalTermos = modalTermos.querySelector('.close-modal');
 const modalTitulo = document.getElementById('modalTitulo');
@@ -835,17 +850,7 @@ comprarVipBtn.addEventListener("click", (e) => {
 document.getElementById('menuBtn').addEventListener('click',()=>menu.classList.add('open'));
 document.getElementById('closeBtn').addEventListener('click',()=>menu.classList.remove('open'));
 
-// Incrementa contador de visitas 
-const visitasRef = ref(db, 'visitas');
-runTransaction(visitasRef, (currentData) => {
-  return (currentData || 0) + 1;
-});
-
-// Exibe contador de visitas
-onValue(visitasRef, snap => {
-  contador.textContent = `Visitas: ${snap.val() || 0}`;
-});
-
+// REMOVIDO: Lógica para incrementar e exibir contador de visitas.
 
 document.querySelectorAll('.cat-btn').forEach(btn => {
   btn.addEventListener('click', () => {
