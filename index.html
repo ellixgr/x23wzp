@@ -172,37 +172,19 @@ header p{margin-top:4px;text-shadow:1px 1px 3px #000}
     text-shadow: 0 0 4px rgba(0,0,0,0.8);
 }
 
-/* --- Rodapé (FOOTER) CORRIGIDO: Agora fixo no fim e invisível por padrão --- */
+/* --- Rodapé (FOOTER) CORRIGIDO --- */
 footer{
-    position: fixed; /* Fixa o rodapé na tela */
-    bottom: 0;
-    left: 0;
-    width: 100%;
     color:#ccc;
     text-align:center;
     padding:14px 10px;
     font-size:14px;
     line-height:1.6;
-    z-index:2000; 
+    /* z-index:2000; <--- REMOVIDO */
     text-shadow: 1px 1px 3px #000;
-    
-    /* Estado Inicial: Invisível e Fora da tela */
-    transform: translateY(100%); 
-    opacity: 0;
-    visibility: hidden;
-    transition: transform 0.3s ease-out, opacity 0.3s ease-out, visibility 0.3s;
-    background: rgba(0, 0, 0, 0.8); /* Fundo escuro para destacar sobre o vídeo */
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.8);
+    /* display: block; <--- REMOVIDO */
+    margin-top: 25px; 
 }
 footer a{color:#b78cff;text-decoration:none}
-
-/* Classe Adicionada pelo JavaScript ao rolar */
-footer.show-footer {
-    transform: translateY(0);
-    opacity: 1;
-    visibility: visible;
-}
-
 
 /* Modal Geral e Termos (MANTIDOS) */
 .modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);display:none;justify-content:center;align-items:center;z-index:5000}
@@ -356,11 +338,12 @@ footer.show-footer {
         <img src="https://files.catbox.moe/755rh6.jpg" alt="Anúncio - Compre Seguidores e Curtidas" loading="lazy">
     </a>
 
-    </div>
+</div>
+
 <footer>
-    <a href="#" id="termosLink">Termos de Uso</a>
-    <a href="#" id="privacidadeLink">Politica de Privacidade</a><br>
-    © COPYRIGHT 2025 - <a href="https://ellixgr.github.io/x23wzp/" target="_blank"gruposWhats</a>
+  <a href="#" id="termosLink">Termos de Uso</a>
+  <a href="#" id="privacidadeLink">Politica de Privacidade</a><br>
+  © COPYRIGHT 2025 - <a href="https://ellixgr.github.io/x23wzp/" target="_blank">gruposWhats</a>
 </footer>
 
 
@@ -451,38 +434,6 @@ footer.show-footer {
 </div>
 
 
-<script>
-// Bloco de script para o Rodapé (Footer)
-document.addEventListener('DOMContentLoaded', () => {
-    const footer = document.querySelector('footer');
-    let isFooterVisible = false;
-
-    // Função que verifica a posição da rolagem
-    const checkScroll = () => {
-        // window.scrollY ou document.documentElement.scrollTop: Posição de rolagem vertical
-        // window.innerHeight: Altura da viewport (tela visível)
-        // document.body.offsetHeight: Altura total do conteúdo
-        
-        // Vamos mostrar o rodapé assim que o usuário rolar pelo menos 100 pixels
-        if (window.scrollY > 100 && !isFooterVisible) {
-            footer.classList.add('show-footer');
-            isFooterVisible = true;
-        } else if (window.scrollY <= 100 && isFooterVisible) {
-            // Opcional: Oculta o rodapé se o usuário voltar para o topo
-            footer.classList.remove('show-footer');
-            isFooterVisible = false;
-        }
-    };
-
-    // Adiciona o listener para o evento de rolagem
-    window.addEventListener('scroll', checkScroll);
-    
-    // Roda uma vez no carregamento caso a página já carregue com rolagem (em alguns dispositivos móveis)
-    checkScroll();
-});
-</script>
-
-
 <script type="module">
 // Versões mais recentes e modulares do Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
@@ -528,7 +479,7 @@ const pixCodeField = document.getElementById('pix-code-field');
 const copyPixBtn = document.getElementById('copy-pix-btn');
 
 
-// VARIÁVEL GLOBAL ESSENCIAL (AGORA COM A KEY DO FIREBASE)
+// VARIÁVEL GLOBAL ESSENCIAL 
 let todosGrupos = []; 
 
 // REGEX CORRIGIDO: Mais robusto para links de convite do WhatsApp
@@ -577,7 +528,7 @@ async function salvarNovoGrupo() {
     return;
   }
   
-  // 2. CORREÇÃO CRÍTICA: Validação de DUPLICIDADE (Nome ou Link)
+  // 2. Validação de DUPLICIDADE (Nome ou Link)
   const nomeLowerCase = nome.toLowerCase();
   if (todosGrupos.some(g => g.nome?.toLowerCase() === nomeLowerCase)) {
       alert('Já existe um grupo com esse nome. Por favor, escolha outro nome.');
@@ -612,10 +563,7 @@ async function salvarNovoGrupo() {
   setTimeout(() => {
     msg.style.display = 'none';
     modal.style.display = 'none';
-    // Não precisa de carregarGrupos() pois o listener 'onValue' já faz isso
   }, 1500);
-
-  // 6. Não é mais necessário salvar em 'gruposEnviados' no localStorage. A lista principal 'todosGrupos' é a fonte.
 };
 
 // SALVAR GRUPO AGORA APONTA PARA A FUNÇÃO DE NOVO GRUPO POR PADRÃO
@@ -651,7 +599,7 @@ async function salvarEdicao(grupoOriginal){
     return;
   }
   
-  // 2. CORREÇÃO CRÍTICA: Validação de DUPLICIDADE de Nome e Link (Ignora o grupo em edição)
+  // 2. Validação de DUPLICIDADE de Nome e Link (Ignora o grupo em edição)
   const nomeLowerCase = nomeNovo.toLowerCase();
   const isNomeRepetido = todosGrupos.some(g => 
       g.nome?.toLowerCase() === nomeLowerCase && 
@@ -702,7 +650,6 @@ async function salvarEdicao(grupoOriginal){
 
   // 6. Restaura a função de salvar para o padrão de "novo grupo"
   salvarGrupoBtn.onclick = salvarNovoGrupo; 
-  // Não precisa de carregarGrupos() pois o listener 'onValue' já faz isso
 }
 
 // *** FUNÇÃO EXCLUIR GRUPO (CORRIGIDA PARA USAR A CHAVE ÚNICA/KEY) ***
@@ -715,61 +662,29 @@ function excluirGrupo(grupo){
     alert('Erro ao excluir o grupo.');
     console.error('Erro ao excluir do Firebase:', error);
   }
-  // A lista 'todosGrupos' será atualizada automaticamente pelo listener 'onValue'
 }
 
 
-// *** FUNÇÃO CARREGAR GRUPOS (CORRIGIDA PARA MAPEAR A KEY) ***
+// *** FUNÇÃO CARREGAR GRUPOS (CORRIGIDA E SIMPLIFICADA) ***
 async function carregarGrupos() {
-  let jsonGrupos = [];
-  try {
-    const res = await fetch('grupos.json'); 
-    if (res.ok) {
-        const data = await res.json();
-        jsonGrupos = Array.isArray(data) ? data : []; 
-    }
-  } catch (e) {
-    console.warn('Nenhum grupos.json encontrado ou erro ao carregar.');
-    jsonGrupos = [];
-  }
+  /* REMOVIDA a lógica de carregar 'grupos.json' para evitar problemas de key e sincronização */
 
   const gruposRef = ref(db, 'grupos');
   // Monitora mudanças no Firebase em tempo real
   onValue(gruposRef, snap => {
-    const mapa = new Map();
-    const dadosFirebase = [];
+    const listaFirebase = [];
     
-    // 1. Mapeia os dados do Firebase, ADICIONANDO A CHAVE ÚNICA (KEY)
+    // Mapeia os dados do Firebase, ADICIONANDO A CHAVE ÚNICA (KEY)
     snap.forEach(childSnap => {
         const grupo = childSnap.val();
-        grupo.key = childSnap.key; // ADICIONA A KEY
-        grupo.vip = !!grupo.vip; // Garante que 'vip' é booleano (true/false)
-        dadosFirebase.push(grupo);
+        grupo.key = childSnap.key; // ADICIONA A KEY ÚNICA DO FIREBASE
+        grupo.vip = !!grupo.vip; // Garante que 'vip' é booleano
+        listaFirebase.push(grupo);
     });
     
-    // 2. Adiciona grupos do arquivo JSON (se houver), evitando duplicatas por nome 
-    // e garantindo que os grupos do Firebase têm prioridade.
-    jsonGrupos.forEach(g => {
-        if (g?.nome && !mapa.has(g.nome.toLowerCase())) {
-            g.key = 'json-' + g.nome.toLowerCase(); // Cria uma key temporária para JSON
-            g.vip = !!g.vip;
-            mapa.set(g.nome.toLowerCase(), g);
-        }
-    });
-
-    // 3. Adiciona grupos do Firebase (sobrescreve o JSON se o nome for igual, e garante a KEY)
-    dadosFirebase.forEach(g => {
-      if (g?.nome) {
-        // Usa o nome para sobrescrever o JSON, mas usa a key do Firebase para referência
-        mapa.set(g.key, g); 
-      }
-    });
-
-    // Filtra para manter apenas os grupos com KEY válida
-    const listaCombinada = Array.from(mapa.values()).filter(g => g.key);
-
-    // Atualiza a lista global
-    todosGrupos = listaCombinada;
+    // Atualiza a lista global com os grupos do Firebase
+    todosGrupos = listaFirebase;
+    
     // Renderiza a lista padrão (Todos)
     const categoriaAtiva = document.querySelector('.cat-btn.active').dataset.cat.toLowerCase();
     
@@ -836,7 +751,7 @@ function renderizarGrupos(lista) {
     `;
 
     // Atualiza o contador de cliques em tempo real
-    const cliqueRef = ref(db, 'cliques/' + g.key); // MUDANÇA: USAR A KEY DO FIREBASE PARA CLIQUE
+    const cliqueRef = ref(db, 'cliques/' + g.key); // USAR A KEY DO FIREBASE PARA CLIQUE
     onValue(cliqueRef, snap => {
       // Adiciona o valor do clique ao span dentro do botão.
       const cliquesSpan = btn.querySelector('.cliques');
@@ -1015,4 +930,22 @@ document.getElementById('privacidadeLink').onclick = (e) => {
   modalTexto.innerHTML = `
     <p>Esta Política de Privacidade explica como coletamos e usamos os dados dos usuários em nosso site.</p>
     <ul>
-      <li>Coletamos apenas informações necessárias para o funcionamento do site, como seu identificador único (usuario
+      <li>Coletamos apenas informações necessárias para o funcionamento do site, como seu identificador único (usuarioID), cliques nos grupos e visitas ao site.</li>
+      <li>O usuarioID é armazenado no seu navegador via localStorage e não contém dados pessoais identificáveis.</li>
+      <li>Os dados de cliques e visitas são armazenados no Firebase apenas para exibir estatísticas do site.</li>
+      <li>Não compartilhamos seus dados com terceiros.</li>
+      <li>Você pode limpar os dados do seu navegador a qualquer momento, removendo seu usuarioID e histórico local.</li>
+    </ul>
+    <p>Ao continuar usando o site, você concorda com esta política.</p>
+  `;
+  modalTermos.style.display = "flex";
+};
+
+closeModalTermos.onclick = () => modalTermos.style.display = "none";
+
+// ================== INICIAR ================== //
+carregarGrupos();
+</script>
+
+</body>
+</html>
