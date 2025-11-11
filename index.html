@@ -539,7 +539,6 @@ async function salvarNovoGrupo() {
   }
   
   // 2. Validação de DUPLICIDADE (APENAS Link)
-  // Removida a verificação de nome duplicado conforme solicitado.
   if (todosGrupos.some(g => g.link === link)) {
     alert('Este link de grupo já foi enviado. Não é permitido links repetidos.');
     return; 
@@ -550,12 +549,13 @@ async function salvarNovoGrupo() {
   const usuario = localStorage.getItem('usuarioID') || crypto.randomUUID();
   localStorage.setItem('usuarioID', usuario);
 
-  const novoGrupo = { nome, link, foto, categoria, dono: usuario, vip: isVip, cliques: 0 }; // Adicionado 'cliques: 0' para consistência
+  // CORREÇÃO ESSENCIAL: Garante que 'cliques' é inicializado em 0
+  const novoGrupo = { nome, link, foto, categoria, dono: usuario, vip: isVip, cliques: 0 }; 
 
   // 4. Salva no Firebase
   try {
     const gruposRef = ref(db, 'grupos');
-    // Usa push() para criar uma chave única e salvar os dados
+    // Usa push() para criar uma chave ÚNICA e salvar os dados
     await push(gruposRef, novoGrupo); 
   } catch (error) {
     alert('Erro ao salvar no banco de dados. Tente novamente.');
@@ -590,7 +590,7 @@ function abrirEdicao(grupo){
   salvarGrupoBtn.onclick = () => salvarEdicao(grupo); 
 }
 
-// *** FUNÇÃO SALVAREDICAO (COM VALIDAÇÃO DE LINK, SEM VALIDAÇÃO DE NOME) ***
+// *** FUNÇÃO SALVAREDICAO (CORRIGIDA PARA PRESERVAR CLIQUES) ***
 async function salvarEdicao(grupoOriginal){
   const nomeNovo = document.getElementById('grupoNome').value.trim();
   const linkNovo = document.getElementById('grupoLink').value.trim();
@@ -606,8 +606,6 @@ async function salvarEdicao(grupoOriginal){
   }
   
   // 2. Validação de DUPLICIDADE de Link (Ignora o grupo em edição)
-  // Removida a verificação de nome duplicado conforme solicitado.
-
   const isLinkRepetido = todosGrupos.some(g => 
       g.link === linkNovo && 
       g.key !== grupoOriginal.key // IGNORA O PRÓPRIO GRUPO SENDO EDITADO
@@ -626,11 +624,13 @@ async function salvarEdicao(grupoOriginal){
       categoria: categoriaNova,
       vip: vipNovo,
       dono: grupoOriginal.dono, 
-      cliques: grupoOriginal.cliques || 0, // Mantém o valor de cliques original
+      // CORREÇÃO ESSENCIAL: Usa o valor de cliques do objeto original, garantindo que não seja resetado.
+      cliques: grupoOriginal.cliques || 0, 
   };
   
   try {
     // 4. ATUALIZA o grupo no Firebase usando sua CHAVE ÚNICA (grupoOriginal.key)
+    // O SET SUBSTITUI O OBJETO, POR ISSO PRECISÁVAMOS DO CAMPO 'cliques' acima.
     await set(ref(db, 'grupos/' + grupoOriginal.key), grupoEditado);
   } catch (error) {
     alert('Erro ao salvar edição no banco de dados. Tente novamente.');
@@ -698,7 +698,7 @@ async function carregarGrupos() {
   });
 }
 
-// ================== RENDERIZAR GRUPOS (MANTIDO) ================== //
+// ================== RENDERIZAR GRUPOS (CORRIGIDO) ================== //
 
 function ordenarGrupos(lista) {
     return lista.sort((a, b) => {
@@ -752,13 +752,14 @@ function renderizarGrupos(lista) {
     `;
 
     // Atualiza o contador de cliques em tempo real
-    // CORRIGIDO: Agora usa o valor de cliques inicial do objeto 'g' e atualiza pelo Firebase.
     const cliquesSpan = btn.querySelector('.cliques');
     if (cliquesSpan) {
         cliquesSpan.textContent = `Cliques: ${g.cliques || 0}`;
     }
 
-    const cliqueRef = ref(db, 'grupos/' + g.key + '/cliques'); // USAR A KEY DO GRUPO PARA O CAMPO 'cliques'
+    // CORREÇÃO CRÍTICA: Usa a chave única (key) para a referência de cliques e transação
+    const cliqueRef = ref(db, 'grupos/' + g.key + '/cliques'); 
+    
     onValue(cliqueRef, snap => {
       // Adiciona o valor do clique ao span dentro do botão.
       const cliquesSpanUpdate = btn.querySelector('.cliques');
@@ -770,10 +771,15 @@ function renderizarGrupos(lista) {
     // Função para registrar clique e abrir link
     btn.addEventListener('click', e => {
       e.preventDefault();
+      // CORREÇÃO: runTransaction APENAS NO CAMPO 'cliques' DENTRO DA KEY
       runTransaction(cliqueRef, (currentData) => {
         return (currentData || 0) + 1;
       }).then(() => {
         window.open(g.link, '_blank');
+      }).catch(error => {
+          console.error("Erro na transação de cliques:", error);
+          // Abre o link mesmo se a transação falhar, para não bloquear o usuário
+          window.open(g.link, '_blank'); 
       });
     });
 
