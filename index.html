@@ -29,10 +29,9 @@ body{
     display:flex;
     flex-direction:column;
     align-items:center;
-    padding-top:120px;
+    /* REMOVIDO: padding-top:120px; */ /* REMOVIDO para que o header possa rolar */
     background:#fff 
 }
-/* REMOVIDO: #video-bg { ... } */
 
 /* --- Header e Categorias --- */
 header{
@@ -41,12 +40,26 @@ header{
     left:0;
     width:100%;
     padding:12px 10px;
-    background:none; /* ALTERADO: Fundo transparente */
+    background:#fff; /* ALTERADO: Fundo branco para não vazar a rolagem */
     color:#000;
     text-align:center;
     z-index:1000; 
-    box-shadow: none; /* ALTERADO: Removida a sombra */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+    
+    /* ---------------------------------------------------- */
+    /* NOVO: Estilo para Esconder/Mostrar no Scroll */
+    transform: translateY(-100%); /* Esconde o header acima da tela */
+    transition: transform 0.3s ease-out, box-shadow 0.3s; /* Adiciona transição suave */
+    /* ---------------------------------------------------- */
 }
+
+/* ---------------------------------------------------- */
+/* NOVO: Classe para exibir o Header */
+header.header-visible {
+    transform: translateY(0);
+}
+/* ---------------------------------------------------- */
+
 /* ALTERADO: Cor do título para azul escuro */
 header h1{
     font-size:28px;
@@ -54,7 +67,7 @@ header h1{
     color:#00008b; /* ALTERADO: Azul escuro */
 } 
 header p{margin-top:4px;text-shadow:none;} 
-/* REMOVIDO: #contador { ... } */
+
 #categorias{margin-top:8px;display:flex;justify-content:center;gap:6px;flex-wrap:wrap}
 .cat-btn{background:rgba(0,0,0,0.05);border:1px solid rgba(0,0,0,0.1);border-radius:20px;color:#000;font-size:13px;padding:5px 11px;cursor:pointer;transition:all .2s}
 .cat-btn:hover{background:rgba(0,0,0,0.1)}
@@ -352,9 +365,11 @@ footer a{color:#b78cff;text-decoration:none}
 
 <div style="width: 100%; max-width: 420px; display: flex; flex-direction: column; align-items: center; padding: 0 20px; flex-grow: 1;"> 
     
+    <div style="height: 120px; width: 100%;"></div> 
+    
     <div id="lista-grupos" style="padding: 0; padding-bottom: 0;"></div>
 
-    <a href="https://soupopular.net/ref/bagau" target="_blank" id="anuncio-afiliado" style="margin-top: auto; /* IMPORTANTE: Empurra o anúncio e, consequentemente, o footer */">
+    <a href="https://soupopular.net/ref/bagau" target="_blank" id="anuncio-afiliado" style="margin-top: auto;">
         <img src="https://files.catbox.moe/755rh6.jpg" alt="Anúncio - Compre Seguidores e Curtidas" loading="lazy">
     </a>
 
@@ -478,11 +493,11 @@ const db = getDatabase(app);
 const menu = document.getElementById('sideMenu');
 const enviarBtn = document.getElementById('enviarGrupo');
 const meusBtn = document.getElementById('meusGrupos');
-// REMOVIDO: const contador = document.getElementById('contador');
 const modalTermos = document.getElementById('modalTermos');
 const closeModalTermos = modalTermos.querySelector('.close-modal');
 const modalTitulo = document.getElementById('modalTitulo');
 const modalTexto = document.getElementById('modalTexto');
+const header = document.querySelector('header'); // NOVO: Referência ao Header
 
 const vipModal = document.getElementById('vipModal');
 const fecharVipIcon = document.getElementById('fecharVipIcon');
@@ -850,8 +865,6 @@ comprarVipBtn.addEventListener("click", (e) => {
 document.getElementById('menuBtn').addEventListener('click',()=>menu.classList.add('open'));
 document.getElementById('closeBtn').addEventListener('click',()=>menu.classList.remove('open'));
 
-// REMOVIDO: Lógica para incrementar e exibir contador de visitas.
-
 document.querySelectorAll('.cat-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
@@ -955,6 +968,44 @@ document.getElementById('privacidadeLink').onclick = (e) => {
 };
 
 closeModalTermos.onclick = () => modalTermos.style.display = "none";
+
+// ========================================================= //
+// === NOVO CÓDIGO PARA MOSTRAR/ESCONDER O HEADER NO SCROLL === //
+// ========================================================= //
+
+let lastScrollTop = 0;
+const scrollThreshold = 20; // Rolagem mínima necessária para disparar a mudança
+
+window.addEventListener("scroll", () => {
+    const currentScroll = window.scrollY || document.documentElement.scrollTop;
+
+    // Apenas se o scroll for maior que o topo (para evitar esconder no carregamento)
+    if (currentScroll > 0) {
+        
+        // Rolando para BAIXO
+        if (currentScroll > lastScrollTop + scrollThreshold) {
+            header.classList.remove('header-visible');
+        } 
+        
+        // Rolando para CIMA
+        else if (currentScroll < lastScrollTop - scrollThreshold) {
+            header.classList.add('header-visible');
+        }
+    } else {
+        // Se estiver no topo da página, sempre mostre o header
+        header.classList.add('header-visible');
+    }
+
+    lastScrollTop = currentScroll <= 0 ? 0 : currentScroll; // Para mobile/scroll bounce
+}, false);
+
+// Garante que o header esteja visível na carga inicial
+document.addEventListener('DOMContentLoaded', () => {
+    if (window.scrollY === 0) {
+        header.classList.add('header-visible');
+    }
+});
+
 
 // ================== INICIAR ================== //
 carregarGrupos();
