@@ -515,7 +515,7 @@ fotoInput.addEventListener("change", (e) => {
   }
 });
 
-// ================== SALVAR NOVO GRUPO (AGORA COM VALIDAÇÃO DE DUPLICIDADE) ================== //
+// ================== SALVAR NOVO GRUPO (COM VALIDAÇÃO DE LINK, SEM VALIDAÇÃO DE NOME) ================== //
 async function salvarNovoGrupo() {
   const nome = document.getElementById('grupoNome').value.trim();
   const link = document.getElementById('grupoLink').value.trim();
@@ -538,12 +538,8 @@ async function salvarNovoGrupo() {
     return;
   }
   
-  // 2. Validação de DUPLICIDADE (Nome ou Link)
-  const nomeLowerCase = nome.toLowerCase();
-  if (todosGrupos.some(g => g.nome?.toLowerCase() === nomeLowerCase)) {
-      alert('Já existe um grupo com esse nome. Por favor, escolha outro nome.');
-      return; 
-  }
+  // 2. Validação de DUPLICIDADE (APENAS Link)
+  // Removida a verificação de nome duplicado conforme solicitado.
   if (todosGrupos.some(g => g.link === link)) {
     alert('Este link de grupo já foi enviado. Não é permitido links repetidos.');
     return; 
@@ -554,7 +550,7 @@ async function salvarNovoGrupo() {
   const usuario = localStorage.getItem('usuarioID') || crypto.randomUUID();
   localStorage.setItem('usuarioID', usuario);
 
-  const novoGrupo = { nome, link, foto, categoria, dono: usuario, vip: isVip };
+  const novoGrupo = { nome, link, foto, categoria, dono: usuario, vip: isVip, cliques: 0 }; // Adicionado 'cliques: 0' para consistência
 
   // 4. Salva no Firebase
   try {
@@ -594,7 +590,7 @@ function abrirEdicao(grupo){
   salvarGrupoBtn.onclick = () => salvarEdicao(grupo); 
 }
 
-// *** FUNÇÃO SALVAREDICAO (CORRIGIDA PARA USAR A CHAVE ÚNICA/KEY) ***
+// *** FUNÇÃO SALVAREDICAO (COM VALIDAÇÃO DE LINK, SEM VALIDAÇÃO DE NOME) ***
 async function salvarEdicao(grupoOriginal){
   const nomeNovo = document.getElementById('grupoNome').value.trim();
   const linkNovo = document.getElementById('grupoLink').value.trim();
@@ -609,21 +605,14 @@ async function salvarEdicao(grupoOriginal){
     return;
   }
   
-  // 2. Validação de DUPLICIDADE de Nome e Link (Ignora o grupo em edição)
-  const nomeLowerCase = nomeNovo.toLowerCase();
-  const isNomeRepetido = todosGrupos.some(g => 
-      g.nome?.toLowerCase() === nomeLowerCase && 
-      g.key !== grupoOriginal.key // IGNORA O PRÓPRIO GRUPO SENDO EDITADO
-  );
+  // 2. Validação de DUPLICIDADE de Link (Ignora o grupo em edição)
+  // Removida a verificação de nome duplicado conforme solicitado.
+
   const isLinkRepetido = todosGrupos.some(g => 
       g.link === linkNovo && 
       g.key !== grupoOriginal.key // IGNORA O PRÓPRIO GRUPO SENDO EDITADO
   );
   
-  if (isNomeRepetido) {
-      alert('Já existe um grupo com esse nome. Por favor, escolha outro nome.');
-      return;
-  }
   if (isLinkRepetido) {
     alert('Este link de grupo já está sendo usado por outro grupo. Não é permitido links repetidos.');
     return;
@@ -637,6 +626,7 @@ async function salvarEdicao(grupoOriginal){
       categoria: categoriaNova,
       vip: vipNovo,
       dono: grupoOriginal.dono, 
+      cliques: grupoOriginal.cliques || 0, // Mantém o valor de cliques original
   };
   
   try {
@@ -689,6 +679,7 @@ async function carregarGrupos() {
         const grupo = childSnap.val();
         grupo.key = childSnap.key; // ADICIONA A KEY ÚNICA DO FIREBASE
         grupo.vip = !!grupo.vip; // Garante que 'vip' é booleano
+        grupo.cliques = grupo.cliques || 0; // Garante que 'cliques' existe
         listaFirebase.push(grupo);
     });
     
@@ -761,12 +752,18 @@ function renderizarGrupos(lista) {
     `;
 
     // Atualiza o contador de cliques em tempo real
-    const cliqueRef = ref(db, 'cliques/' + g.key); // USAR A KEY DO FIREBASE PARA CLIQUE
+    // CORRIGIDO: Agora usa o valor de cliques inicial do objeto 'g' e atualiza pelo Firebase.
+    const cliquesSpan = btn.querySelector('.cliques');
+    if (cliquesSpan) {
+        cliquesSpan.textContent = `Cliques: ${g.cliques || 0}`;
+    }
+
+    const cliqueRef = ref(db, 'grupos/' + g.key + '/cliques'); // USAR A KEY DO GRUPO PARA O CAMPO 'cliques'
     onValue(cliqueRef, snap => {
       // Adiciona o valor do clique ao span dentro do botão.
-      const cliquesSpan = btn.querySelector('.cliques');
-      if (cliquesSpan) {
-        cliquesSpan.textContent = `Cliques: ${snap.val() || 0}`;
+      const cliquesSpanUpdate = btn.querySelector('.cliques');
+      if (cliquesSpanUpdate) {
+        cliquesSpanUpdate.textContent = `Cliques: ${snap.val() || 0}`;
       }
     });
 
