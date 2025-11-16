@@ -33,6 +33,67 @@ body{
     background:#fff 
 }
 
+/* --- Estilos do Pop-up de Anúncio --- */
+#popup-anuncio {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7); /* Fundo escuro transparente */
+    display: none; /* Inicia oculto e o JS o mostrará no carregamento */
+    justify-content: center;
+    align-items: center;
+    z-index: 9999; /* Garante que fique acima de tudo */
+    transition: opacity 0.3s ease;
+}
+
+#popup-content {
+    position: relative;
+    max-width: 90%;
+    width: 350px; /* Largura máxima do pop-up */
+    background: none;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+}
+
+#popup-content a {
+    display: block;
+}
+
+#popup-content img {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 15px;
+    cursor: pointer;
+}
+
+#close-popup-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #e74c3c; /* Cor vermelha para o botão */
+    color: white;
+    border: 2px solid white;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    text-align: center;
+    line-height: 26px; /* Centraliza o 'X' */
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s;
+    z-index: 10;
+}
+
+#close-popup-btn:hover {
+    background: #c0392b;
+}
+/* --- Fim dos Estilos do Pop-up --- */
+
 /* --- Header e Categorias --- */
 header{
     position:fixed;
@@ -342,6 +403,15 @@ footer a{color:#b78cff;text-decoration:none}
 </style>
 </head>
 <body>
+
+<div id="popup-anuncio">
+    <div id="popup-content">
+        <span id="close-popup-btn">X</span>
+        <a href="https://vt.tiktok.com/ZSyEjC4RT/?page=TikTokShop" target="_blank">
+            <img src="https://files.catbox.moe/755rh6.jpg" alt="Anúncio - Visite a TikTok Shop">
+        </a>
+    </div>
+</div>
 <header>
   <h1>Grupos WhatsApp</h1>
   <p></p>
@@ -850,6 +920,29 @@ copyPixBtn.onclick = async () => {
 };
 
 
+// ================== NOVO CÓDIGO PARA O POP-UP DE ANÚNCIO ================== //
+
+const popupAnuncio = document.getElementById('popup-anuncio');
+const closePopupBtn = document.getElementById('close-popup-btn');
+
+// 1. Função para abrir o pop-up
+function showPopupAd() {
+    popupAnuncio.style.display = 'flex';
+}
+
+// 2. Função para fechar o pop-up
+function closePopupAd() {
+    popupAnuncio.style.display = 'none';
+    // Opcional: Armazenar no localStorage que o usuário já viu/fechou, para não mostrar novamente na mesma sessão
+    // localStorage.setItem('popupClosed', 'true');
+}
+
+// 3. Adiciona o evento de fechar ao botão 'X'
+closePopupBtn.addEventListener('click', closePopupAd);
+
+// 4. Adiciona o evento para mostrar o pop-up no carregamento da página
+window.addEventListener('load', showPopupAd);
+
 // ================== INICIALIZAÇÃO DE EVENTOS (MANTIDO) ================== //
 
 const comprarVipBtn = document.getElementById('comprarVipBtn');
@@ -970,7 +1063,7 @@ document.getElementById('privacidadeLink').onclick = (e) => {
 closeModalTermos.onclick = () => modalTermos.style.display = "none";
 
 // ========================================================= //
-// === NOVO CÓDIGO PARA MOSTRAR/ESCONDER O HEADER NO SCROLL === //
+// === CÓDIGO PARA MOSTRAR/ESCONDER O HEADER NO SCROLL === //
 // ========================================================= //
 
 let lastScrollTop = 0;
