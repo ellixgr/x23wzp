@@ -175,51 +175,93 @@ header p{margin-top:4px;text-shadow:none;}
 }
 
 
-/* Aprimoramento do Cartão do Grupo */
-.grupo{
-    width:100%;
-    max-width:380px;
-    display:flex;
-    align-items:center;
-    gap:14px;
-    background:#ffffff; /* Branco puro para destacar do fundo cinza */
-    padding:16px 20px;
-    border-radius:25px; 
-    text-decoration:none;
-    color:#000; 
-    position:relative;
-    transition:transform .18s,background .18s,box-shadow .18s;
-    border:1px solid rgba(0,0,0,0.05); 
-    box-shadow: 0 4px 10px rgba(0,0,0,0.08); /* Sombra mais suave */
+/* --- NOVO ESTILO CARD IGUAL A FOTO --- */
+.grupo {
+    width: 100%;
+    max-width: 380px;
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column; /* Faz ficar um embaixo do outro */
+    text-decoration: none;
+    color: #333;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+    border: 1px solid #eee;
 }
 
-.grupo:hover{
-    transform:scale(1.02);
-    background:#fdfdfd; 
-    box-shadow: 0 6px 15px rgba(0,0,0,0.12);
+.card-topo {
+    position: relative;
+    width: 100%;
+    height: 180px; /* Altura da imagem */
 }
 
-.grupo:hover{transform:scale(1.02);background:rgba(0,0,0,0.08); box-shadow: 0 6px 12px rgba(0,0,0,0.15);}
-
-/* Ajuste na Imagem */
-.grupo img.foto{
-    width:50px;
-    height:50px;
-    border-radius:50%;
-    object-fit:cover;
-    border:2px solid rgba(0,0,0,0.1); 
+.grupo img.foto {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 0;
 }
-/* Estilo do Texto */
-.grupo .info{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;text-align:left}
-.grupo span.nome{font-size:18px;font-weight:bold;line-height:1.2; text-shadow: none;} 
-.grupo .categoria{font-size:13px;color:#555;margin-top:2px; padding: 2px 8px; border-radius: 10px; background: rgba(183,140,255, 0.1); text-transform: capitalize;}
 
-/* Estilo VIP */
-.grupo.vip{
-    background: linear-gradient(90deg, rgba(255,215,0,0.15), rgba(255,215,0,0.08));
-    border:1px solid rgba(255,215,0,0.5);
-    box-shadow: 0 0 8px 3px rgba(255,215,0,0.2), 0 4px 10px rgba(0,0,0,0.2);
+.badge-categoria {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background: rgba(0,0,0,0.7);
+    color: #fff;
+    padding: 3px 10px;
+    font-size: 11px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    font-weight: bold;
 }
+
+.card-corpo {
+    padding: 15px;
+    text-align: left;
+}
+
+.grupo span.nome {
+    font-size: 18px;
+    font-weight: bold;
+    display: block;
+    margin-bottom: 5px;
+    color: #000;
+}
+
+.descricao {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 15px;
+    line-height: 1.4;
+}
+
+.btn-falso-entrar {
+    background: #25d366;
+    color: white;
+    text-align: center;
+    padding: 12px;
+    border-radius: 5px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.estrela-vip {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 20px;
+    background: rgba(255,255,255,0.9);
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
 .grupo.vip::before{
     content:"⭐";
     position:absolute;
@@ -845,14 +887,19 @@ function renderizarGrupos(lista) {
     btn.className = classNames.join(' ');
     btn.href = g.link;
     btn.target = '_blank';
-    btn.innerHTML = `
-      <img class="foto" src="${g.foto}" alt="foto do grupo">
-      <div class="info">
+        btn.innerHTML = `
+      <div class="card-topo">
+        <img class="foto" src="${g.foto}" alt="foto do grupo">
+        <span class="badge-categoria">${g.categoria || 'Geral'}</span>
+        ${g.vip ? '<span class="estrela-vip">⭐</span>' : ''}
+      </div>
+      <div class="card-corpo">
         <span class="nome">${g.nome}</span>
-        <div class="categoria">${g.categoria || ''}</div>
-        <div class="cliques">🔥 acesso: 0</div>
+        <p class="descricao">Clique para entrar no grupo e interagir com a galera!</p>
+        <div class="btn-falso-entrar">Entrar no Grupo</div>
       </div>
     `;
+
 
     // Atualiza o contador de cliques em tempo real
     const cliquesSpan = btn.querySelector('.cliques');
