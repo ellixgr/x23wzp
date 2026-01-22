@@ -24,12 +24,12 @@
 /* CORREÇÃO DO RODAPÉ: BODY com flex-direction: column e min-height: 100vh */
 body{
     font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    color:#eee; /* Cor do texto clara para ler no fundo escuro */
+    color:#222; /* Volta para o texto escuro */
     min-height:100vh;
     display:flex;
     flex-direction:column;
     align-items:center;
-    background:#121212; /* Fundo grafite bem escuro */
+    background:#ebebeb; /* Cinza claro suave, sem ser branco ofuscante */
 }
 
 
@@ -182,16 +182,23 @@ header p{margin-top:4px;text-shadow:none;}
     display:flex;
     align-items:center;
     gap:14px;
-    background:rgba(0,0,0,0.03); 
+    background:#ffffff; /* Branco puro para destacar do fundo cinza */
     padding:16px 20px;
     border-radius:25px; 
     text-decoration:none;
     color:#000; 
     position:relative;
     transition:transform .18s,background .18s,box-shadow .18s;
-    border:1px solid rgba(0,0,0,0.1); 
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    border:1px solid rgba(0,0,0,0.05); 
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08); /* Sombra mais suave */
 }
+
+.grupo:hover{
+    transform:scale(1.02);
+    background:#fdfdfd; 
+    box-shadow: 0 6px 15px rgba(0,0,0,0.12);
+}
+
 .grupo:hover{transform:scale(1.02);background:rgba(0,0,0,0.08); box-shadow: 0 6px 12px rgba(0,0,0,0.15);}
 
 /* Ajuste na Imagem */
