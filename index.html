@@ -867,36 +867,43 @@ function excluirGrupo(grupo){
 
 // *** FUNÇÃO CARREGAR GRUPOS (CORRIGIDA E SIMPLIFICADA) ***
 async function carregarGrupos() {
-  /* REMOVIDA a lógica de carregar 'grupos.json' para evitar problemas de key e sincronização */
-
   const gruposRef = ref(db, 'grupos');
-  // Monitora mudanças no Firebase em tempo real
+
+  // onValue garante que o site seja um ESPELHO do Firebase
   onValue(gruposRef, snap => {
     const listaFirebase = [];
     
-    // Mapeia os dados do Firebase, ADICIONANDO A CHAVE ÚNICA (KEY)
+    // Se o banco estiver vazio, limpa a tela
+    if (!snap.exists()) {
+      todosGrupos = [];
+      renderizarGrupos([]);
+      return;
+    }
+
+    // Pega APENAS o que existe no Firebase agora
     snap.forEach(childSnap => {
         const grupo = childSnap.val();
-        grupo.key = childSnap.key; // ADICIONA A KEY ÚNICA DO FIREBASE
-        grupo.vip = !!grupo.vip; // Garante que 'vip' é booleano
-        grupo.cliques = grupo.cliques || 0; // Garante que 'cliques' existe
+        grupo.key = childSnap.key; 
+        grupo.vip = !!grupo.vip;
+        grupo.cliques = grupo.cliques || 0;
         listaFirebase.push(grupo);
     });
     
-    // Atualiza a lista global com os grupos do Firebase
+    // Sobrescreve a lista global (apaga qualquer dado antigo)
     todosGrupos = listaFirebase;
     
-    // Renderiza a lista padrão (Todos)
-    const categoriaAtiva = document.querySelector('.cat-btn.active').dataset.cat.toLowerCase();
+    // Mantém a categoria selecionada correta
+    const catAtiva = document.querySelector('.cat-btn.active').dataset.cat.toLowerCase();
     
-    let listaInicial = todosGrupos;
-    if (categoriaAtiva !== 'todos') {
-      listaInicial = todosGrupos.filter(g => g.categoria?.toLowerCase() === categoriaAtiva);
+    let listaFiltrada = todosGrupos;
+    if (catAtiva !== 'todos') {
+      listaFiltrada = todosGrupos.filter(g => g.categoria?.toLowerCase() === catAtiva);
     }
     
-    renderizarGrupos(listaInicial);
+    renderizarGrupos(listaFiltrada);
   });
 }
+
 
 // ================== RENDERIZAR GRUPOS (CORRIGIDO) ================== //
 
