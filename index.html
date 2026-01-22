@@ -296,6 +296,27 @@ header p{margin-top:4px;text-shadow:none;}
     min-width: 95px; 
     color: #fff; 
 }
+
+/* --- AQUI ENTRA O BRILHO DO CARTÃO VIP --- */
+.grupo.vip {
+    border: 2px solid #ffd700 !important; /* Borda Dourada */
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.5); /* Sombra inicial */
+    animation: brilhoPulsante 2s infinite alternate; /* Faz o brilho "viver" */
+}
+
+/* Animação para o brilho ficar pulsando */
+@keyframes brilhoPulsante {
+    from {
+        box-shadow: 0 0 8px rgba(255, 215, 0, 0.4);
+        border-color: #ffd700;
+    }
+    to {
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+        border-color: #fff1a0; /* Cor um pouco mais clara no auge do brilho */
+    }
+}
+
+
 .grupo-acoes-wrapper button:hover {
     box-shadow: 0 4px 8px rgba(0,0,0,0.3);
 }
@@ -478,7 +499,10 @@ footer a{color:#b78cff;text-decoration:none}
   <a href="#" id="enviarGrupo">🚀 Enviar Meu Grupo</a>
   <a href="https://linkfly.to/grifinoria" target="_blank">Renda extra👨‍💻💰</a> 
   <a href="#" id="comprarVipBtn">⭐ Ativar Vip</a>
+  
+  <a href="https://wa.me/5521977231625?text=Olá! Preciso de suporte." target="_blank" style="background: rgba(37, 211, 102, 0.1); border: 1px solid #25d366; color: #128c7e; font-weight: bold;">🟢 Suporte WhatsApp</a>
 </div>
+
 
 <div style="width: 100%; max-width: 420px; display: flex; flex-direction: column; align-items: center; padding: 0 20px; flex-grow: 1;"> 
     
