@@ -22,7 +22,7 @@
 :root {
     --primary: #b78cff;
     --primary-hover: #a56be0;
-    --bg-body: #f8f9fa; /* Cinza bem clarinho, agradável aos olhos */
+    --bg-body: #f8f9fa; 
     --bg-card: #ffffff;
     --text-main: #1c1e21;
     --text-sub: #65676b;
@@ -160,28 +160,32 @@ header h1{
 /* --- Lista de Grupos --- */
 #lista-grupos{
     width: 100%; max-width: 450px; padding: 20px;
-    display: flex; flex-direction: column; gap: 16px;
+    display: flex; flex-direction: column; gap: 20px;
 }
 
-/* Cartão do Grupo */
+/* Container do Card para agrupar Ações e Grupo */
+.grupo-item-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-card);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+}
+
 .grupo{
     width: 100%;
     display: flex; align-items: center; gap: 15px;
-    background: var(--bg-card);
     padding: 15px;
-    border-radius: 18px;
     text-decoration: none; color: var(--text-main);
-    border: 1px solid rgba(0,0,0,0.03);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
     position: relative;
     transition: 0.2s ease;
 }
 
-.grupo:hover{ transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.08); }
-
 .grupo img.foto{
-    width: 60px; height: 60px;
-    border-radius: 15px;
+    width: 65px; height: 65px;
+    border-radius: 12px;
     object-fit: cover;
 }
 
@@ -207,7 +211,6 @@ header h1{
 
 /* Estilo VIP */
 .grupo.vip{
-    border: 1px solid rgba(255, 207, 0, 0.3);
     background: linear-gradient(135deg, #ffffff 0%, #fffdf0 100%);
 }
 .grupo.vip::after {
@@ -222,14 +225,31 @@ header h1{
     top: 10px; right: 10px;
 }
 
-/* Botões de Ação */
-.grupo-acoes-wrapper { display: flex; gap: 10px; margin-top: -10px; margin-bottom: 10px; width: 100%; justify-content: center;}
-.grupo-acoes-wrapper button {
-    border: none; padding: 8px 15px; border-radius: 10px;
-    font-size: 12px; font-weight: 700; cursor: pointer; color: #fff;
+/* Botões de Ação CORRIGIDOS */
+.grupo-acoes-wrapper { 
+    display: flex; 
+    gap: 8px; 
+    padding: 10px 15px; 
+    background: #f1f3f5; /* Fundo sutil para separar as ações */
+    border-top: 1px solid #eee;
+    justify-content: flex-end;
 }
+
+.grupo-acoes-wrapper button {
+    border: none; 
+    padding: 6px 14px; 
+    border-radius: 8px;
+    font-size: 12px; 
+    font-weight: 700; 
+    cursor: pointer; 
+    color: #fff;
+    transition: 0.2s;
+}
+
 .edit-btn { background: #2ecc71; }
+.edit-btn:hover { background: #27ae60; }
 .delete-btn { background: #e74c3c; }
+.delete-btn:hover { background: #c0392b; }
 
 /* Footer */
 footer{ padding: 40px 20px; text-align: center; color: var(--text-sub); font-size: 13px; width: 100%; }
@@ -261,7 +281,7 @@ footer a{ color: var(--primary); text-decoration: none; font-weight: 600; paddin
 
 #previewFoto { width: 80px; height: 80px; border-radius: 20px; object-fit: cover; border: 3px solid var(--primary); margin: 15px 0; }
 
-#anuncio-afiliado img { width: 100%; border-radius: 15px; margin: 20px 0; }
+#anuncio-afiliado img { width: 100%; max-width: 450px; border-radius: 15px; margin: 20px 0; }
 </style>
 </head>
 <body>
@@ -357,7 +377,7 @@ footer a{ color: var(--primary); text-decoration: none; font-weight: 600; paddin
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getDatabase, ref, onValue, runTransaction, set, remove, push } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+import { getDatabase, ref, onValue, runTransaction, remove, push } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDsrYjO2yVTemKqwmJRzNjh5sfaMalPqhE",
@@ -418,40 +438,46 @@ function renderizar(lista) {
     const uid = localStorage.getItem('usuarioID');
 
     lista.forEach(g => {
-        const wrap = document.createElement('div');
-        wrap.style.width = '100%';
-        wrap.innerHTML = `
-            <a href="${g.link}" class="grupo ${g.vip ? 'vip' : ''}">
-                <img src="${g.foto}" class="foto">
-                <div class="info">
-                    <span class="nome">${g.nome}</span>
-                    <span class="categoria">${g.categoria}</span>
-                    <div class="cliques">🔥 ${g.cliques || 0} acessos</div>
-                </div>
-            </a>
+        const itemContainer = document.createElement('div');
+        itemContainer.className = 'grupo-item-container';
+
+        const groupLink = document.createElement('a');
+        groupLink.href = g.link;
+        groupLink.className = `grupo ${g.vip ? 'vip' : ''}`;
+        groupLink.innerHTML = `
+            <img src="${g.foto}" class="foto">
+            <div class="info">
+                <span class="nome">${g.nome}</span>
+                <span class="categoria">${g.categoria}</span>
+                <div class="cliques">🔥 ${g.cliques || 0} acessos</div>
+            </div>
         `;
 
-        if (g.dono === uid) {
-            const acoes = document.createElement('div');
-            acoes.className = 'grupo-acoes-wrapper';
-            acoes.innerHTML = `<button class="edit-btn">Editar</button><button class="delete-btn">Excluir</button>`;
-            acoes.querySelector('.delete-btn').onclick = () => confirm('Excluir?') && remove(ref(db, 'grupos/'+g.key));
-            acoes.querySelector('.edit-btn').onclick = () => abrirEdicao(g);
-            wrap.appendChild(acoes);
-        }
-
-        wrap.querySelector('a').onclick = (e) => {
+        groupLink.onclick = (e) => {
             e.preventDefault();
             runTransaction(ref(db, `grupos/${g.key}/cliques`), c => (c || 0) + 1);
             window.open(g.link, '_blank');
         };
-        container.appendChild(wrap);
+
+        itemContainer.appendChild(groupLink);
+
+        if (g.dono === uid) {
+            const acoes = document.createElement('div');
+            acoes.className = 'grupo-acoes-wrapper';
+            acoes.innerHTML = `
+                <button class="edit-btn">Editar</button>
+                <button class="delete-btn">Excluir</button>
+            `;
+            acoes.querySelector('.delete-btn').onclick = () => confirm('Deseja excluir este grupo?') && remove(ref(db, 'grupos/'+g.key));
+            acoes.querySelector('.edit-btn').onclick = () => abrirEdicao(g);
+            itemContainer.appendChild(acoes);
+        }
+
+        container.appendChild(itemContainer);
     });
 }
 
-// --- Menu Funções ---
-
-// MEUS GRUPOS (CORRIGIDO)
+// MEUS GRUPOS
 document.getElementById('meusGrupos').onclick = (e) => {
     e.preventDefault();
     const uid = localStorage.getItem('usuarioID');
@@ -489,7 +515,7 @@ document.getElementById('salvarGrupo').onclick = async () => {
     const link = document.getElementById('grupoLink').value;
     const cat = document.getElementById('grupoCategoria').value;
     const vipCod = document.getElementById('grupoVipCodigo').value;
-    if(!nome || !WHATSAPP_LINK_REGEX.test(link) || !cat) return alert('Preencha tudo!');
+    if(!nome || !WHATSAPP_LINK_REGEX.test(link) || !cat) return alert('Preencha os campos obrigatórios!');
 
     const uid = localStorage.getItem('usuarioID') || crypto.randomUUID();
     localStorage.setItem('usuarioID', uid);
@@ -512,18 +538,18 @@ document.getElementById('copy-pix-btn').onclick = () => {
     alert('Pix Copiado!');
 };
 
-// TERMOS E PRIVACIDADE (CORRIGIDO)
+// TERMOS E PRIVACIDADE
 document.getElementById('termosLink').onclick = (e) => {
     e.preventDefault();
     document.getElementById('modalTitulo').innerText = "Termos de Uso";
-    document.getElementById('modalTexto').innerHTML = "Ao usar nosso site, você concorda que:<br>1. Não publicará conteúdo ilegal ou adulto.<br>2. É responsável pelo link enviado.<br>3. Grupos inativos podem ser removidos.";
+    document.getElementById('modalTexto').innerHTML = "1. Não publicar conteúdo ilegal.<br>2. Você é responsável pelos seus links.<br>3. Grupos abusivos serão removidos.";
     document.getElementById('modalTermos').style.display = 'flex';
 };
 
 document.getElementById('privacidadeLink').onclick = (e) => {
     e.preventDefault();
     document.getElementById('modalTitulo').innerText = "Política de Privacidade";
-    document.getElementById('modalTexto').innerHTML = "Nós respeitamos sua privacidade:<br>1. Não coletamos dados pessoais como nome ou telefone.<br>2. Usamos um ID anônimo no seu navegador para você gerenciar seus grupos.<br>3. Seus dados não são compartilhados.";
+    document.getElementById('modalTexto').innerHTML = "Usamos apenas um ID anônimo no seu navegador para gerenciar seus grupos. Não coletamos dados pessoais.";
     document.getElementById('modalTermos').style.display = 'flex';
 };
 
