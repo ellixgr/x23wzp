@@ -860,14 +860,10 @@ function renderizarGrupos(lista) {
   }
 
   const usuario = localStorage.getItem('usuarioID');
-
-  // Aplica a ordenação VIP
   const listaOrdenada = ordenarGrupos([...lista]);
 
   listaOrdenada.forEach(g => {
-    // A verificação é pelo ID/dono armazenado
     const isOwner = g.dono === usuario;
-
     const wrapper = document.createElement('div');
     wrapper.style.display = 'flex';
     wrapper.style.flexDirection = 'column';
@@ -881,69 +877,58 @@ function renderizarGrupos(lista) {
     btn.className = classNames.join(' ');
     btn.href = g.link;
     btn.target = '_blank';
-        btn.innerHTML = `
+
+    // AQUI ESTÁ O SEGREDO: Adicionei o span com a classe "cliques" de volta
+    btn.innerHTML = `
       <div class="card-topo">
         <img class="foto" src="${g.foto}" alt="foto do grupo">
         <span class="badge-categoria">${g.categoria || 'Geral'}</span>
         ${g.vip ? '<span class="estrela-vip">⭐</span>' : ''}
       </div>
       <div class="card-corpo">
-        <span class="nome">${g.nome}</span>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <span class="nome">${g.nome}</span>
+            <span class="cliques" style="font-size: 11px; color: #b78cff; font-weight: bold; white-space: nowrap; margin-left: 5px;">🔥 ${g.cliques || 0} ACESSO</span>
+        </div>
         <p class="descricao">${g.descricao || "Clique para entrar no grupo e interagir com a galera!"}</p>
         <div class="btn-falso-entrar">Entrar no Grupo</div>
       </div>
     `;
 
-
-    // Atualiza o contador de cliques em tempo real
-    const cliquesSpan = btn.querySelector('.cliques');
-    if (cliquesSpan) {
-        cliquesSpan.textContent = `🔥 acesso: ${g.cliques || 0}`;
-    }
-
-    // CORREÇÃO CRÍTICA: Usa a chave única (key) para a referência de cliques e transação
     const cliqueRef = ref(db, 'grupos/' + g.key + '/cliques'); 
     
+    // Atualização em tempo real (Realtime)
     onValue(cliqueRef, snap => {
-      // Adiciona o valor do clique ao span dentro do botão.
       const cliquesSpanUpdate = btn.querySelector('.cliques');
       if (cliquesSpanUpdate) {
-        cliquesSpanUpdate.textContent = `🔥 acesso: ${snap.val() || 0}`;
+        cliquesSpanUpdate.textContent = `🔥 ${snap.val() || 0} ACESSO`;
       }
     });
 
-    // Função para registrar clique e abrir link
     btn.addEventListener('click', e => {
       e.preventDefault();
-      // CORREÇÃO: runTransaction APENAS NO CAMPO 'cliques' DENTRO DA KEY
       runTransaction(cliqueRef, (currentData) => {
         return (currentData || 0) + 1;
       }).then(() => {
         window.open(g.link, '_blank');
       }).catch(error => {
-          console.error("Erro na transação de cliques:", error);
-          // Abre o link mesmo se a transação falhar, para não bloquear o usuário
           window.open(g.link, '_blank'); 
       });
     });
 
     wrapper.appendChild(btn);
 
-    // Criação dos botões de ação (Editar/Excluir)
     if (isOwner) {
       const box = document.createElement('div');
       box.className = 'grupo-acoes-wrapper'; 
-      
       const edit = document.createElement('button');
       edit.textContent = 'Editar';
       edit.className = 'edit-btn'; 
       edit.onclick = () => abrirEdicao(g);
-      
       const del = document.createElement('button');
       del.textContent = 'Excluir';
       del.className = 'delete-btn'; 
       del.onclick = () => excluirGrupo(g);
-
       box.appendChild(edit);
       box.appendChild(del);
       wrapper.appendChild(box);
@@ -952,6 +937,7 @@ function renderizarGrupos(lista) {
     container.appendChild(wrapper);
   });
 }
+
 
 
 // ================== FUNÇÃO DE COPIAR PIX (MANTIDA) ================== //
