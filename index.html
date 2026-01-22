@@ -849,7 +849,7 @@ function renderizarGrupos(lista) {
     // Atualiza o contador de cliques em tempo real
     const cliquesSpan = btn.querySelector('.cliques');
     if (cliquesSpan) {
-        cliquesSpan.textContent = `Cliques: ${g.cliques || 0}`;
+        cliquesSpan.textContent = `🔥 acesso: ${g.cliques || 0}`;
     }
 
     // CORREÇÃO CRÍTICA: Usa a chave única (key) para a referência de cliques e transação
@@ -859,7 +859,7 @@ function renderizarGrupos(lista) {
       // Adiciona o valor do clique ao span dentro do botão.
       const cliquesSpanUpdate = btn.querySelector('.cliques');
       if (cliquesSpanUpdate) {
-        cliquesSpanUpdate.textContent = `Cliques: ${snap.val() || 0}`;
+        cliquesSpanUpdate.textContent = `🔥 acesso: ${snap.val() || 0}`;
       }
     });
 
