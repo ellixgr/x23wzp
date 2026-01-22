@@ -18,285 +18,403 @@
 <meta name="twitter:card" content="summary_large_image">
 
 <style>
-/* Reset e Estilos de Cores Globais */
-:root {
-    --primary: #b78cff;
-    --primary-hover: #a56be0;
-    --bg-body: #f8f9fa; 
-    --bg-card: #ffffff;
-    --text-main: #1c1e21;
-    --text-sub: #65676b;
-    --whatsapp-green: #25d366;
-    --vip-gold: #ffcf00;
-}
-
+/* Reset e Estilos Básicos */
 *{box-sizing:border-box;margin:0;padding:0}
 
+/* CORREÇÃO DO RODAPÉ: BODY com flex-direction: column e min-height: 100vh */
 body{
-    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    color: var(--text-main); 
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    background: var(--bg-body);
+    font-family:Arial,sans-serif;
+    color:#000; 
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    /* REMOVIDO: padding-top:120px; */ /* REMOVIDO para que o header possa rolar */
+    background:#fff 
 }
 
-/* --- Pop-up de Anúncio --- */
+/* --- Estilos do Pop-up de Anúncio --- */
 #popup-anuncio {
     position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.8);
-    display: none;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7); /* Fundo escuro transparente */
+    display: none; /* Inicia oculto e o JS o mostrará no carregamento */
     justify-content: center;
     align-items: center;
-    z-index: 9999;
+    z-index: 9999; /* Garante que fique acima de tudo */
+    transition: opacity 0.3s ease;
 }
 
 #popup-content {
     position: relative;
     max-width: 90%;
-    width: 350px;
-    border-radius: 20px;
+    width: 350px; /* Largura máxima do pop-up */
+    background: none;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
     overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
 
-#popup-content img { width: 100%; display: block; }
+#popup-content a {
+    display: block;
+}
+
+#popup-content img {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 15px;
+    cursor: pointer;
+}
 
 #close-popup-btn {
     position: absolute;
-    top: 15px; right: 15px;
-    background: rgba(0,0,0,0.5);
+    top: 10px;
+    right: 10px;
+    background: #e74c3c; /* Cor vermelha para o botão */
     color: white;
     border: 2px solid white;
     border-radius: 50%;
-    width: 34px; height: 34px;
+    width: 30px;
+    height: 30px;
     text-align: center;
-    line-height: 30px;
-    font-size: 16px;
+    line-height: 26px; /* Centraliza o 'X' */
+    font-size: 18px;
+    font-weight: bold;
     cursor: pointer;
-    backdrop-filter: blur(5px);
+    transition: background 0.2s;
+    z-index: 10;
 }
+
+#close-popup-btn:hover {
+    background: #c0392b;
+}
+/* --- Fim dos Estilos do Pop-up --- */
 
 /* --- Header e Categorias --- */
 header{
-    position: fixed;
-    top: 0; left: 0; width: 100%;
-    padding: 15px 10px;
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(15px);
-    z-index: 1000; 
-    box-shadow: 0 2px 15px rgba(0,0,0,0.05); 
-    transform: translateY(-100%);
-    transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    padding:12px 10px;
+    background:#fff; /* ALTERADO: Fundo branco para não vazar a rolagem */
+    color:#000;
+    text-align:center;
+    z-index:1000; 
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+    
+    /* ---------------------------------------------------- */
+    /* NOVO: Estilo para Esconder/Mostrar no Scroll */
+    transform: translateY(-100%); /* Esconde o header acima da tela */
+    transition: transform 0.3s ease-out, box-shadow 0.3s; /* Adiciona transição suave */
+    /* ---------------------------------------------------- */
 }
 
-header.header-visible { transform: translateY(0); }
+/* ---------------------------------------------------- */
+/* NOVO: Classe para exibir o Header */
+header.header-visible {
+    transform: translateY(0);
+}
+/* ---------------------------------------------------- */
 
+/* ALTERADO: Cor do título para azul escuro */
 header h1{
-    font-size: 24px;
-    color: var(--primary);
-    font-weight: 800;
-    margin-bottom: 10px;
-    text-align: center;
+    font-size:28px;
+    text-shadow:none;
+    color:#00008b; /* ALTERADO: Azul escuro */
 } 
+header p{margin-top:4px;text-shadow:none;} 
 
-#categorias{ display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+#categorias{margin-top:8px;display:flex;justify-content:center;gap:6px;flex-wrap:wrap}
+.cat-btn{background:rgba(0,0,0,0.05);border:1px solid rgba(0,0,0,0.1);border-radius:20px;color:#000;font-size:13px;padding:5px 11px;cursor:pointer;transition:all .2s}
+.cat-btn:hover{background:rgba(0,0,0,0.1)}
+.cat-btn.active{background:#b78cff;border-color:#b78cff;color:#fff;} 
 
-.cat-btn{
-    background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 20px;
-    color: var(--text-sub);
-    font-size: 13px;
-    font-weight: 600;
-    padding: 6px 15px;
-    cursor: pointer;
-    transition: all .2s ease;
-}
-
-.cat-btn.active{
-    background: var(--primary);
-    border-color: var(--primary);
-    color: #fff;
-    box-shadow: 0 4px 10px rgba(183,140,255,0.3);
-}
-
-/* --- Menu Lateral --- */
-.menu-icon{
-    position: fixed; top: 20px; right: 20px;
-    font-size: 24px; z-index: 1100;
-    background: var(--primary);
-    color: #fff;
-    padding: 10px;
-    border-radius: 12px;
-    cursor: pointer;
-    box-shadow: 0 4px 12px rgba(183,140,255,0.4);
-}
-
-.menu{
-    position: fixed; top: 0; right: -300px;
-    width: 280px; height: 100%;
-    background: #fff;
-    padding: 40px 25px;
-    transition: right 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-    z-index: 1200;
-    box-shadow: -5px 0 25px rgba(0,0,0,0.1);
-}
-
-.menu.open{ right: 0; }
-
-.menu h2{ color: var(--primary); margin-bottom: 20px; font-weight: 800; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; }
-
-.menu a{
-    display: block; text-decoration: none; color: var(--text-main);
-    background: #f8f9fa; padding: 14px; border-radius: 12px;
-    margin-bottom: 12px; font-weight: 600; transition: 0.2s;
-}
-
-.menu a:hover{ background: #f0edff; color: var(--primary); }
+/* --- Menu Lateral (Ícone Hambúrguer) --- */
+.menu-icon{position:fixed;top:20px;right:20px;font-size:28px;z-index:1100;background:rgba(255,255,255,0.8);color:#000;padding:6px 12px;border-radius:10px;cursor:pointer; line-height: 1; box-shadow: 0 2px 5px rgba(0,0,0,0.2);}
+.menu{position:fixed;top:0;right:-300px;width:250px;height:100%;background:rgba(255,255,255,0.95);padding:30px 20px;transition:right .3s;z-index:1200; box-shadow: -2px 0 10px rgba(0,0,0,0.1);}
+.menu.open{right:0}
+.menu .close-btn{position:absolute;top:15px;right:20px;background:none;border:none;color:#000;font-size:26px;cursor:pointer}
+.menu h2{margin-top:50px;color:#b78cff;border-bottom:1px solid #b78cff;padding-bottom:5px;text-align:left}
+.menu a{display:block;text-decoration:none;color:#000;background:rgba(183,140,255,0.08);padding:12px;border-radius:10px;margin-top:15px;text-align:left;font-size:18px}
+.menu a:hover{background:rgba(183,140,255,0.15)}
 
 /* --- Lista de Grupos --- */
-#lista-grupos{
-    width: 100%; max-width: 450px; padding: 20px;
-    display: flex; flex-direction: column; gap: 20px;
-}
+#lista-grupos{width:100%;max-width:420px;padding:30px 20px 0;
+    display:flex;flex-direction:column;align-items:center;gap:22px}
 
-/* Container do Card para agrupar Ações e Grupo */
-.grupo-item-container {
+/* ESTILO DO ANÚNCIO */
+#anuncio-afiliado {
     width: 100%;
-    display: flex;
-    flex-direction: column;
-    background: var(--bg-card);
-    border-radius: 18px;
-    overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+    max-width: 420px; 
+    margin: 25px auto; 
+    display: block;
+    border-radius: 15px;
+    overflow: hidden; 
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); 
+    transition: transform 0.2s;
+    background: none; 
 }
 
+#anuncio-afiliado:hover {
+    transform: scale(1.03);
+    box-shadow: 0 6px 20px rgba(183,140,255,0.4); 
+}
+
+#anuncio-afiliado img {
+    width: 80%; 
+    max-width: 100%;
+    height: auto; 
+    display: block;
+    margin: 0 auto;
+}
+
+
+/* Aprimoramento do Cartão do Grupo */
 .grupo{
-    width: 100%;
-    display: flex; align-items: center; gap: 15px;
-    padding: 15px;
-    text-decoration: none; color: var(--text-main);
-    position: relative;
-    transition: 0.2s ease;
+    width:100%;
+    max-width:380px;
+    display:flex;
+    align-items:center;
+    gap:14px;
+    background:rgba(0,0,0,0.03); 
+    padding:16px 20px;
+    border-radius:25px; 
+    text-decoration:none;
+    color:#000; 
+    position:relative;
+    transition:transform .18s,background .18s,box-shadow .18s;
+    border:1px solid rgba(0,0,0,0.1); 
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
+.grupo:hover{transform:scale(1.02);background:rgba(0,0,0,0.08); box-shadow: 0 6px 12px rgba(0,0,0,0.15);}
 
+/* Ajuste na Imagem */
 .grupo img.foto{
-    width: 65px; height: 65px;
-    border-radius: 12px;
-    object-fit: cover;
+    width:50px;
+    height:50px;
+    border-radius:50%;
+    object-fit:cover;
+    border:2px solid rgba(0,0,0,0.1); 
 }
-
-.grupo .info{ flex-grow: 1; }
-
-.grupo span.nome{ font-size: 17px; font-weight: 700; display: block; margin-bottom: 4px; }
-
-.grupo .categoria{
-    font-size: 11px; font-weight: 700;
-    color: var(--primary);
-    background: #f0edff;
-    padding: 3px 10px;
-    border-radius: 8px;
-    display: inline-block;
-    text-transform: uppercase;
-}
-
-.grupo .cliques {
-    font-size: 11px;
-    color: var(--text-sub);
-    margin-top: 5px;
-}
+/* Estilo do Texto */
+.grupo .info{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;text-align:left}
+.grupo span.nome{font-size:18px;font-weight:bold;line-height:1.2; text-shadow: none;} 
+.grupo .categoria{font-size:13px;color:#555;margin-top:2px; padding: 2px 8px; border-radius: 10px; background: rgba(183,140,255, 0.1); text-transform: capitalize;}
 
 /* Estilo VIP */
 .grupo.vip{
-    background: linear-gradient(135deg, #ffffff 0%, #fffdf0 100%);
+    background: linear-gradient(90deg, rgba(255,215,0,0.15), rgba(255,215,0,0.08));
+    border:1px solid rgba(255,215,0,0.5);
+    box-shadow: 0 0 8px 3px rgba(255,215,0,0.2), 0 4px 10px rgba(0,0,0,0.2);
 }
-.grupo.vip::after {
-    content: '⭐ VIP';
-    background: var(--vip-gold);
-    color: #000;
-    font-size: 10px;
-    font-weight: 900;
-    padding: 2px 6px;
-    border-radius: 5px;
-    position: absolute;
-    top: 10px; right: 10px;
+.grupo.vip::before{
+    content:"⭐";
+    position:absolute;
+    left:10px; 
+    top:10px;
+    transform: none;
+    font-size:18px; 
+    color:#ffd700;
+    text-shadow:0 0 6px #ffda00,0 0 10px #ffb700;
+    animation:none;
 }
+.grupo.vip .categoria{color: #e6b800; background: rgba(255,215,0,0.3);}
 
-/* Botões de Ação CORRIGIDOS */
+/* Estilos para Botões de Ação (Editar/Excluir) */
 .grupo-acoes-wrapper { 
     display: flex; 
     gap: 8px; 
-    padding: 10px 15px; 
-    background: #f1f3f5; /* Fundo sutil para separar as ações */
-    border-top: 1px solid #eee;
-    justify-content: flex-end;
+    margin-top: 10px; 
+    width: 100%;
+    justify-content: center; 
+    flex-wrap: wrap; 
 }
-
 .grupo-acoes-wrapper button {
-    border: none; 
-    padding: 6px 14px; 
-    border-radius: 8px;
-    font-size: 12px; 
-    font-weight: 700; 
-    cursor: pointer; 
+    border: none;
+    padding: 6px 15px;
+    border-radius: 20px; 
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: background 0.2s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    min-width: 95px; 
+    color: #fff; 
+}
+.grupo-acoes-wrapper button:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.grupo-acoes-wrapper button.edit-btn {
+    background: rgba(46, 204, 113, 0.9); 
+}
+.grupo-acoes-wrapper button.edit-btn:hover {
+    background: rgba(46, 204, 113, 1);
+}
+.grupo-acoes-wrapper button.delete-btn {
+    background: rgba(231, 76, 60, 0.9); 
+}
+.grupo-acoes-wrapper button.delete-btn:hover {
+    background: rgba(231, 76, 60, 1);
+}
+
+/* Ajuste no estilo dos cliques */
+.grupo .cliques {
+    position: absolute;
+    top: 10px; 
+    right: 20px;
+    font-size: 13px;
+    color: #b78cff; 
+    text-shadow: none; 
+}
+
+/* --- Rodapé (FOOTER) CORRIGIDO - Garante que o footer fique no final do conteúdo/tela --- */
+footer{
+    color:#666; 
+    text-align:center;
+    padding:14px 10px 40px;
+    font-size:14px;
+    line-height:1.6;
+    text-shadow: none; 
+    width: 100%;
+}
+footer a{color:#b78cff;text-decoration:none}
+
+/* Modal Geral e Termos (Ajustado para Fundo Branco) */
+.modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);display:none;justify-content:center;align-items:center;z-index:5000}
+.modal-content{background:#fff;padding:20px;border-radius:20px;max-width:400px;width:90%;text-align:center;color:#000;position:relative; box-shadow: 0 4px 15px rgba(0,0,0,0.3);}
+.modal-content h3{margin-bottom:15px}
+.modal-content input, .modal-content select{width:90%;margin:5px 0;padding:8px;border-radius:10px;border:1px solid #ccc;background:#f9f9f9;color:#000;}
+.modal-content button{padding:10px 20px;margin-top:10px;border:none;border-radius:15px;background:#b78cff;color:#fff;cursor:pointer;transition:0.2s}
+.modal-content button:hover{background:#a56be0}
+.modal .close-modal{position:absolute;top:10px;right:15px;font-size:22px;cursor:pointer;color:#000;}
+
+/* Estilo para o conteúdo do Modal VIP */
+#vipModal > .modal-content {
+    animation: fadeZoom 0.25s ease;
+    border: 1px solid gold;
+    padding: 25px;
+    max-width: 350px;
+    width: 90%; 
+}
+
+/* Estilo específico para o botão de Copiar e Enviar Comprovante */
+.pix-copy-btn {
+    background: #00bfff; 
     color: #fff;
-    transition: 0.2s;
+    font-weight: bold;
+    margin-top: 15px;
+    padding: 12px 25px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.pix-copy-btn:hover {
+    background: #0099cc;
 }
 
-.edit-btn { background: #2ecc71; }
-.edit-btn:hover { background: #27ae60; }
-.delete-btn { background: #e74c3c; }
-.delete-btn:hover { background: #c0392b; }
-
-/* Footer */
-footer{ padding: 40px 20px; text-align: center; color: var(--text-sub); font-size: 13px; width: 100%; }
-footer a{ color: var(--primary); text-decoration: none; font-weight: 600; padding: 0 5px; }
-
-/* Modais */
-.modal{
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
-    display: none; justify-content: center; align-items: center; z-index: 5000;
+.whatsapp-btn {
+    background: #25d366; 
+    color: #fff;
+    font-weight: bold;
+    margin-top: 15px;
+    padding: 12px 25px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    display: block;
+    width: 90%;
+    margin-left: auto;
+    margin-right: auto;
+    transition: background 0.2s;
 }
-.modal-content{
-    background: #fff; padding: 30px; border-radius: 25px;
-    width: 90%; max-width: 400px; text-align: center;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.2);
-    position: relative;
-}
-.modal-content input, .modal-content select {
-    width: 100%; padding: 12px; margin: 8px 0;
-    border-radius: 12px; border: 1px solid #ddd; background: #f9f9f9;
-}
-.modal-content button {
-    width: 100%; padding: 14px; margin-top: 15px;
-    background: var(--primary); color: #fff; border: none;
-    border-radius: 12px; font-weight: 700; cursor: pointer;
+.whatsapp-btn:hover {
+    background: #1eaa54;
 }
 
-.close-modal-icon { position: absolute; top: 15px; right: 20px; font-size: 20px; cursor: pointer; }
-
-#previewFoto { width: 80px; height: 80px; border-radius: 20px; object-fit: cover; border: 3px solid var(--primary); margin: 15px 0; }
-
-#anuncio-afiliado img { width: 100%; max-width: 450px; border-radius: 15px; margin: 20px 0; }
+/* Estilo para o formulário de envio */
+#modalEnvioGrupo .modal-content {
+    background: #fff;
+    border: 1px solid #b78cff;
+    padding: 30px;
+}
+#modalEnvioGrupo h3 {
+    color: #b78cff;
+    border-bottom: 2px solid #b78cff;
+    padding-bottom: 10px;
+}
+#modalEnvioGrupo .modal-content input,
+#modalEnvioGrupo .modal-content select {
+    background: #f0f0f0;
+    color: #000;
+    border: 1px solid #ccc;
+    transition: border-color 0.2s;
+}
+#modalEnvioGrupo .modal-content input:focus,
+#modalEnvioGrupo .modal-content select:focus {
+    border-color: #b78cff;
+    outline: none;
+}
+#grupoFotoLabel {
+    display: block;
+    background: #ccc;
+    color: #000;
+    padding: 10px;
+    border-radius: 10px;
+    cursor: pointer;
+    margin: 10px auto;
+    width: 90%;
+    transition: background 0.2s;
+}
+#grupoFotoLabel:hover {
+    background: #aaa;
+}
+#grupoFotoUpload {
+    display: none; 
+}
+#previewContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 15px;
+}
+#previewFoto {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%; 
+    object-fit: cover; 
+    border: 3px solid #b78cff;
+    box-shadow: 0 0 10px rgba(183,140,255,0.5);
+}
+#modalEnvioGrupo #salvarGrupo {
+    background: #2ecc71;
+    font-size: 16px;
+}
+#modalEnvioGrupo #salvarGrupo:hover {
+    background: #27ae60;
+}
 </style>
 </head>
 <body>
 
 <div id="popup-anuncio">
     <div id="popup-content">
-        <span id="close-popup-btn">✕</span>
+        <span id="close-popup-btn">X</span>
         <a href="https://br.shp.ee/5q1d37e?smtt=0.0.9" target="_blank">
-            <img src="https://files.catbox.moe/xjuhw5.png" alt="Anúncio">
+            <img src="https://files.catbox.moe/xjuhw5.png" alt="Anúncio - Visite a Shop">
         </a>
     </div>
 </div>
-
-<header id="main-header" class="header-visible">
+<header>
   <h1>Grupos WhatsApp</h1>
+  <p></p>
   <div id="categorias">
     <button class="cat-btn active" data-cat="Todos">Todos</button>
     <button class="cat-btn" data-cat="amizade">Amizade</button>
@@ -304,81 +422,129 @@ footer a{ color: var(--primary); text-decoration: none; font-weight: 600; paddin
     <button class="cat-btn" data-cat="namoro">Namoro</button>
   </div>
 </header>
-
 <div class="menu-icon" id="menuBtn">☰</div> 
-
 <div class="menu" id="sideMenu">
-  <button style="float:right; background:none; border:none; font-size:20px; cursor:pointer;" id="closeBtn">✕</button>
-  <h2 style="margin-top:20px;">Menu</h2>
-  <a href="https://br.shp.ee/5q1d37e?smtt=0.0.9" target="_blank">🛍️ Loja Acessórios</a>
+  <button class="close-btn" id="closeBtn">❌</button>
+  <h2>MENU</h2>
+  <a href="https://br.shp.ee/5q1d37e?smtt=0.0.9" target="_blank">🛍️ꚠ Loja-acessórios</a>
   <a href="#" id="meusGrupos">📝 Meus Grupos</a>
-  <a href="#" id="enviarGrupo">🚀 Enviar Grupo</a>
-  <a href="https://linkfly.to/grifinoria" target="_blank">💰 Renda Extra</a> 
-  <a href="#" id="comprarVipBtn">⭐ Ativar VIP</a>
+  <a href="#" id="enviarGrupo">🚀 Enviar Meu Grupo</a>
+  <a href="https://linkfly.to/grifinoria" target="_blank">Renda extra👨‍💻💰</a> 
+  <a href="#" id="comprarVipBtn">⭐ Comprar VIP</a>
 </div>
 
-<div style="flex-grow: 1; width: 100%; display: flex; flex-direction: column; align-items: center;">
-    <div style="height: 140px;"></div>
-    <div id="lista-grupos"></div>
-    <a href="https://soupopular.net/ref/bagau" target="_blank" id="anuncio-afiliado">
-        <img src="https://files.catbox.moe/k4dtyg.jpg" alt="Anúncio">
+<div style="width: 100%; max-width: 420px; display: flex; flex-direction: column; align-items: center; padding: 0 20px; flex-grow: 1;"> 
+    
+    <div style="height: 120px; width: 100%;"></div> 
+    
+    <div id="lista-grupos" style="padding: 0; padding-bottom: 0;"></div>
+
+    <a href="https://soupopular.net/ref/bagau" target="_blank" id="anuncio-afiliado" style="margin-top: auto;">
+        <img src="https://files.catbox.moe/k4dtyg.jpg" alt="Anúncio - Compre Seguidores e Curtidas" loading="lazy">
     </a>
+
 </div>
 
 <footer>
-  <a href="#" id="termosLink">Termos de Uso</a> • 
-  <a href="#" id="privacidadeLink">Privacidade</a><br><br>
-  © 2026 <b>gruposWhats</b> - Todos os direitos reservados.
+  <a href="#" id="termosLink">Termos de Uso</a>
+  <a href="#" id="privacidadeLink">Politica de Privacidade</a><br>
+  © COPYRIGHT 2026 - <a href="https://ellixgr.github.io/x23wzp/" target="_blank">gruposWhats</a>
 </footer>
+
 
 <div id="modalTermos" class="modal">
   <div class="modal-content">
-    <span class="close-modal-icon" onclick="document.getElementById('modalTermos').style.display='none'">✕</span>
+    <span class="close-modal">❌</span>
     <h3 id="modalTitulo"></h3>
-    <div id="modalTexto" style="text-align:left; max-height:300px; overflow-y:auto; margin: 15px 0; font-size: 14px; line-height: 1.5;"></div>
-    <button onclick="document.getElementById('modalTermos').style.display='none'">Entendi</button>
+    <div id="modalTexto" style="text-align:left; max-height:300px; overflow-y:auto;"></div>
   </div>
 </div>
 
 <div id="vipModal" class="modal">
-  <div class="modal-content">
-    <span class="close-modal-icon" onclick="document.getElementById('vipModal').style.display='none'">✕</span>
-    <h3>⭐ Ativar VIP ⭐</h3>
-    <p style="font-size:14px; color:#666; margin: 10px 0;">Destaque seu grupo no topo da lista!</p>
-    <img src="https://files.catbox.moe/kvyq5d.jpg" style="width:100%; border-radius:15px; border: 2px solid var(--vip-gold);">
-    <button id="copy-pix-btn">📋 Copiar Código Pix</button>
-    <a href="https://wa.me/5521977231625?text=Fiz o VIP" target="_blank" style="text-decoration:none;">
-        <button style="background:var(--whatsapp-green);">Enviar Comprovante</button>
+  <div class="modal-content" id="vip-content-container">
+    <span class="close-modal" id="fecharVipIcon">❌</span>
+    <h3>⭐ Ativar VIP (Pagamento Pix) ⭐</h3>
+    
+    <p style="margin-bottom: 10px;">Grupos VIPs serão mais visíveis e terão mais visitas!</p>
+    
+    <div style="margin: 15px 0;">
+        <img id="qrcode-img" 
+             src="https://files.catbox.moe/kvyq5d.jpg" 
+             alt="QR Code Pix" 
+             style="width: 90%; max-width: 300px; border: 2px solid gold; border-radius: 10px;">
+    </div>
+
+    <input type="text" id="pix-code-field" 
+           value="00020126580014BR.GOV.BCB.PIX013689a5c070-cdd1-443b-997d-0cbbcf80e2de52040000530398654045.005802BR5918Elias da Conceicao6009SAO PAULO62140510lRM9nLzEht6304AA83" 
+           style="position: absolute; left: -9999px;">
+           
+    <button id="copy-pix-btn" class="pix-copy-btn">
+        📋 Copiar Código Pix
+    </button>
+    
+    <p style="margin-top: 15px; font-size: 14px; color: #555;">
+        Após pagar, envie o comprovante:
+    </p>
+
+    <a href="https://wa.me/5521977231625?text=Ol%C3%A1%2C%20acabei%20de%20fazer%20o%20Pix%20para%20o%20VIP.%20Segue%20o%20comprovante!" 
+       target="_blank" 
+       class="whatsapp-btn">
+       Enviar Comprovante (WhatsApp) 📱
     </a>
-    <input type="text" id="pix-code-field" value="00020126580014BR.GOV.BCB.PIX013689a5c070-cdd1-443b-997d-0cbbcf80e2de52040000530398654045.005802BR5918Elias da Conceicao6009SAO PAULO62140510lRM9nLzEht6304AA83" style="position:absolute; left:-9999px;">
+
+    <button id="fecharVipBtn"
+            style="background:#e74c3c; color:#fff; border:none; padding:8px 15px; border-radius:8px; cursor:pointer; margin-top: 20px;">
+      Fechar
+    </button>
+  </div>
+</div>
+<div id="modalAvisoVip" class="modal">
+  <div class="modal-content">
+    <span class="close-modal" id="fecharAvisoVip">❌</span>
+    <h3 id="avisoVipTitulo"></h3>
+    <p id="avisoVipMensagem"></p>
+    <p id="avisoVipCodigo" style="font-size:24px; font-weight:bold; color:#b78cff; margin-top:15px;"></p>
   </div>
 </div>
 
 <div id="modalEnvioGrupo" class="modal">
   <div class="modal-content">
-    <span class="close-modal-icon" onclick="document.getElementById('modalEnvioGrupo').style.display='none'">✕</span>
-    <h3>🚀 Enviar Grupo</h3>
-    <input type="text" id="grupoNome" placeholder="Nome do grupo">
-    <input type="text" id="grupoLink" placeholder="Link do WhatsApp">
-    <select id="grupoCategoria">
-      <option value="">Selecione a Categoria</option>
+    <span class="close-modal" onclick="document.getElementById('modalEnvioGrupo').style.display = 'none';" style="position:absolute; top:10px; right:15px; font-size:22px; cursor:pointer;">❌</span>
+    <h3>Enviar Meu Grupo</h3>
+    
+    <input type="text" id="grupoNome" placeholder=" Nome do grupo" required>
+    <input type="text" id="grupoLink" placeholder=" Link do grupo (https://chat.whatsapp.com/...)" required>
+    
+    <select id="grupoCategoria" required>
+      <option value=""> Selecione a Categoria</option>
       <option value="Amizade">Amizade</option>
       <option value="Zoeira">Zoeira</option>
       <option value="Namoro">Namoro</option>
     </select>
-    <input type="text" id="grupoVipCodigo" placeholder="Código VIP (se tiver)">
-    <label for="grupoFotoUpload" style="background:#eee; padding:10px; display:block; border-radius:10px; cursor:pointer; margin-top:10px;">📸 Escolher Foto</label>
-    <input type="file" id="grupoFotoUpload" style="display:none;" accept="image/*">
-    <img id="previewFoto" src="https://files.catbox.moe/9qdwuz.webp">
-    <button id="salvarGrupo">Publicar Agora</button>
-    <p id="mensagemEnvio" style="color:green; display:none; margin-top:10px;">Sucesso!</p>
+    
+    <input type="text" id="grupoVipCodigo" placeholder=" Código VIP (opcional)">
+
+    <div id="previewContainer">
+        <input type="file" id="grupoFotoUpload" accept="image/*">
+        <label for="grupoFotoUpload" id="grupoFotoLabel"> Escolha a foto do grupo</label>
+        
+        <img id="previewFoto" src="https://files.catbox.moe/9qdwuz.webp" alt="Prévia da foto">
+    </div>
+    
+    <button id="salvarGrupo">
+      Enviar Grupo
+    </button>
+    <p id="mensagemEnvio" style="margin-top:10px; color:#2ecc71; font-weight:bold; display:none;">Grupo enviado com sucesso!</p>
   </div>
 </div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getDatabase, ref, onValue, runTransaction, remove, push } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
+<script type="module">
+// Versões mais recentes e modulares do Firebase
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getDatabase, ref, onValue, runTransaction, set, remove, push } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+
+// Credenciais do Firebase (MANTIDAS)
 const firebaseConfig = {
   apiKey: "AIzaSyDsrYjO2yVTemKqwmJRzNjh5sfaMalPqhE",
   authDomain: "cliques-4a2c1.firebaseapp.com",
@@ -386,182 +552,557 @@ const firebaseConfig = {
   projectId: "cliques-4a2c1",
   storageBucket: "cliques-4a2c1.firebase storage.app",
   messagingSenderId: "903875153255",
-  appId: "1:903875153255:web:ff3cf25e059b10d665b3c2"
+  appId: "1:903875153255:web:ff3cf25e059b10d665b3c2",
+  measurementId: "G-BQ7FWRJD"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-let todosGrupos = [];
-const WHATSAPP_LINK_REGEX = /^(https?:\/\/)?(chat\.whatsapp\.com\/|wa\.me\/|whatsapp\.com\/invite\/).+/;
-
-// --- Interface ---
-const header = document.getElementById('main-header');
+// Variáveis de Elementos (MANTIDAS)
 const menu = document.getElementById('sideMenu');
-const menuBtn = document.getElementById('menuBtn');
-const closeBtn = document.getElementById('closeBtn');
+const enviarBtn = document.getElementById('enviarGrupo');
+const meusBtn = document.getElementById('meusGrupos');
+const modalTermos = document.getElementById('modalTermos');
+const closeModalTermos = modalTermos.querySelector('.close-modal');
+const modalTitulo = document.getElementById('modalTitulo');
+const modalTexto = document.getElementById('modalTexto');
+const header = document.querySelector('header'); // NOVO: Referência ao Header
 
-menuBtn.onclick = () => menu.classList.add('open');
-closeBtn.onclick = () => menu.classList.remove('open');
+const vipModal = document.getElementById('vipModal');
+const fecharVipIcon = document.getElementById('fecharVipIcon');
+const fecharVipBtn = document.getElementById('fecharVipBtn');
 
-// Header Scroll
-let lastScroll = 0;
-window.addEventListener('scroll', () => {
-    let currentScroll = window.scrollY;
-    if (currentScroll <= 0) header.classList.add('header-visible');
-    else if (currentScroll > lastScroll) header.classList.remove('header-visible');
-    else header.classList.add('header-visible');
-    lastScroll = currentScroll;
-});
+const modalAvisoVip = document.getElementById('modalAvisoVip');
+const avisoVipTitulo = document.getElementById('avisoVipTitulo');
+const avisoVipMensagem = document.getElementById('avisoVipMensagem');
+const avisoVipCodigo = document.getElementById('avisoVipCodigo');
+document.getElementById('fecharAvisoVip').onclick = () => modalAvisoVip.style.display = 'none';
 
-// Pop-up Inicial
-window.onload = () => document.getElementById('popup-anuncio').style.display = 'flex';
-document.getElementById('close-popup-btn').onclick = () => document.getElementById('popup-anuncio').style.display = 'none';
+// Elementos Pix
+const pixCodeField = document.getElementById('pix-code-field');
+const copyPixBtn = document.getElementById('copy-pix-btn');
 
-// --- Lógica Firebase ---
-function carregarGrupos() {
-    onValue(ref(db, 'grupos'), snap => {
-        todosGrupos = [];
-        snap.forEach(child => {
-            let g = child.val();
-            g.key = child.key;
-            todosGrupos.push(g);
-        });
-        renderizar(todosGrupos);
-    });
-}
 
-function renderizar(lista) {
-    const container = document.getElementById('lista-grupos');
-    container.innerHTML = '';
-    lista.sort((a,b) => (b.vip ? 1 : 0) - (a.vip ? 1 : 0));
-    const uid = localStorage.getItem('usuarioID');
+// VARIÁVEL GLOBAL ESSENCIAL 
+let todosGrupos = []; 
 
-    lista.forEach(g => {
-        const itemContainer = document.createElement('div');
-        itemContainer.className = 'grupo-item-container';
+// REGEX CORRIGIDO: Mais robusto para links de convite do WhatsApp
+const WHATSAPP_LINK_REGEX = /^https?:\/\/(chat\.whatsapp\.com\/|wa\.me\/invite\/|whatsapp\.com\/)([A-Za-z0-9_-]{22}|[0-9]{1,4})\/?(\?.*)?$/i;
 
-        const groupLink = document.createElement('a');
-        groupLink.href = g.link;
-        groupLink.className = `grupo ${g.vip ? 'vip' : ''}`;
-        groupLink.innerHTML = `
-            <img src="${g.foto}" class="foto">
-            <div class="info">
-                <span class="nome">${g.nome}</span>
-                <span class="categoria">${g.categoria}</span>
-                <div class="cliques">🔥 ${g.cliques || 0} acessos</div>
-            </div>
-        `;
 
-        groupLink.onclick = (e) => {
-            e.preventDefault();
-            runTransaction(ref(db, `grupos/${g.key}/cliques`), c => (c || 0) + 1);
-            window.open(g.link, '_blank');
-        };
+// ================== CRIAÇÃO E MANIPULAÇÃO DO MODAL DE GRUPO (MANTIDO) ================== //
 
-        itemContainer.appendChild(groupLink);
+const modal = document.getElementById('modalEnvioGrupo'); 
+const previewFoto = document.getElementById("previewFoto");
+const fotoInput = document.getElementById("grupoFotoUpload");
+const salvarGrupoBtn = document.getElementById('salvarGrupo');
 
-        if (g.dono === uid) {
-            const acoes = document.createElement('div');
-            acoes.className = 'grupo-acoes-wrapper';
-            acoes.innerHTML = `
-                <button class="edit-btn">Editar</button>
-                <button class="delete-btn">Excluir</button>
-            `;
-            acoes.querySelector('.delete-btn').onclick = () => confirm('Deseja excluir este grupo?') && remove(ref(db, 'grupos/'+g.key));
-            acoes.querySelector('.edit-btn').onclick = () => abrirEdicao(g);
-            itemContainer.appendChild(acoes);
-        }
+salvarGrupoBtn.addEventListener('mouseover', () => salvarGrupoBtn.style.background = '#27ae60');
+salvarGrupoBtn.addEventListener('mouseout', () => salvarGrupoBtn.style.background = '#2ecc71');
 
-        container.appendChild(itemContainer);
-    });
-}
-
-// MEUS GRUPOS
-document.getElementById('meusGrupos').onclick = (e) => {
-    e.preventDefault();
-    const uid = localStorage.getItem('usuarioID');
-    const meus = todosGrupos.filter(g => g.dono === uid);
-    if (meus.length === 0) return alert("Você ainda não tem grupos.");
-    renderizar(meus);
-    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-    menu.classList.remove('open');
-};
-
-// Categorias
-document.querySelectorAll('.cat-btn').forEach(btn => {
-    btn.onclick = () => {
-        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        const cat = btn.dataset.cat.toLowerCase();
-        renderizar(cat === 'todos' ? todosGrupos : todosGrupos.filter(g => g.categoria.toLowerCase() === cat));
-    };
-});
-
-// Enviar Grupo
-document.getElementById('enviarGrupo').onclick = () => {
-    document.getElementById('modalEnvioGrupo').style.display = 'flex';
-    menu.classList.remove('open');
-};
-
-document.getElementById('grupoFotoUpload').onchange = (e) => {
+fotoInput.addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (file) {
     const reader = new FileReader();
-    reader.onload = r => document.getElementById('previewFoto').src = r.target.result;
-    reader.readAsDataURL(e.target.files[0]);
+    reader.onload = (ev) => (previewFoto.src = ev.target.result);
+    reader.readAsDataURL(file);
+  }
+});
+
+// ================== SALVAR NOVO GRUPO (COM VALIDAÇÃO DE LINK, SEM VALIDAÇÃO DE NOME) ================== //
+async function salvarNovoGrupo() {
+  const nome = document.getElementById('grupoNome').value.trim();
+  const link = document.getElementById('grupoLink').value.trim();
+  // Uso da imagem padrão se a prévia ainda for a imagem padrão OU se a foto for a imagem padrão
+  const foto = previewFoto.src.trim().includes('9qdwuz.webp') ? 'https://files.catbox.moe/ls07y5.jpg' : previewFoto.src.trim();
+  const categoria = document.getElementById('grupoCategoria').value;
+  const vipCodigo = document.getElementById('grupoVipCodigo').value.trim();
+
+  // 1. Validação de Campos
+  if (!nome) {
+    alert('O nome do grupo é obrigatório.');
+    return;
+  }
+  if (!WHATSAPP_LINK_REGEX.test(link)) {
+    alert('Por favor, use um link de convite do WhatsApp válido (ex: https://chat.whatsapp.com/...).');
+    return;
+  }
+  if (!categoria) {
+    alert('A categoria do grupo é obrigatória. Por favor, escolha uma.');
+    return;
+  }
+  
+  // 2. Validação de DUPLICIDADE (APENAS Link)
+  if (todosGrupos.some(g => g.link === link)) {
+    alert('Este link de grupo já foi enviado. Não é permitido links repetidos.');
+    return; 
+  }
+  
+  // 3. Gera ID de usuário se não existir
+  const isVip = vipCodigo === "21977"; 
+  const usuario = localStorage.getItem('usuarioID') || crypto.randomUUID();
+  localStorage.setItem('usuarioID', usuario);
+
+  // CORREÇÃO ESSENCIAL: Garante que 'cliques' é inicializado em 0
+  const novoGrupo = { nome, link, foto, categoria, dono: usuario, vip: isVip, cliques: 0 }; 
+
+  // 4. Salva no Firebase
+  try {
+    const gruposRef = ref(db, 'grupos');
+    // Usa push() para criar uma chave ÚNICA e salvar os dados
+    await push(gruposRef, novoGrupo); 
+  } catch (error) {
+    alert('Erro ao salvar no banco de dados. Tente novamente.');
+    console.error('Erro ao salvar no Firebase:', error);
+    return;
+  }
+
+  // 5. Feedback e Limpeza
+  const msg = document.getElementById('mensagemEnvio');
+  msg.style.display = 'block';
+  setTimeout(() => {
+    msg.style.display = 'none';
+    modal.style.display = 'none';
+  }, 1500);
 };
 
-document.getElementById('salvarGrupo').onclick = async () => {
-    const nome = document.getElementById('grupoNome').value;
-    const link = document.getElementById('grupoLink').value;
-    const cat = document.getElementById('grupoCategoria').value;
-    const vipCod = document.getElementById('grupoVipCodigo').value;
-    if(!nome || !WHATSAPP_LINK_REGEX.test(link) || !cat) return alert('Preencha os campos obrigatórios!');
+// SALVAR GRUPO AGORA APONTA PARA A FUNÇÃO DE NOVO GRUPO POR PADRÃO
+salvarGrupoBtn.onclick = salvarNovoGrupo;
 
-    const uid = localStorage.getItem('usuarioID') || crypto.randomUUID();
-    localStorage.setItem('usuarioID', uid);
+// ================== FUNÇÕES DE EDIÇÃO/EXCLUSÃO, CARREGAR GRUPOS (CORRIGIDAS) ================== //
 
-    await push(ref(db, 'grupos'), {
-        nome, link, categoria: cat, dono: uid,
-        foto: document.getElementById('previewFoto').src.includes('9qdwuz') ? 'https://files.catbox.moe/ls07y5.jpg' : document.getElementById('previewFoto').src,
-        vip: vipCod === "21977", cliques: 0
+function abrirEdicao(grupo){
+  modal.style.display = 'flex';
+  document.getElementById('grupoNome').value = grupo.nome;
+  document.getElementById('grupoLink').value = grupo.link;
+  previewFoto.src = grupo.foto;
+  document.getElementById('grupoCategoria').value = grupo.categoria;
+  document.getElementById('grupoVipCodigo').value = grupo.vip ? "21977" : "";
+  document.getElementById('grupoFotoUpload').value = null; // Limpa o input file
+  
+  // Define a função de salvar para a edição e passa o objeto completo (com a key)
+  salvarGrupoBtn.onclick = () => salvarEdicao(grupo); 
+}
+
+// *** FUNÇÃO SALVAREDICAO (CORRIGIDA PARA PRESERVAR CLIQUES) ***
+async function salvarEdicao(grupoOriginal){
+  const nomeNovo = document.getElementById('grupoNome').value.trim();
+  const linkNovo = document.getElementById('grupoLink').value.trim();
+  // Se o usuário não alterou a foto, mantém a original. Se sim, usa a nova prévia (ou padrão)
+  const fotoNova = previewFoto.src.trim().includes('9qdwuz.webp') ? grupoOriginal.foto : previewFoto.src.trim();
+  const categoriaNova = document.getElementById('grupoCategoria').value;
+  const vipNovo = document.getElementById('grupoVipCodigo').value.trim() === "21977"; 
+
+  // 1. Validação de Campos
+  if (!nomeNovo || !WHATSAPP_LINK_REGEX.test(linkNovo) || !categoriaNova) {
+    alert('Preencha corretamente o nome, link válido do WhatsApp e a categoria!');
+    return;
+  }
+  
+  // 2. Validação de DUPLICIDADE de Link (Ignora o grupo em edição)
+  const isLinkRepetido = todosGrupos.some(g => 
+      g.link === linkNovo && 
+      g.key !== grupoOriginal.key // IGNORA O PRÓPRIO GRUPO SENDO EDITADO
+  );
+  
+  if (isLinkRepetido) {
+    alert('Este link de grupo já está sendo usado por outro grupo. Não é permitido links repetidos.');
+    return;
+  }
+  
+  // 3. Monta o Objeto Editado
+  const grupoEditado = {
+      nome: nomeNovo, 
+      link: linkNovo, 
+      foto: fotoNova,
+      categoria: categoriaNova,
+      vip: vipNovo,
+      dono: grupoOriginal.dono, 
+      // CORREÇÃO ESSENCIAL: Usa o valor de cliques do objeto original, garantindo que não seja resetado.
+      cliques: grupoOriginal.cliques || 0, 
+  };
+  
+  try {
+    // 4. ATUALIZA o grupo no Firebase usando sua CHAVE ÚNICA (grupoOriginal.key)
+    // O SET SUBSTITUI O OBJETO, POR ISSO PRECISÁVAMOS DO CAMPO 'cliques' acima.
+    await set(ref(db, 'grupos/' + grupoOriginal.key), grupoEditado);
+  } catch (error) {
+    alert('Erro ao salvar edição no banco de dados. Tente novamente.');
+    console.error('Erro ao salvar edição no Firebase:', error);
+    return;
+  }
+
+  // 5. Feedback e Limpeza
+  const msg = document.getElementById('mensagemEnvio');
+  msg.textContent = 'Grupo editado com sucesso!';
+  msg.style.display = 'block';
+  setTimeout(() => {
+    msg.style.display = 'none';
+    msg.textContent = 'Grupo enviado com sucesso!'; // Restaura a mensagem padrão
+    modal.style.display = 'none';
+  }, 1500);
+
+  // 6. Restaura a função de salvar para o padrão de "novo grupo"
+  salvarGrupoBtn.onclick = salvarNovoGrupo; 
+}
+
+// *** FUNÇÃO EXCLUIR GRUPO (CORRIGIDA PARA USAR A CHAVE ÚNICA/KEY) ***
+function excluirGrupo(grupo){
+  if (!confirm('Deseja realmente excluir este grupo?')) return;
+  // CORRIGIDO: Remove no Firebase usando a chave única
+  try {
+    remove(ref(db, 'grupos/' + grupo.key));
+  } catch (error) {
+    alert('Erro ao excluir o grupo.');
+    console.error('Erro ao excluir do Firebase:', error);
+  }
+}
+
+
+// *** FUNÇÃO CARREGAR GRUPOS (CORRIGIDA E SIMPLIFICADA) ***
+async function carregarGrupos() {
+  /* REMOVIDA a lógica de carregar 'grupos.json' para evitar problemas de key e sincronização */
+
+  const gruposRef = ref(db, 'grupos');
+  // Monitora mudanças no Firebase em tempo real
+  onValue(gruposRef, snap => {
+    const listaFirebase = [];
+    
+    // Mapeia os dados do Firebase, ADICIONANDO A CHAVE ÚNICA (KEY)
+    snap.forEach(childSnap => {
+        const grupo = childSnap.val();
+        grupo.key = childSnap.key; // ADICIONA A KEY ÚNICA DO FIREBASE
+        grupo.vip = !!grupo.vip; // Garante que 'vip' é booleano
+        grupo.cliques = grupo.cliques || 0; // Garante que 'cliques' existe
+        listaFirebase.push(grupo);
     });
-    document.getElementById('modalEnvioGrupo').style.display = 'none';
+    
+    // Atualiza a lista global com os grupos do Firebase
+    todosGrupos = listaFirebase;
+    
+    // Renderiza a lista padrão (Todos)
+    const categoriaAtiva = document.querySelector('.cat-btn.active').dataset.cat.toLowerCase();
+    
+    let listaInicial = todosGrupos;
+    if (categoriaAtiva !== 'todos') {
+      listaInicial = todosGrupos.filter(g => g.categoria?.toLowerCase() === categoriaAtiva);
+    }
+    
+    renderizarGrupos(listaInicial);
+  });
+}
+
+// ================== RENDERIZAR GRUPOS (CORRIGIDO) ================== //
+
+function ordenarGrupos(lista) {
+    return lista.sort((a, b) => {
+        // 1. VIPs SEMPRE no topo
+        if (a.vip && !b.vip) return -1;
+        if (!a.vip && b.vip) return 1;
+        // 2. Critério de desempate: alfabética
+        return (a.nome || '').localeCompare(b.nome || ''); 
+    });
+}
+
+
+function renderizarGrupos(lista) {
+  const container = document.getElementById('lista-grupos');
+  container.innerHTML = '';
+
+  if (lista.length === 0) {
+    container.innerHTML = '<p style="color:#555;">Nenhum grupo encontrado nesta categoria.</p>';
+    return;
+  }
+
+  const usuario = localStorage.getItem('usuarioID');
+
+  // Aplica a ordenação VIP
+  const listaOrdenada = ordenarGrupos([...lista]);
+
+  listaOrdenada.forEach(g => {
+    // A verificação é pelo ID/dono armazenado
+    const isOwner = g.dono === usuario;
+
+    const wrapper = document.createElement('div');
+    wrapper.style.display = 'flex';
+    wrapper.style.flexDirection = 'column';
+    wrapper.style.alignItems = 'center';
+    wrapper.style.width = '100%';
+
+    const btn = document.createElement('a');
+    let classNames = ['grupo'];
+    if (g.vip) classNames.push('vip');
+    
+    btn.className = classNames.join(' ');
+    btn.href = g.link;
+    btn.target = '_blank';
+    btn.innerHTML = `
+      <img class="foto" src="${g.foto}" alt="foto do grupo">
+      <div class="info">
+        <span class="nome">${g.nome}</span>
+        <div class="categoria">${g.categoria || ''}</div>
+        <div class="cliques">0</div>
+      </div>
+    `;
+
+    // Atualiza o contador de cliques em tempo real
+    const cliquesSpan = btn.querySelector('.cliques');
+    if (cliquesSpan) {
+        cliquesSpan.textContent = `Cliques: ${g.cliques || 0}`;
+    }
+
+    // CORREÇÃO CRÍTICA: Usa a chave única (key) para a referência de cliques e transação
+    const cliqueRef = ref(db, 'grupos/' + g.key + '/cliques'); 
+    
+    onValue(cliqueRef, snap => {
+      // Adiciona o valor do clique ao span dentro do botão.
+      const cliquesSpanUpdate = btn.querySelector('.cliques');
+      if (cliquesSpanUpdate) {
+        cliquesSpanUpdate.textContent = `Cliques: ${snap.val() || 0}`;
+      }
+    });
+
+    // Função para registrar clique e abrir link
+    btn.addEventListener('click', e => {
+      e.preventDefault();
+      // CORREÇÃO: runTransaction APENAS NO CAMPO 'cliques' DENTRO DA KEY
+      runTransaction(cliqueRef, (currentData) => {
+        return (currentData || 0) + 1;
+      }).then(() => {
+        window.open(g.link, '_blank');
+      }).catch(error => {
+          console.error("Erro na transação de cliques:", error);
+          // Abre o link mesmo se a transação falhar, para não bloquear o usuário
+          window.open(g.link, '_blank'); 
+      });
+    });
+
+    wrapper.appendChild(btn);
+
+    // Criação dos botões de ação (Editar/Excluir)
+    if (isOwner) {
+      const box = document.createElement('div');
+      box.className = 'grupo-acoes-wrapper'; 
+      
+      const edit = document.createElement('button');
+      edit.textContent = 'Editar';
+      edit.className = 'edit-btn'; 
+      edit.onclick = () => abrirEdicao(g);
+      
+      const del = document.createElement('button');
+      del.textContent = 'Excluir';
+      del.className = 'delete-btn'; 
+      del.onclick = () => excluirGrupo(g);
+
+      box.appendChild(edit);
+      box.appendChild(del);
+      wrapper.appendChild(box);
+    }
+
+    container.appendChild(wrapper);
+  });
+}
+
+
+// ================== FUNÇÃO DE COPIAR PIX (MANTIDA) ================== //
+copyPixBtn.onclick = async () => {
+    try {
+        await navigator.clipboard.writeText(pixCodeField.value);
+        copyPixBtn.textContent = '✅ Código Copiado!';
+    } catch (err) {
+        console.error('Falha ao copiar:', err);
+        copyPixBtn.textContent = '❌ Erro ao Copiar!';
+    }
+    setTimeout(() => {
+        copyPixBtn.textContent = '📋 Copiar Código Pix';
+    }, 3000);
 };
 
-// VIP
-document.getElementById('comprarVipBtn').onclick = () => {
-    document.getElementById('vipModal').style.display = 'flex';
+
+// ================== NOVO CÓDIGO PARA O POP-UP DE ANÚNCIO ================== //
+
+const popupAnuncio = document.getElementById('popup-anuncio');
+const closePopupBtn = document.getElementById('close-popup-btn');
+
+// 1. Função para abrir o pop-up
+function showPopupAd() {
+    popupAnuncio.style.display = 'flex';
+}
+
+// 2. Função para fechar o pop-up
+function closePopupAd() {
+    popupAnuncio.style.display = 'none';
+    // Opcional: Armazenar no localStorage que o usuário já viu/fechou, para não mostrar novamente na mesma sessão
+    // localStorage.setItem('popupClosed', 'true');
+}
+
+// 3. Adiciona o evento de fechar ao botão 'X'
+closePopupBtn.addEventListener('click', closePopupAd);
+
+// 4. Adiciona o evento para mostrar o pop-up no carregamento da página
+window.addEventListener('load', showPopupAd);
+
+// ================== INICIALIZAÇÃO DE EVENTOS (MANTIDO) ================== //
+
+const comprarVipBtn = document.getElementById('comprarVipBtn');
+
+// O evento agora só abre o modal de Pix
+comprarVipBtn.addEventListener("click", (e) => {
+  e.preventDefault();
+  vipModal.style.display = "flex";
+  menu.classList.remove("open");
+});
+
+// Outros Eventos 
+document.getElementById('menuBtn').addEventListener('click',()=>menu.classList.add('open'));
+document.getElementById('closeBtn').addEventListener('click',()=>menu.classList.remove('open'));
+
+document.querySelectorAll('.cat-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const cat = btn.dataset.cat.toLowerCase();
+    
+    // Filtra e depois ordena
+    let listaFiltrada;
+    if (cat === 'todos') {
+        listaFiltrada = todosGrupos;
+    } else {
+        // Filtragem segura
+        listaFiltrada = todosGrupos.filter(g => g.categoria?.toLowerCase() === cat);
+    }
+
+    // Re-ordena a lista filtrada (necessário para manter VIPs no topo da categoria)
+    const listaFinal = ordenarGrupos(listaFiltrada);
+
+    renderizarGrupos(listaFinal);
+  });
+});
+
+fecharVipIcon.onclick = () => { vipModal.style.display = 'none'; };
+fecharVipBtn.onclick = () => { vipModal.style.display = 'none'; };
+
+
+// ABRIR MODAL ENVIAR GRUPO (RESTAURA O O SALVAR POR PADRÃO)
+enviarBtn.onclick = (e) => {
+  e.preventDefault(); 
+  modal.style.display = 'flex';
+  menu.classList.remove('open');
+  // Limpa os campos para um novo envio
+  document.getElementById('grupoNome').value = '';
+  document.getElementById('grupoLink').value = '';
+  document.getElementById('grupoCategoria').value = '';
+  document.getElementById('grupoVipCodigo').value = '';
+  previewFoto.src = 'https://files.catbox.moe/9qdwuz.webp';
+  document.getElementById('grupoFotoUpload').value = null; // Limpa o input file
+  // Garante que o botão use a função de "novo grupo"
+  salvarGrupoBtn.onclick = salvarNovoGrupo; 
+  document.getElementById('mensagemEnvio').textContent = 'Grupo enviado com sucesso!'; // Restaura
+  document.getElementById('mensagemEnvio').style.display = 'none'; // Esconde
+};
+
+// MEUS GRUPOS (MANTIDO)
+meusBtn.onclick = (e) => {
+  e.preventDefault();
+  const usuario = localStorage.getItem('usuarioID');
+  if (!usuario) {
+      alert('Você ainda não enviou nenhum grupo.');
+      return;
+  }
+
+  const meus = todosGrupos.filter(g => g.dono === usuario);
+
+  if (meus.length === 0) {
+      alert('Você ainda não enviou nenhum grupo.');
+  } else {
+    // Remove a classe 'active' de todos os botões de categoria
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+    
+    renderizarGrupos(meus);
     menu.classList.remove('open');
-};
-document.getElementById('copy-pix-btn').onclick = () => {
-    navigator.clipboard.writeText(document.getElementById('pix-code-field').value);
-    alert('Pix Copiado!');
+  }
 };
 
-// TERMOS E PRIVACIDADE
+// TERMOS E PRIVACIDADE (MANTIDO)
 document.getElementById('termosLink').onclick = (e) => {
-    e.preventDefault();
-    document.getElementById('modalTitulo').innerText = "Termos de Uso";
-    document.getElementById('modalTexto').innerHTML = "1. Não publicar conteúdo ilegal.<br>2. Você é responsável pelos seus links.<br>3. Grupos abusivos serão removidos.";
-    document.getElementById('modalTermos').style.display = 'flex';
+  e.preventDefault();
+  modalTitulo.textContent = "Termos de Uso";
+  modalTexto.innerHTML = `
+    <p>Bem-vindo ao nosso site de grupos WhatsApp. Ao utilizar este site, você concorda com os seguintes termos:</p>
+    <ul>
+      <li>Você é responsável por todo o conteúdo que enviar, incluindo links e imagens.</li>
+      <li>Não é permitido enviar conteúdo ilegal, ofensivo ou que viole direitos de terceiros.</li>
+      <li>O site não se responsabiliza pelo conteúdo dos grupos externos do WhatsApp.</li>
+      <li>Os grupos VIPs são destacados apenas para fins de visibilidade dentro do site.</li>
+      <li>Podemos alterar os termos de uso a qualquer momento, sendo sua responsabilidade consultar atualizações.</li>
+      <li>O uso do site é gratuito, mas o envio de grupos e pagamentos VIP seguem as regras aqui descritas.</li>
+      </ul>
+    <p>Se você não concorda com estes termos, por favor, não utilize o site.</p>
+  `; 
+  modalTermos.style.display = "flex";
 };
 
 document.getElementById('privacidadeLink').onclick = (e) => {
-    e.preventDefault();
-    document.getElementById('modalTitulo').innerText = "Política de Privacidade";
-    document.getElementById('modalTexto').innerHTML = "Usamos apenas um ID anônimo no seu navegador para gerenciar seus grupos. Não coletamos dados pessoais.";
-    document.getElementById('modalTermos').style.display = 'flex';
+  e.preventDefault();
+  modalTitulo.textContent = "Política de Privacidade";
+  modalTexto.innerHTML = `
+    <p>Esta Política de Privacidade explica como coletamos e usamos os dados dos usuários em nosso site.</p>
+    <ul>
+      <li>Coletamos apenas informações necessárias para o funcionamento do site, como seu identificador único (usuarioID), cliques nos grupos e visitas ao site.</li>
+      <li>O usuarioID é armazenado no seu navegador via localStorage e não contém dados pessoais identificáveis.</li>
+      <li>Os dados de cliques e visitas são armazenados no Firebase apenas para exibir estatísticas do site.</li>
+      <li>Não compartilhamos seus dados com terceiros.</li>
+      <li>Você pode limpar os dados do seu navegador a qualquer momento, removendo seu usuarioID e histórico local.</li>
+    </ul>
+    <p>Ao continuar usando o site, você concorda com esta política.</p>
+  `;
+  modalTermos.style.display = "flex";
 };
 
-carregarGrupos();
+closeModalTermos.onclick = () => modalTermos.style.display = "none";
 
-function abrirEdicao(g) {
-    document.getElementById('modalEnvioGrupo').style.display = 'flex';
-    document.getElementById('grupoNome').value = g.nome;
-    document.getElementById('grupoLink').value = g.link;
-    document.getElementById('grupoCategoria').value = g.categoria;
-    document.getElementById('previewFoto').src = g.foto;
-}
+// ========================================================= //
+// === CÓDIGO PARA MOSTRAR/ESCONDER O HEADER NO SCROLL === //
+// ========================================================= //
+
+let lastScrollTop = 0;
+const scrollThreshold = 20; // Rolagem mínima necessária para disparar a mudança
+
+window.addEventListener("scroll", () => {
+    const currentScroll = window.scrollY || document.documentElement.scrollTop;
+
+    // Apenas se o scroll for maior que o topo (para evitar esconder no carregamento)
+    if (currentScroll > 0) {
+        
+        // Rolando para BAIXO
+        if (currentScroll > lastScrollTop + scrollThreshold) {
+            header.classList.remove('header-visible');
+        } 
+        
+        // Rolando para CIMA
+        else if (currentScroll < lastScrollTop - scrollThreshold) {
+            header.classList.add('header-visible');
+        }
+    } else {
+        // Se estiver no topo da página, sempre mostre o header
+        header.classList.add('header-visible');
+    }
+
+    lastScrollTop = currentScroll <= 0 ? 0 : currentScroll; // Para mobile/scroll bounce
+}, false);
+
+// Garante que o header esteja visível na carga inicial
+document.addEventListener('DOMContentLoaded', () => {
+    if (window.scrollY === 0) {
+        header.classList.add('header-visible');
+    }
+});
+
+
+// ================== INICIAR ================== //
+carregarGrupos();
 </script>
+
 </body>
 </html>
