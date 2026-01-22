@@ -564,7 +564,10 @@ footer a{color:#b78cff;text-decoration:none}
     
     <input type="text" id="grupoNome" placeholder=" Nome do grupo" required>
     <input type="text" id="grupoLink" placeholder=" Link do grupo (https://chat.whatsapp.com/...)" required>
-    
+ 
+    <input type="text" id="grupoDescricao" placeholder=" Descrição curta (Máx 60 letras)" maxlength="60" required>
+
+          
     <select id="grupoCategoria" required>
       <option value=""> Selecione a Categoria</option>
       <option value="Amizade">Amizade</option>
@@ -664,12 +667,12 @@ fotoInput.addEventListener("change", (e) => {
 async function salvarNovoGrupo() {
   const nome = document.getElementById('grupoNome').value.trim();
   const link = document.getElementById('grupoLink').value.trim();
-  // Uso da imagem padrão se a prévia ainda for a imagem padrão OU se a foto for a imagem padrão
+  const descricao = document.getElementById('grupoDescricao').value.trim() || "Clique para entrar no grupo e interagir com a galera!";
+  
   const foto = previewFoto.src.trim().includes('9qdwuz.webp') ? 'https://files.catbox.moe/ls07y5.jpg' : previewFoto.src.trim();
   const categoria = document.getElementById('grupoCategoria').value;
   const vipCodigo = document.getElementById('grupoVipCodigo').value.trim();
 
-  // 1. Validação de Campos
   if (!nome) {
     alert('O nome do grupo é obrigatório.');
     return;
@@ -683,24 +686,20 @@ async function salvarNovoGrupo() {
     return;
   }
   
-  // 2. Validação de DUPLICIDADE (APENAS Link)
   if (todosGrupos.some(g => g.link === link)) {
     alert('Este link de grupo já foi enviado. Não é permitido links repetidos.');
     return; 
   }
   
-  // 3. Gera ID de usuário se não existir
   const isVip = vipCodigo === "21977"; 
   const usuario = localStorage.getItem('usuarioID') || crypto.randomUUID();
   localStorage.setItem('usuarioID', usuario);
 
-  // CORREÇÃO ESSENCIAL: Garante que 'cliques' é inicializado em 0
-  const novoGrupo = { nome, link, foto, categoria, dono: usuario, vip: isVip, cliques: 0 }; 
+  // Aqui a descrição foi incluída no pacote
+  const novoGrupo = { nome, link, descricao, foto, categoria, dono: usuario, vip: isVip, cliques: 0 }; 
 
-  // 4. Salva no Firebase
   try {
     const gruposRef = ref(db, 'grupos');
-    // Usa push() para criar uma chave ÚNICA e salvar os dados
     await push(gruposRef, novoGrupo); 
   } catch (error) {
     alert('Erro ao salvar no banco de dados. Tente novamente.');
@@ -708,14 +707,14 @@ async function salvarNovoGrupo() {
     return;
   }
 
-  // 5. Feedback e Limpeza
   const msg = document.getElementById('mensagemEnvio');
   msg.style.display = 'block';
   setTimeout(() => {
     msg.style.display = 'none';
     modal.style.display = 'none';
   }, 1500);
-};
+}
+
 
 // SALVAR GRUPO AGORA APONTA PARA A FUNÇÃO DE NOVO GRUPO POR PADRÃO
 salvarGrupoBtn.onclick = salvarNovoGrupo;
@@ -739,21 +738,20 @@ function abrirEdicao(grupo){
 async function salvarEdicao(grupoOriginal){
   const nomeNovo = document.getElementById('grupoNome').value.trim();
   const linkNovo = document.getElementById('grupoLink').value.trim();
-  // Se o usuário não alterou a foto, mantém a original. Se sim, usa a nova prévia (ou padrão)
+  const descricaoNova = document.getElementById('grupoDescricao').value.trim() || "Clique para entrar no grupo e interagir com a galera!";
+  
   const fotoNova = previewFoto.src.trim().includes('9qdwuz.webp') ? grupoOriginal.foto : previewFoto.src.trim();
   const categoriaNova = document.getElementById('grupoCategoria').value;
   const vipNovo = document.getElementById('grupoVipCodigo').value.trim() === "21977"; 
 
-  // 1. Validação de Campos
   if (!nomeNovo || !WHATSAPP_LINK_REGEX.test(linkNovo) || !categoriaNova) {
     alert('Preencha corretamente o nome, link válido do WhatsApp e a categoria!');
     return;
   }
   
-  // 2. Validação de DUPLICIDADE de Link (Ignora o grupo em edição)
   const isLinkRepetido = todosGrupos.some(g => 
       g.link === linkNovo && 
-      g.key !== grupoOriginal.key // IGNORA O PRÓPRIO GRUPO SENDO EDITADO
+      g.key !== grupoOriginal.key
   );
   
   if (isLinkRepetido) {
@@ -761,21 +759,18 @@ async function salvarEdicao(grupoOriginal){
     return;
   }
   
-  // 3. Monta o Objeto Editado
   const grupoEditado = {
       nome: nomeNovo, 
       link: linkNovo, 
+      descricao: descricaoNova,
       foto: fotoNova,
       categoria: categoriaNova,
       vip: vipNovo,
       dono: grupoOriginal.dono, 
-      // CORREÇÃO ESSENCIAL: Usa o valor de cliques do objeto original, garantindo que não seja resetado.
       cliques: grupoOriginal.cliques || 0, 
   };
   
   try {
-    // 4. ATUALIZA o grupo no Firebase usando sua CHAVE ÚNICA (grupoOriginal.key)
-    // O SET SUBSTITUI O OBJETO, POR ISSO PRECISÁVAMOS DO CAMPO 'cliques' acima.
     await set(ref(db, 'grupos/' + grupoOriginal.key), grupoEditado);
   } catch (error) {
     alert('Erro ao salvar edição no banco de dados. Tente novamente.');
@@ -783,19 +778,18 @@ async function salvarEdicao(grupoOriginal){
     return;
   }
 
-  // 5. Feedback e Limpeza
   const msg = document.getElementById('mensagemEnvio');
   msg.textContent = 'Grupo editado com sucesso!';
   msg.style.display = 'block';
   setTimeout(() => {
     msg.style.display = 'none';
-    msg.textContent = 'Grupo enviado com sucesso!'; // Restaura a mensagem padrão
+    msg.textContent = 'Grupo enviado com sucesso!';
     modal.style.display = 'none';
   }, 1500);
 
-  // 6. Restaura a função de salvar para o padrão de "novo grupo"
   salvarGrupoBtn.onclick = salvarNovoGrupo; 
 }
+
 
 // *** FUNÇÃO EXCLUIR GRUPO (CORRIGIDA PARA USAR A CHAVE ÚNICA/KEY) ***
 function excluirGrupo(grupo){
@@ -895,7 +889,7 @@ function renderizarGrupos(lista) {
       </div>
       <div class="card-corpo">
         <span class="nome">${g.nome}</span>
-        <p class="descricao">Clique para entrar no grupo e interagir com a galera!</p>
+        <p class="descricao">${g.descricao || "Clique para entrar no grupo e interagir com a galera!"}</p>
         <div class="btn-falso-entrar">Entrar no Grupo</div>
       </div>
     `;
@@ -1039,23 +1033,30 @@ fecharVipIcon.onclick = () => { vipModal.style.display = 'none'; };
 fecharVipBtn.onclick = () => { vipModal.style.display = 'none'; };
 
 
-// ABRIR MODAL ENVIAR GRUPO (RESTAURA O O SALVAR POR PADRÃO)
+// ABRIR MODAL ENVIAR GRUPO (RESTAURA O SALVAR POR PADRÃO)
 enviarBtn.onclick = (e) => {
   e.preventDefault(); 
   modal.style.display = 'flex';
   menu.classList.remove('open');
+  
   // Limpa os campos para um novo envio
   document.getElementById('grupoNome').value = '';
   document.getElementById('grupoLink').value = '';
+  
+  // --- ADICIONE ESTA LINHA ABAIXO ---
+  document.getElementById('grupoDescricao').value = ''; 
+  // ---------------------------------
+
   document.getElementById('grupoCategoria').value = '';
   document.getElementById('grupoVipCodigo').value = '';
   previewFoto.src = 'https://files.catbox.moe/9qdwuz.webp';
-  document.getElementById('grupoFotoUpload').value = null; // Limpa o input file
-  // Garante que o botão use a função de "novo grupo"
+  document.getElementById('grupoFotoUpload').value = null; 
+  
   salvarGrupoBtn.onclick = salvarNovoGrupo; 
-  document.getElementById('mensagemEnvio').textContent = 'Grupo enviado com sucesso!'; // Restaura
-  document.getElementById('mensagemEnvio').style.display = 'none'; // Esconde
+  document.getElementById('mensagemEnvio').textContent = 'Grupo enviado com sucesso!'; 
+  document.getElementById('mensagemEnvio').style.display = 'none'; 
 };
+
 
 // MEUS GRUPOS (MANTIDO)
 meusBtn.onclick = (e) => {
