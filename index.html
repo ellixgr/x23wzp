@@ -735,20 +735,20 @@ async function salvarNovoGrupo() {
   const vipCodigo = document.getElementById('grupoVipCodigo').value.trim();
 
   if (!nome) {
-    alert('O nome do grupo é obrigatório.');
+    showAlert('O nome do grupo é obrigatório.');
     return;
   }
   if (!WHATSAPP_LINK_REGEX.test(link)) {
-    alert('Por favor, use um link de convite do WhatsApp válido (ex: https://chat.whatsapp.com/...).');
+    showAlert('Por favor, use um link de convite do WhatsApp válido (ex: https://chat.whatsapp.com/...).');
     return;
   }
   if (!categoria) {
-    alert('A categoria do grupo é obrigatória. Por favor, escolha uma.');
+    showAlert('A categoria do grupo é obrigatória. Por favor, escolha uma.');
     return;
   }
   
   if (todosGrupos.some(g => g.link === link)) {
-    alert('Este link de grupo já foi enviado. Não é permitido links repetidos.');
+    showAlert('Este link de grupo já foi enviado. Não é permitido links repetidos.');
     return; 
   }
   
@@ -763,7 +763,7 @@ async function salvarNovoGrupo() {
     const gruposRef = ref(db, 'grupos');
     await push(gruposRef, novoGrupo); 
   } catch (error) {
-    alert('Erro ao salvar no banco de dados. Tente novamente.');
+    showAlert('Erro ao salvar no banco de dados. Tente novamente.');
     console.error('Erro ao salvar no Firebase:', error);
     return;
   }
@@ -806,7 +806,7 @@ async function salvarEdicao(grupoOriginal){
   const vipNovo = document.getElementById('grupoVipCodigo').value.trim() === "21977"; 
 
   if (!nomeNovo || !WHATSAPP_LINK_REGEX.test(linkNovo) || !categoriaNova) {
-    alert('Preencha corretamente o nome, link válido do WhatsApp e a categoria!');
+    showAlert('Preencha corretamente o nome, link válido do WhatsApp e a categoria!');
     return;
   }
   
@@ -816,7 +816,7 @@ async function salvarEdicao(grupoOriginal){
   );
   
   if (isLinkRepetido) {
-    alert('Este link de grupo já está sendo usado por outro grupo. Não é permitido links repetidos.');
+    showAlert('Este link de grupo já está sendo usado por outro grupo. Não é permitido links repetidos.');
     return;
   }
   
@@ -834,7 +834,7 @@ async function salvarEdicao(grupoOriginal){
   try {
     await set(ref(db, 'grupos/' + grupoOriginal.key), grupoEditado);
   } catch (error) {
-    alert('Erro ao salvar edição no banco de dados. Tente novamente.');
+    showAlert('Erro ao salvar edição no banco de dados. Tente novamente.');
     console.error('Erro ao salvar edição no Firebase:', error);
     return;
   }
@@ -859,7 +859,7 @@ function excluirGrupo(grupo){
   try {
     remove(ref(db, 'grupos/' + grupo.key));
   } catch (error) {
-    alert('Erro ao excluir o grupo.');
+    showAlert('Erro ao excluir o grupo.');
     console.error('Erro ao excluir do Firebase:', error);
   }
 }
@@ -1117,14 +1117,14 @@ meusBtn.onclick = (e) => {
   e.preventDefault();
   const usuario = localStorage.getItem('usuarioID');
   if (!usuario) {
-      alert('Você ainda não enviou nenhum grupo.');
+      showAlert('Você ainda não enviou nenhum grupo.');
       return;
   }
 
   const meus = todosGrupos.filter(g => g.dono === usuario);
 
   if (meus.length === 0) {
-      alert('Você ainda não enviou nenhum grupo.');
+      showAlert('Você ainda não enviou nenhum grupo.');
   } else {
     // Remove a classe 'active' de todos os botões de categoria
     document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
@@ -1211,8 +1211,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 // ================== INICIAR ================== //
+
+// 1. Crie a função showAlert aqui dentro (no final do script)
+window.showAlert = function(mensagem) {
+  document.getElementById('customAlertMessage').textContent = mensagem;
+  document.getElementById('customAlert').style.display = 'flex';
+};
+
 carregarGrupos();
 </script>
+
+<div id="customAlert" class="modal" style="display:none; z-index: 10000;">
+  <div class="modal-content" style="border: 2px solid #b78cff; padding: 30px;">
+    <h3 style="color: #b78cff;">Aviso</h3>
+    <p id="customAlertMessage" style="margin: 15px 0; color: #333; font-weight: 500;"></p>
+    <button onclick="document.getElementById('customAlert').style.display='none'" 
+            style="background: #b78cff; border: none; padding: 10px 30px; color: white; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 16px;">
+      OK
+    </button>
+  </div>
+</div>
 
 </body>
 </html>
