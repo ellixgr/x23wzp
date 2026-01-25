@@ -3,217 +3,171 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DBZ Crazy Zombie Mobile</title>
+    <title>DBZ ULTRA MOBILE</title>
     <style>
         * { box-sizing: border-box; -webkit-touch-callout: none; -webkit-user-select: none; touch-action: none; }
         body { margin: 0; background: #000; overflow: hidden; font-family: 'Arial Black', sans-serif; }
-        
-        canvas { display: block; background: #111; }
-
-        /* Telas de Menu e Pause */
+        canvas { display: block; }
         .overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.9); display: flex; flex-direction: column;
             align-items: center; justify-content: center; z-index: 100;
         }
-        button {
-            padding: 15px 40px; font-size: 24px; background: #ff9900; color: white;
-            border: none; border-radius: 10px; cursor: pointer; margin: 10px;
-        }
-
-        /* HUD */
-        .hud { position: fixed; top: 10px; left: 10px; color: white; width: 250px; pointer-events: none; }
-        .bar-container { width: 100%; height: 15px; background: #333; margin: 5px 0; border: 1px solid #fff; }
-        .bar-fill { height: 100%; transition: width 0.2s; }
-
-        /* Controles GIGANTES para Mobile */
-        .controls {
-            position: fixed; bottom: 30px; width: 100%; display: flex;
-            justify-content: space-between; padding: 0 40px; pointer-events: none;
-        }
-        .joystick-area {
-            width: 160px; height: 160px; background: rgba(255,255,255,0.15);
-            border-radius: 50%; position: relative; pointer-events: auto;
-        }
-        #stick {
-            width: 70px; height: 70px; background: #fff; border-radius: 50%;
-            position: absolute; top: 45px; left: 45px;
-        }
-        .action-btns { display: flex; gap: 20px; pointer-events: auto; }
-        .btn {
-            width: 90px; height: 90px; border-radius: 50%; display: flex;
-            align-items: center; justify-content: center; color: white; font-weight: bold;
-        }
-        .btn-atk { background: #fe2c55; }
-        .btn-sp { background: #0099ff; }
-        #pauseBtn { position: fixed; top: 10px; right: 10px; padding: 10px; background: #444; pointer-events: auto; }
+        .hud { position: fixed; top: 10px; left: 10px; color: white; width: 180px; pointer-events: none; }
+        .bar { width: 100%; height: 12px; background: #333; border: 1px solid #fff; margin: 4px 0; overflow: hidden; }
+        .bar-f { height: 100%; width: 0%; transition: width 0.1s; }
+        .ctrl { position: fixed; bottom: 30px; width: 100%; display: flex; justify-content: space-between; padding: 0 25px; }
+        .joy { width: 130px; height: 130px; background: rgba(255,255,255,0.1); border: 2px solid #555; border-radius: 50%; position: relative; pointer-events: auto; }
+        #stk { width: 60px; height: 60px; background: #fff; border-radius: 50%; position: absolute; top: 35px; left: 35px; box-shadow: 0 0 15px rgba(255,255,255,0.5); }
+        .btns { display: flex; gap: 15px; pointer-events: auto; align-items: flex-end; }
+        .b { width: 85px; height: 85px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 16px; font-weight: bold; text-shadow: 1px 1px #000; border: 4px solid rgba(255,255,255,0.4); }
     </style>
 </head>
 <body>
 
-    <div id="startMenu" class="overlay">
-        <h1 style="color: #ff9900; text-shadow: 2px 2px #f00;">DBZ ZOMBIE SURVIVAL</h1>
-        <p style="color: white;">Escolha seu Guerreiro:</p>
-        <div style="display: flex;">
-            <button onclick="startGame('Goku')" style="background: #ff6600;">GOKU</button>
-            <button onclick="startGame('Vegeta')" style="background: #6600ff;">VEGETA</button>
-        </div>
-    </div>
-
-    <div id="pauseMenu" class="overlay" style="display: none;">
-        <h1>PAUSA</h1>
-        <button onclick="togglePause()">VOLTAR</button>
-        <button onclick="location.reload()" style="background: #666;">SAIR</button>
+    <div id="m" class="overlay">
+        <h1 style="color: #f90; font-size: 40px; margin-bottom: 20px;">DBZ MOBILE</h1>
+        <button onclick="st('Goku')" style="background:#f60; padding:20px 50px; color:#fff; border:none; border-radius:15px; font-size:20px; font-weight:bold; margin:10px;">GOKU</button>
+        <button onclick="st('Vegeta')" style="background:#04f; padding:20px 50px; color:#fff; border:none; border-radius:15px; font-size:20px; font-weight:bold; margin:10px;">VEGETA</button>
     </div>
 
     <div class="hud">
-        HP <div class="bar-container"><div id="hpFill" class="bar-fill" style="background: #f00; width: 100%;"></div></div>
-        KI <div class="bar-container"><div id="kiFill" class="bar-fill" style="background: #00f; width: 0%;"></div></div>
-        SCORE: <span id="score">0</span>
+        <div style="font-size: 12px; color: #f00;">VIDA</div>
+        <div class="bar"><div id="h" class="bar-f" style="background:#f00; width:100%"></div></div>
+        <div style="font-size: 12px; color: #09f;">KI (ESPECIAL)</div>
+        <div class="bar"><div id="k" class="bar-f" style="background:#09f; width:0%"></div></div>
+        <div style="color: #fff; font-size: 18px; margin-top: 5px;">KILLS: <span id="s">0</span></div>
     </div>
 
-    <button id="pauseBtn" onclick="togglePause()">||</button>
-    <canvas id="gameCanvas"></canvas>
+    <canvas id="c"></canvas>
 
-    <div class="controls">
-        <div class="joystick-area" id="joyArea"><div id="stick"></div></div>
-        <div class="action-btns">
-            <div class="btn btn-sp" id="spBtn">KI</div>
-            <div class="btn btn-atk" id="atkBtn">GOLPE</div>
+    <div class="ctrl">
+        <div class="joy" id="ja"><div id="stk"></div></div>
+        <div class="btns">
+            <div class="b" id="ba" style="background:linear-gradient(#f22, #600);">SOCO</div>
+            <div class="b" id="bs" style="background:linear-gradient(#08e, #003);">PODER</div>
         </div>
     </div>
 
     <script>
-        const canvas = document.getElementById('gameCanvas');
+        const canvas = document.getElementById('c');
         const ctx = canvas.getContext('2d');
-        let gameActive = false;
-        let paused = false;
-
+        let active = false, score = 0;
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        const p = {
-            x: 200, y: 300, w: 50, h: 80, hp: 100, ki: 0,
-            score: 0, dx: 0, dy: 0, facing: 1, isAtk: false, isSp: false, name: ''
-        };
-
+        const p = { x: canvas.width/2, y: canvas.height/2, hp: 100, ki: 0, dx: 0, dy: 0, f: 1, atk: false, sp: false, name: '' };
         const enemies = [];
-        const particles = [];
 
-        function startGame(char) {
-            p.name = char;
-            document.getElementById('startMenu').style.display = 'none';
-            gameActive = true;
-            loop();
-        }
+        function st(n) { p.name = n; document.getElementById('m').style.display = 'none'; active = true; loop(); }
 
-        function togglePause() {
-            paused = !paused;
-            document.getElementById('pauseMenu').style.display = paused ? 'flex' : 'none';
-        }
-
-        // --- CONTROLES TOUCH ---
-        const joyArea = document.getElementById('joyArea');
-        const stick = document.getElementById('stick');
-        
-        joyArea.ontouchmove = (e) => {
-            const touch = e.touches[0];
-            const rect = joyArea.getBoundingClientRect();
-            const cx = rect.left + 80, cy = rect.top + 80;
-            let dx = touch.clientX - cx, dy = touch.clientY - cy;
-            const dist = Math.sqrt(dx*dx + dy*dy);
-            if(dist > 50) { dx *= 50/dist; dy *= 50/dist; }
-            stick.style.left = (45 + dx) + 'px'; stick.style.top = (45 + dy) + 'px';
-            p.dx = dx/8; p.dy = dy/8;
-            if(dx !== 0) p.facing = dx > 0 ? 1 : -1;
+        const ja = document.getElementById('ja');
+        ja.ontouchmove = (e) => {
+            const t = e.touches[0];
+            const r = ja.getBoundingClientRect();
+            let dx = t.clientX - (r.left + 65), dy = t.clientY - (r.top + 65);
+            const d = Math.sqrt(dx*dx + dy*dy);
+            if(d > 50) { dx *= 50/d; dy *= 50/d; }
+            document.getElementById('stk').style.transform = `translate(${dx}px, ${dy}px)`;
+            p.dx = dx/4; p.dy = dy/4;
+            if(dx > 5) p.f = 1; if(dx < -5) p.f = -1;
         };
-        joyArea.ontouchend = () => { p.dx = 0; p.dy = 0; stick.style.left = '45px'; stick.style.top = '45px'; };
+        ja.ontouchend = () => { p.dx = p.dy = 0; document.getElementById('stk').style.transform = 'translate(0,0)'; };
 
-        document.getElementById('atkBtn').ontouchstart = () => {
-            p.isAtk = true; setTimeout(() => p.isAtk = false, 150);
+        document.getElementById('ba').ontouchstart = (e) => { e.preventDefault(); p.atk = true; setTimeout(() => p.atk = false, 150); };
+        document.getElementById('bs').ontouchstart = (e) => { 
+            e.preventDefault();
+            if(p.ki >= 100) { p.sp = true; p.ki = 0; setTimeout(() => p.sp = false, 1000); }
         };
 
-        document.getElementById('spBtn').ontouchstart = () => {
-            if(p.ki >= 100) {
-                p.isSp = true; p.ki = 0;
-                setTimeout(() => p.isSp = false, 800);
+        function drawChar(x, y, color, hair, isEn, hp) {
+            ctx.save();
+            ctx.translate(x, y);
+            if(!isEn && p.f === -1) ctx.scale(-1, 1);
+
+            // Cabelo espetado
+            ctx.fillStyle = hair;
+            ctx.beginPath(); ctx.moveTo(-20, -30); ctx.lineTo(-10, -55); ctx.lineTo(0, -35); ctx.lineTo(10, -55); ctx.lineTo(20, -30); ctx.fill();
+            // Rosto e corpo
+            ctx.fillStyle = "#ffdbac"; ctx.fillRect(-15, -35, 30, 25);
+            ctx.fillStyle = color; ctx.fillRect(-18, -10, 36, 45);
+            // Olhos bravos
+            ctx.fillStyle = "white"; ctx.fillRect(5, -28, 8, 4); ctx.fillStyle = "black"; ctx.fillRect(8, -27, 3, 3);
+
+            if(isEn) {
+                ctx.scale(-1, 1);
+                ctx.fillStyle = "red"; ctx.fillRect(-20, -65, 40, 6);
+                ctx.fillStyle = "#0f0"; ctx.fillRect(-20, -65, (hp/30)*40, 6);
             }
-        };
-
-        function spawnEnemy() {
-            if(enemies.length < 8 && gameActive) {
-                enemies.push({ x: Math.random()*canvas.width, y: -50, hp: 30, s: 1 + Math.random() });
-            }
+            ctx.restore();
         }
-        setInterval(spawnEnemy, 2000);
 
         function update() {
-            if(!gameActive || paused) return;
-
-            p.x = Math.max(0, Math.min(canvas.width - p.w, p.x + p.dx));
-            p.y = Math.max(0, Math.min(canvas.height - p.h, p.y + p.dy));
+            if(!active) return;
+            p.x = Math.max(30, Math.min(canvas.width-30, p.x + p.dx));
+            p.y = Math.max(30, Math.min(canvas.height-30, p.y + p.dy));
 
             enemies.forEach((en, i) => {
-                const angle = Math.atan2(p.y - en.y, p.x - en.x);
-                en.x += Math.cos(angle) * en.s;
-                en.y += Math.sin(angle) * en.s;
+                const dx = p.x - en.x, dy = p.y - en.y;
+                const d = Math.sqrt(dx*dx + dy*dy);
+                en.x += (dx/d) * en.s; en.y += (dy/d) * en.s;
 
-                // Colisão Ataque Comum
-                if(p.isAtk && Math.abs(en.x - (p.x + p.facing*40)) < 40 && Math.abs(en.y - p.y) < 40) {
-                    en.hp -= 2; en.x += p.facing*20;
+                // DANO DO SOCO
+                if(p.atk && Math.abs(dy) < 40) {
+                    const inRange = p.f === 1 ? (en.x > p.x && en.x < p.x + 80) : (en.x < p.x && en.x > p.x - 80);
+                    if(inRange) { en.hp -= 5; en.x += p.f * 15; }
                 }
 
-                // Colisão Especial (Kamehameha)
-                if(p.isSp && Math.abs(en.y - p.y) < 60) {
-                    if((p.facing === 1 && en.x > p.x) || (p.facing === -1 && en.x < p.x)) {
-                        en.hp -= 5;
-                    }
+                // KAMEHAMEHA REAL (Dano contínuo enquanto o raio encosta)
+                if(p.sp && Math.abs(dy) < 50) {
+                    const inBeam = p.f === 1 ? (en.x > p.x) : (en.x < p.x);
+                    if(inBeam) { en.hp -= 1.5; en.s = 0.2; } // Desacelera no raio
                 }
 
-                // Dano no Player
-                if(Math.abs(en.x - p.x) < 30 && Math.abs(en.y - p.y) < 30) {
-                    p.hp -= 0.5;
-                }
-
-                if(en.hp <= 0) { enemies.splice(i,1); p.score += 10; p.ki = Math.min(100, p.ki + 20); }
+                if(d < 30) p.hp -= 0.4;
+                if(en.hp <= 0) { enemies.splice(i, 1); score++; p.ki = Math.min(100, p.ki + 20); }
             });
 
-            document.getElementById('hpFill').style.width = p.hp + '%';
-            document.getElementById('kiFill').style.width = p.ki + '%';
-            document.getElementById('score').innerText = p.score;
-
-            if(p.hp <= 0) { alert("GAME OVER! Score: " + p.score); location.reload(); }
-        }
-
-        function draw() {
-            ctx.clearRect(0,0,canvas.width, canvas.height);
-
-            // Inimigos (Zumbis) com rosto
-            enemies.forEach(en => {
-                ctx.fillStyle = "#4ade80"; ctx.fillRect(en.x-20, en.y-30, 40, 60);
-                ctx.fillStyle = "black"; ctx.fillRect(en.x-10, en.y-20, 5, 5); ctx.fillRect(en.x+5, en.y-20, 5, 5); // Olhos
-            });
-
-            // Personagem (Cabelo espetado)
-            ctx.fillStyle = p.name === 'Goku' ? "#ff6600" : "#0033ff";
-            ctx.fillRect(p.x-25, p.y-40, 50, 80);
-            ctx.fillStyle = "#ffe0bd"; ctx.fillRect(p.x-15, p.y-35, 30, 30); // Rosto
-            ctx.fillStyle = p.name === 'Goku' ? "black" : "#ff0"; // Cabelo
-            ctx.beginPath(); ctx.moveTo(p.x-25, p.y-35); ctx.lineTo(p.x, p.y-60); ctx.lineTo(p.x+25, p.y-35); ctx.fill();
-
-            // Especial Visual
-            if(p.isSp) {
-                ctx.fillStyle = "rgba(0, 153, 255, 0.6)";
-                if(p.facing === 1) ctx.fillRect(p.x + 20, p.y - 20, canvas.width, 40);
-                else ctx.fillRect(0, p.y - 20, p.x - 20, 40);
-                ctx.fillStyle = "white"; ctx.font = "20px Arial";
-                ctx.fillText(p.name === 'Goku' ? "KAMEHAMEHA!!!" : "FINAL FLASH!!!", p.x, p.y - 70);
-            }
+            if(Math.random() < 0.03) enemies.push({x: Math.random()*canvas.width, y: Math.random()>0.5? -50 : canvas.height+50, hp: 30, s: 1.5 + (score/20)});
+            
+            document.getElementById('h').style.width = p.hp + "%";
+            document.getElementById('k').style.width = p.ki + "%";
+            document.getElementById('s').innerText = score;
+            if(p.hp <= 0) { alert("PERDEU! KILLS: " + score); location.reload(); }
         }
 
         function loop() {
-            update(); draw();
-            if(gameActive) requestAnimationFrame(loop);
+            ctx.fillStyle = "#111"; ctx.fillRect(0,0,canvas.width,canvas.height);
+            
+            // Grid de fundo para percepção de movimento
+            ctx.strokeStyle = "#222";
+            for(let i=0; i<canvas.width; i+=60) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke(); }
+
+            enemies.forEach(en => drawChar(en.x, en.y, '#262', '#131', true, en.hp));
+            drawChar(p.x, p.y, p.name=='Goku'?'#f60':'#04f', 'black', false);
+
+            if(p.sp) {
+                // Brilho do Especial
+                let grad = ctx.createLinearGradient(p.x, p.y, p.f === 1 ? canvas.width : 0, p.y);
+                grad.addColorStop(0, "white");
+                grad.addColorStop(0.2, "#09f");
+                grad.addColorStop(1, "rgba(0,150,255,0)");
+                ctx.fillStyle = grad;
+                if(p.f === 1) ctx.fillRect(p.x + 20, p.y - 25, canvas.width, 50);
+                else ctx.fillRect(0, p.y - 25, p.x - 20, 50);
+                
+                // Texto do Golpe
+                ctx.fillStyle = "white"; ctx.font = "bold 25px Arial";
+                ctx.fillText(p.name=='Goku'?'KAMEHAMEHA!':'FINAL FLASH!', p.x - 50, p.y - 70);
+            }
+
+            if(p.atk) {
+                ctx.fillStyle = "rgba(255,255,255,0.8)";
+                ctx.beginPath(); ctx.arc(p.x + (p.f*40), p.y, 20, 0, Math.PI*2); ctx.fill();
+            }
+
+            update();
+            requestAnimationFrame(loop);
         }
     </script>
 </body>
