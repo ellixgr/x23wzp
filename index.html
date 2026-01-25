@@ -3,168 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mineradora Tycoon</title>
+    <title>Mega Zombie Combat</title>
     <style>
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background: #1a1a1a;
-            color: white;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin: 0;
-            height: 100vh;
-        }
-        .header {
-            text-align: center;
-            padding: 20px;
-        }
-        .main-container {
-            display: flex;
-            gap: 30px;
-            padding: 20px;
-        }
-        #gameCanvas {
-            background: #252525;
-            border: 4px solid #fe2c55;
-            border-radius: 15px;
-            cursor: pointer;
-        }
-        .shop {
-            background: #333;
-            padding: 20px;
-            border-radius: 15px;
-            width: 250px;
-        }
-        .upgrade-btn {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            background: #fe2c55;
-            border: none;
-            color: white;
-            font-weight: bold;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        .upgrade-btn:disabled {
-            background: #555;
-            cursor: not-allowed;
-        }
-        .stats { font-size: 1.2em; margin-bottom: 10px; }
+        body { margin: 0; background: #111; color: white; display: flex; flex-direction: column; align-items: center; font-family: sans-serif; overflow: hidden; }
+        canvas { background: url('https://img.freepik.com/free-photo/dark-street-wet-asphalt-reflections-rays-water-night-city-view-with-night-lights_1217-2516.jpg'); background-size: cover; border: 4px solid #333; margin-top: 20px; }
+        .ui { position: absolute; top: 30px; left: 50px; background: rgba(0,0,0,0.7); padding: 15px; border-radius: 10px; border-left: 5px solid #fe2c55; }
+        .controls-hint { margin-top: 10px; color: #888; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h1>Mineradora Digital</h1>
-        <div class="stats">Pontos: <span id="score">0</span></div>
-        <div class="stats">Produção: <span id="pps">0</span>/s</div>
+    <div class="ui">
+        <div>Kills: <span id="score">0</span></div>
+        <div>HP: <progress id="hp" value="100" max="100" style="width: 200px;"></progress></div>
+        <div class="controls-hint">WASD para mover | J para Atacar</div>
     </div>
 
-    <div class="main-container">
-        <canvas id="gameCanvas" width="500" height="400"></canvas>
-
-        <div class="shop">
-            <h3>Loja de Upgrades</h3>
-            <button id="buyMiner" class="upgrade-btn">
-                Comprar Mineradora (Custo: 50)
-            </button>
-            <p><small>Gera +1 ponto por segundo</small></p>
-            <hr>
-            <div id="inventory">Mineradoras: 0</div>
-        </div>
-    </div>
+    <canvas id="gameCanvas" width="800" height="450"></canvas>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        const scoreDisplay = document.getElementById('score');
-        const ppsDisplay = document.getElementById('pps');
-        const minerBtn = document.getElementById('buyMiner');
-        const invDisplay = document.getElementById('inventory');
+        
+        // Configurações do Personagem
+        const player = {
+            x: 100, y: 300, w: 40, h: 60,
+            speed: 5, hp: 100,
+            isAttacking: false,
+            dir: 1 // 1 para direita, -1 para esquerda
+        };
 
+        const enemies = [];
         let score = 0;
-        let miners = 0;
-        let minerCost = 50;
+        const keys = {};
 
-        // Alvo para clicar manualmente
-        let target = { x: 250, y: 200, radius: 40 };
+        // Inputs
+        window.onkeydown = (e) => keys[e.key.toLowerCase()] = true;
+        window.onkeyup = (e) => keys[e.key.toLowerCase()] = false;
 
-        // 1. Lógica da Máquina de Minerar (Pontos Passivos)
-        setInterval(() => {
-            if (miners > 0) {
-                addScore(miners);
-            }
-        }, 1000); // A cada 1 segundo
-
-        function addScore(amount) {
-            score += amount;
-            updateUI();
+        function spawnEnemy() {
+            enemies.push({
+                x: canvas.width + 50,
+                y: Math.random() * (canvas.height - 100) + 50,
+                w: 40, h: 60,
+                speed: 1.5 + (score * 0.1),
+                hp: 20
+            });
         }
 
-        function updateUI() {
-            scoreDisplay.innerText = Math.floor(score);
-            ppsDisplay.innerText = miners;
-            invDisplay.innerText = `Mineradoras: ${miners}`;
-            minerBtn.disabled = score < minerCost;
-            minerBtn.innerText = `Comprar Mineradora (Custo: ${minerCost})`;
-        }
+        function update() {
+            // Movimentação
+            if (keys['w'] && player.y > 50) player.y -= player.speed;
+            if (keys['s'] && player.y < canvas.height - player.h) player.y += player.speed;
+            if (keys['a']) { player.x -= player.speed; player.dir = -1; }
+            if (keys['d']) { player.x += player.speed; player.dir = 1; }
 
-        // Compra de Mineradora
-        minerBtn.addEventListener('click', () => {
-            if (score >= minerCost) {
-                score -= minerCost;
-                miners++;
-                minerCost = Math.floor(minerCost * 1.5); // Custo aumenta
-                updateUI();
+            // Ataque (Tecla J)
+            if (keys['j'] && !player.isAttacking) {
+                player.isAttacking = true;
+                setTimeout(() => player.isAttacking = false, 300);
             }
-        });
 
-        // Clique manual no Alvo
-        canvas.addEventListener('click', (e) => {
-            const rect = canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
+            // Lógica dos Inimigos
+            enemies.forEach((en, index) => {
+                // Seguir jogador
+                if (en.x > player.x) en.x -= en.speed;
+                else en.x += en.speed;
+                if (en.y > player.y) en.y -= en.speed;
+                else en.y += en.speed;
 
-            const dist = Math.sqrt((x - target.x)**2 + (y - target.y)**2);
-            if (dist < target.radius) {
-                addScore(1);
-                spawnParticle(x, y);
-                moveTarget();
-            }
-        });
+                // Colisão de Ataque
+                if (player.isAttacking) {
+                    let range = player.dir === 1 ? player.x + player.w : player.x - 40;
+                    if (Math.abs(en.x - range) < 40 && Math.abs(en.y - player.y) < 30) {
+                        en.hp -= 2;
+                        en.x += player.dir * 20; // Knockback
+                    }
+                }
 
-        function moveTarget() {
-            target.x = Math.random() * (canvas.width - 80) + 40;
-            target.y = Math.random() * (canvas.height - 80) + 40;
+                // Dano no Jogador
+                if (Math.abs(en.x - player.x) < 20 && Math.abs(en.y - player.y) < 20) {
+                    player.hp -= 0.2;
+                    document.getElementById('hp').value = player.hp;
+                }
+
+                if (en.hp <= 0) {
+                    enemies.splice(index, 1);
+                    score++;
+                    document.getElementById('score').innerText = score;
+                }
+            });
+
+            if (Math.random() < 0.02) spawnEnemy();
+            if (player.hp <= 0) location.reload();
         }
 
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Desenha o Alvo (O "Minério")
-            ctx.beginPath();
-            ctx.arc(target.x, target.y, target.radius, 0, Math.PI * 2);
-            ctx.fillStyle = '#fe2c55';
-            ctx.fill();
-            ctx.closePath();
 
-            ctx.fillStyle = "white";
-            ctx.textAlign = "center";
-            ctx.fillText("CLIQUE AQUI", target.x, target.y + 5);
+            // Desenhar Jogador
+            ctx.fillStyle = player.isAttacking ? "yellow" : "#00f0ff";
+            ctx.fillRect(player.x, player.y, player.w, player.h);
+            // "Braço" de ataque
+            if (player.isAttacking) {
+                ctx.fillStyle = "white";
+                ctx.fillRect(player.dir === 1 ? player.x + player.w : player.x - 30, player.y + 20, 30, 10);
+            }
 
-            requestAnimationFrame(draw);
-        }
+            // Desenhar Inimigos (Zumbis)
+            ctx.fillStyle = "#4ade80";
+            enemies.forEach(en => {
+                ctx.fillRect(en.x, en.y, en.w, en.h);
+                // Barra de vida pequena em cima do zumbi
+                ctx.fillStyle = "red";
+                ctx.fillRect(en.x, en.y - 10, (en.hp/20)*40, 5);
+                ctx.fillStyle = "#4ade80";
+            });
 
-        function spawnParticle(x, y) {
-            // Efeito visual simples de clique
-            ctx.fillStyle = "gold";
-            ctx.fillText("+1", x, y - 20);
+            requestAnimationFrame(() => {
+                update();
+                draw();
+            });
         }
 
         draw();
-        updateUI();
     </script>
 </body>
 </html>
