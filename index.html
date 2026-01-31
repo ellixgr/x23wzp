@@ -547,13 +547,20 @@ footer a{color:#b78cff;text-decoration:none}
 <div style="width: 100%; max-width: 420px; display: flex; flex-direction: column; align-items: center; padding: 0 20px; flex-grow: 1;"> 
     
     <div style="height: 120px; width: 100%;"></div> 
+
+    <div id="vip-container" style="width: 100%; margin-bottom: 20px;">
+      <h3 style="font-size: 14px; color: #ffd700; text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 5px;">
+        ⭐ Destaques VIP
+      </h3>
+      <div id="carrossel-vip" style="display: flex; overflow-x: auto; gap: 15px; padding: 10px 5px; scrollbar-width: none; -ms-overflow-style: none;">
+        </div>
+    </div>
     
-    <div id="lista-grupos" style="padding: 0; padding-bottom: 0;"></div>
+    <div id="lista-grupos" style="padding: 0; padding-bottom: 0; width: 100%;"></div>
 
     <a href="https://soupopular.net/ref/bagau" target="_blank" id="anuncio-afiliado" style="margin-top: auto;">
         <img src="https://files.catbox.moe/k4dtyg.jpg" alt="Anúncio - Compre Seguidores e Curtidas" loading="lazy">
     </a>
-
 </div>
 
 <footer>
@@ -920,7 +927,9 @@ function ordenarGrupos(lista) {
 
 function renderizarGrupos(lista) {
   const container = document.getElementById('lista-grupos');
+  const carrossel = document.getElementById('carrossel-vip');
   container.innerHTML = '';
+  if (carrossel) carrossel.innerHTML = '';
 
   if (lista.length === 0) {
     container.innerHTML = '<p style="color:#555;">Nenhum grupo encontrado nesta categoria.</p>';
@@ -931,22 +940,29 @@ function renderizarGrupos(lista) {
   const listaOrdenada = ordenarGrupos([...lista]);
 
   listaOrdenada.forEach(g => {
+    // Adiciona ao Carrossel se for VIP
+    if (g.vip && carrossel) {
+      const circle = document.createElement('a');
+      circle.href = g.link;
+      circle.target = '_blank';
+      circle.style = "text-decoration: none; flex: 0 0 auto; text-align: center; width: 70px;";
+      circle.innerHTML = `
+        <img src="${g.foto}" style="width: 60px; height: 60px; border-radius: 50%; border: 2px solid #ffd700; object-fit: cover; box-shadow: 0 0 10px rgba(255,215,0,0.5);">
+        <p style="font-size: 10px; color: #000; margin-top: 5px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: bold;">${g.nome}</p>
+      `;
+      carrossel.appendChild(circle);
+    }
+
+    // Criação dos Cards Normais
     const isOwner = g.dono === usuario;
     const wrapper = document.createElement('div');
-    wrapper.style.display = 'flex';
-    wrapper.style.flexDirection = 'column';
-    wrapper.style.alignItems = 'center';
-    wrapper.style.width = '100%';
+    wrapper.style = "display: flex; flex-direction: column; align-items: center; width: 100%;";
 
     const btn = document.createElement('a');
-    let classNames = ['grupo'];
-    if (g.vip) classNames.push('vip');
-    
-    btn.className = classNames.join(' ');
+    btn.className = g.vip ? 'grupo vip' : 'grupo';
     btn.href = g.link;
     btn.target = '_blank';
 
-    // AQUI ESTÁ O SEGREDO: Adicionei o span com a classe "cliques" de volta
     btn.innerHTML = `
       <div class="card-topo">
         <img class="foto" src="${g.foto}" alt="foto do grupo">
@@ -958,53 +974,39 @@ function renderizarGrupos(lista) {
             <span class="nome">${g.nome}</span>
             <span class="cliques" style="font-size: 11px; color: #b78cff; font-weight: bold; white-space: nowrap; margin-left: 5px;">🔥 ${g.cliques || 0} ACESSO</span>
         </div>
-        <p class="descricao">${g.descricao || "Clique para entrar no grupo e interagir com a galera!"}</p>
+        <p class="descricao">${g.descricao || "Clique para entrar no grupo!"}</p>
         <div class="btn-falso-entrar">Entrar no Grupo</div>
       </div>
     `;
 
     const cliqueRef = ref(db, 'grupos/' + g.key + '/cliques'); 
-    
-    // Atualização em tempo real (Realtime)
     onValue(cliqueRef, snap => {
       const cliquesSpanUpdate = btn.querySelector('.cliques');
-      if (cliquesSpanUpdate) {
-        cliquesSpanUpdate.textContent = `🔥 ${snap.val() || 0} ACESSO`;
-      }
+      if (cliquesSpanUpdate) cliquesSpanUpdate.textContent = `🔥 ${snap.val() || 0} ACESSO`;
     });
 
-    btn.addEventListener('click', e => {
+    btn.onclick = (e) => {
       e.preventDefault();
-      runTransaction(cliqueRef, (currentData) => {
-        return (currentData || 0) + 1;
-      }).then(() => {
+      runTransaction(cliqueRef, (currentData) => (currentData || 0) + 1).then(() => {
         window.open(g.link, '_blank');
-      }).catch(error => {
-          window.open(g.link, '_blank'); 
       });
-    });
+    };
 
     wrapper.appendChild(btn);
 
     if (isOwner) {
       const box = document.createElement('div');
       box.className = 'grupo-acoes-wrapper'; 
-      const edit = document.createElement('button');
-      edit.textContent = 'Editar';
-      edit.className = 'edit-btn'; 
-      edit.onclick = () => abrirEdicao(g);
-      const del = document.createElement('button');
-      del.textContent = 'Excluir';
-      del.className = 'delete-btn'; 
-      del.onclick = () => excluirGrupo(g);
-      box.appendChild(edit);
-      box.appendChild(del);
+      box.innerHTML = `<button class="edit-btn">Editar</button><button class="delete-btn">Excluir</button>`;
+      box.querySelector('.edit-btn').onclick = () => abrirEdicao(g);
+      box.querySelector('.delete-btn').onclick = () => excluirGrupo(g);
       wrapper.appendChild(box);
     }
 
     container.appendChild(wrapper);
   });
 }
+
 
 
 
