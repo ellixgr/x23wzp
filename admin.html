@@ -3,55 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel Admin Profissional</title>
+    <title>Painel Admin Completo</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 500px; margin-bottom: 20px; }
-        h2 { color: #b78cff; text-align: center; margin-top: 0; }
-        label { display: block; margin-top: 10px; font-weight: bold; font-size: 13px; color: #666; }
-        input, select, button, textarea { width: 100%; padding: 12px; margin-top: 5px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
-        button { background: #b78cff; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        button:hover { background: #a56be0; }
-        .btn-excluir { background: #ff4d4d; width: auto; padding: 5px 10px; font-size: 12px; }
-        .btn-editar { background: #3498db; width: auto; padding: 5px 10px; font-size: 12px; margin-right: 5px; }
-        #area-admin { display: none; width: 100%; max-width: 500px; }
-        .item-grupo { background: white; padding: 15px; margin-bottom: 10px; border-radius: 10px; border-left: 5px solid #b78cff; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .resultado-vip { background: #f9fffb; border: 2px dashed #2ecc71; padding: 15px; border-radius: 10px; text-align: center; margin-top: 15px; display: none; }
-        .img-preview { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; margin-right: 10px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 450px; margin-bottom: 20px; }
+        h2 { color: #b78cff; text-align: center; margin-top:0; }
+        input, select, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
+        button { background: #b78cff; color: white; border: none; font-weight: bold; cursor: pointer; }
+        #area-admin { display: none; width: 100%; max-width: 450px; }
+        .item-grupo { background: white; padding: 15px; margin-top: 10px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .btns-acao { display: flex; gap: 8px; }
+        .btn-edit { background: #3498db; width: 40px; }
+        .btn-del { background: #ff4d4d; width: 40px; }
     </style>
 </head>
 <body>
 
     <div id="login-box" class="card">
-        <h2>Acesso Restrito</h2>
-        <input type="password" id="pass-admin" placeholder="Sua Senha Mestra">
-        <button onclick="logar()">Entrar no Painel</button>
+        <h2>Painel Admin</h2>
+        <input type="password" id="pass-input" placeholder="Senha Mestra">
+        <button onclick="logar()">Acessar</button>
     </div>
 
     <div id="area-admin">
-        
         <div class="card">
-            <h2>⭐ Gerar Código VIP</h2>
-            <label>Duração do Acesso:</label>
+            <h2>⭐ Gerar VIP</h2>
+            <label style="font-size:12px; color:#666;">Duração do Código:</label>
             <select id="tempo-vip">
-                <option value="24">24 Horas (1 dia)</option>
-                <option value="48">48 Horas (2 dias)</option>
-                <option value="168">7 Dias (1 semana)</option>
+                <option value="24">24 Horas</option>
+                <option value="48">48 Horas</option>
+                <option value="168">7 Dias</option>
             </select>
-            <button id="btn-gerar" onclick="gerarCodigo()">Gerar Agora</button>
-            
-            <div id="box-vip" class="resultado-vip">
-                <span style="display:block; font-size: 12px;">CÓDIGO GERADO:</span>
-                <strong id="cod-gerado" style="font-size: 22px; color: #2ecc71;"></strong>
-                <br><small id="info-tempo"></small>
-            </div>
+            <button id="btn-gerar" onclick="gerarCodigo()">Gerar Código VIP</button>
+            <div id="res-vip" style="margin-top:15px; text-align:center; font-weight:bold; color:#2ecc71; font-size:20px;"></div>
         </div>
 
         <div class="card">
             <h2>📋 Gerenciar Grupos</h2>
-            <div id="lista-grupos">Carregando grupos...</div>
+            <div id="lista-grupos">Carregando...</div>
         </div>
-
     </div>
 
 <script type="module">
@@ -70,87 +60,67 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    let SENHA_SALVA = "";
+    let SENHA_MASTER = "";
 
-    // LOGIN
     window.logar = async function() {
-        const senha = document.getElementById('pass-admin').value;
+        const s = document.getElementById('pass-input').value;
         try {
             const res = await fetch("https://x23wzp.onrender.com/login-admin", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ senha })
+                body: JSON.stringify({ senha: s })
             });
             if(res.ok) {
-                SENHA_SALVA = senha;
+                SENHA_MASTER = s;
                 document.getElementById('login-box').style.display = 'none';
                 document.getElementById('area-admin').style.display = 'block';
                 carregarGrupos();
             } else { alert("Senha incorreta!"); }
-        } catch(e) { alert("Erro ao conectar ao Render."); }
+        } catch(e) { alert("Erro de conexão."); }
     }
 
-    // GERAR VIP
     window.gerarCodigo = async function() {
+        const h = document.getElementById('tempo-vip').value;
         const btn = document.getElementById('btn-gerar');
-        const horas = document.getElementById('tempo-vip').value;
-        btn.innerText = "Gerando...";
-        
+        btn.innerText = "Processando...";
         try {
             const res = await fetch("https://x23wzp.onrender.com/gerar-vip", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ senha: SENHA_SALVA, duracaoHoras: parseInt(horas) })
+                body: JSON.stringify({ senha: SENHA_MASTER, duracaoHoras: h })
             });
             const data = await res.json();
-            if(data.codigo) {
-                document.getElementById('box-vip').style.display = 'block';
-                document.getElementById('cod-gerado').innerText = data.codigo;
-                document.getElementById('info-tempo').innerText = `Válido por ${horas} horas.`;
-            }
-        } catch(e) { alert("Erro no servidor."); }
-        btn.innerText = "Gerar Agora";
+            document.getElementById('res-vip').innerText = data.codigo;
+        } catch(e) { alert("Erro ao gerar."); }
+        btn.innerText = "Gerar Código VIP";
     }
 
-    // CARREGAR E GERENCIAR GRUPOS
     function carregarGrupos() {
-        onValue(ref(db, 'grupos'), (snapshot) => {
-            const container = document.getElementById('lista-grupos');
-            container.innerHTML = "";
-            if(!snapshot.exists()) { container.innerHTML = "Nenhum grupo."; return; }
-
-            snapshot.forEach((child) => {
+        onValue(ref(db, 'grupos'), (snap) => {
+            const div = document.getElementById('lista-grupos');
+            div.innerHTML = "";
+            snap.forEach((child) => {
                 const g = child.val();
-                const div = document.createElement('div');
-                div.className = 'item-grupo';
-                div.innerHTML = `
-                    <div style="display:flex; align-items:center;">
-                        <img src="${g.imagem || ''}" class="img-preview" onerror="this.src='https://via.placeholder.com/50'">
-                        <div>
-                            <strong>${g.nome}</strong><br>
-                            <small>${g.vip ? '⭐ VIP' : 'Grátis'} | 🔥 ${g.cliques || 0}</small>
-                        </div>
-                    </div>
-                    <div>
-                        <button class="btn-editar" onclick="editarGrupo('${child.key}', '${g.nome}', '${g.imagem}')">✎</button>
-                        <button class="btn-excluir" onclick="excluirGrupo('${child.key}')">X</button>
+                const item = document.createElement('div');
+                item.className = 'item-grupo';
+                item.innerHTML = `
+                    <span>${g.nome}</span>
+                    <div class="btns-acao">
+                        <button class="btn-edit" onclick="editar('${child.key}', '${g.nome}', '${g.imagem}', '${g.link}')">✎</button>
+                        <button class="btn-del" onclick="excluir('${child.key}')">X</button>
                     </div>
                 `;
-                container.appendChild(div);
+                div.appendChild(item);
             });
         });
     }
 
-    window.excluirGrupo = function(id) {
-        if(confirm("Apagar este grupo?")) remove(ref(db, 'grupos/' + id));
-    }
-
-    window.editarGrupo = function(id, nomeAtual, imgAtual) {
-        const novoNome = prompt("Novo nome do grupo:", nomeAtual);
-        const novaImg = prompt("Novo link da foto:", imgAtual);
-        if(novoNome) {
-            update(ref(db, 'grupos/' + id), { nome: novoNome, imagem: novaImg });
-        }
+    window.excluir = (id) => confirm("Excluir grupo?") && remove(ref(db, 'grupos/' + id));
+    window.editar = (id, n, i, l) => {
+        const novoNome = prompt("Nome:", n);
+        const novaImg = prompt("Link Foto:", i);
+        const novoLink = prompt("Link Grupo:", l);
+        if(novoNome) update(ref(db, 'grupos/' + id), { nome: novoNome, imagem: novaImg, link: novoLink });
     }
 </script>
 </body>
