@@ -754,19 +754,38 @@ async function salvarNovoGrupo() {
     return; 
   }
   
-  const isVip = vipCodigo === "21977"; 
+  let isVip = false;
+
+  // Validação no Render se houver código
+  if (vipCodigo !== "") {
+    try {
+      const response = await fetch("https://LINK-DO-SEU-APP-NO-RENDER.onrender.com/validar-vip", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ codigo: vipCodigo })
+      });
+      const data = await response.json();
+      if (data.valido) {
+        isVip = true;
+      } else {
+        showAlert("❌ Código VIP inválido ou já utilizado.");
+        return;
+      }
+    } catch (err) {
+      showAlert("Erro ao conectar com o servidor de validação.");
+      return;
+    }
+  }
+
   const usuario = localStorage.getItem('usuarioID') || crypto.randomUUID();
   localStorage.setItem('usuarioID', usuario);
 
-  // Aqui a descrição foi incluída no pacote
   const novoGrupo = { nome, link, descricao, foto, categoria, dono: usuario, vip: isVip, cliques: 0 }; 
 
   try {
-    const gruposRef = ref(db, 'grupos');
-    await push(gruposRef, novoGrupo); 
+    await push(ref(db, 'grupos'), novoGrupo);
   } catch (error) {
-    showAlert('Erro ao salvar no banco de dados. Tente novamente.');
-    console.error('Erro ao salvar no Firebase:', error);
+    showAlert('Erro ao salvar no banco de dados.');
     return;
   }
 
@@ -790,7 +809,7 @@ function abrirEdicao(grupo){
   document.getElementById('grupoLink').value = grupo.link;
   previewFoto.src = grupo.foto;
   document.getElementById('grupoCategoria').value = grupo.categoria;
-  document.getElementById('grupoVipCodigo').value = grupo.vip ? "21977" : "";
+  document.getElementById('grupoVipCodigo').value = ""; // Limpa o campo para novo código se quiserem ativar
   document.getElementById('grupoFotoUpload').value = null; // Limpa o input file
   
   // Define a função de salvar para a edição e passa o objeto completo (com a key)
@@ -805,7 +824,22 @@ async function salvarEdicao(grupoOriginal){
   
   const fotoNova = previewFoto.src.trim().includes('9qdwuz.webp') ? grupoOriginal.foto : previewFoto.src.trim();
   const categoriaNova = document.getElementById('grupoCategoria').value;
-  const vipNovo = document.getElementById('grupoVipCodigo').value.trim() === "21977"; 
+  let vipNovo = grupoOriginal.vip; // Mantém o VIP atual se já for VIP
+
+  // Se ele não era VIP e tentou por um código na edição
+  const codDigitado = document.getElementById('grupoVipCodigo').value.trim();
+  if (!vipNovo && codDigitado !== "") {
+      try {
+          const resVip = await fetch("https://LINK-DO-SEU-APP-NO-RENDER.onrender.com/validar-vip", {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ codigo: codDigitado })
+          });
+          const dataVip = await resVip.json();
+          if (dataVip.valido) vipNovo = true;
+          else { showAlert("Código VIP inválido!"); return; }
+      } catch (e) { showAlert("Erro no servidor VIP"); return; }
+  }
 
   if (!nomeNovo || !WHATSAPP_LINK_REGEX.test(linkNovo) || !categoriaNova) {
     showAlert('Preencha corretamente o nome, link válido do WhatsApp e a categoria!');
