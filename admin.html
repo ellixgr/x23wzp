@@ -1,0 +1,47 @@
+// Função para liberar o painel (Login)
+async function liberarPainel() {
+    const senhaDigitada = document.getElementById('input-senha').value;
+    
+    try {
+        const res = await fetch("https://x23wzp.onrender.com/login-admin", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ senha: senhaDigitada }) // Envia como 'senha'
+        });
+        
+        if (res.ok) { // Se o servidor responder 200 (autorizado)
+            document.getElementById('login-area').style.display = 'none';
+            document.getElementById('painel-controle').style.display = 'block';
+        } else {
+            alert("Senha Incorreta!");
+        }
+    } catch (e) {
+        alert("Erro ao conectar com o servidor Render.");
+    }
+}
+
+// Função para gerar o VIP
+async function gerarVip() {
+    const senhaDigitada = document.getElementById('input-senha').value;
+    const horasEscolhidas = document.getElementById('tempo-vip').value;
+
+    try {
+        const res = await fetch("https://x23wzp.onrender.com/gerar-vip", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+                senha: senhaDigitada, // O servidor espera 'senha'
+                duracaoHoras: parseInt(horasEscolhidas) // O servidor espera 'duracaoHoras'
+            })
+        });
+        const data = await res.json();
+
+        if (data.codigo) {
+            document.getElementById('box-resultado').style.display = 'block';
+            document.getElementById('codigo-texto').innerText = data.codigo;
+            document.getElementById('tempo-texto').innerText = "Duração: " + horasEscolhidas + " horas";
+        }
+    } catch (e) {
+        alert("Erro ao gerar VIP.");
+    }
+}
