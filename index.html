@@ -759,7 +759,7 @@ async function salvarNovoGrupo() {
   // Validação no Render se houver código
   if (vipCodigo !== "") {
     try {
-      const response = await fetch("https://servidor-vip-whatsapp.onrender.com/validar-vip", {
+      const response = await fetch("https://x23wzp.onrender.com/validar-vip", {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ codigo: vipCodigo })
@@ -830,7 +830,7 @@ async function salvarEdicao(grupoOriginal){
   const codDigitado = document.getElementById('grupoVipCodigo').value.trim();
   if (!vipNovo && codDigitado !== "") {
       try {
-          const resVip = await fetch("https://servidor-vip-whatsapp.onrender.com/validar-vip", {
+          const resVip = await fetch("https://x23wzp.onrender.com/validar-vip", {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ codigo: codDigitado })
