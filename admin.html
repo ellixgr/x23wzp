@@ -3,84 +3,155 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel Admin - VIP</title>
+    <title>Painel Admin Profissional</title>
     <style>
-        body { font-family: sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
-        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
-        h2 { color: #b78cff; text-align: center; }
-        input, select, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
-        button { background: #b78cff; color: white; border: none; font-weight: bold; cursor: pointer; }
-        #painel-controle { display: none; }
-        .resultado { margin-top: 15px; padding: 10px; border: 2px dashed #2ecc71; border-radius: 8px; text-align: center; display: none; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 500px; margin-bottom: 20px; }
+        h2 { color: #b78cff; text-align: center; margin-top: 0; }
+        label { display: block; margin-top: 10px; font-weight: bold; font-size: 13px; color: #666; }
+        input, select, button, textarea { width: 100%; padding: 12px; margin-top: 5px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
+        button { background: #b78cff; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button:hover { background: #a56be0; }
+        .btn-excluir { background: #ff4d4d; width: auto; padding: 5px 10px; font-size: 12px; }
+        .btn-editar { background: #3498db; width: auto; padding: 5px 10px; font-size: 12px; margin-right: 5px; }
+        #area-admin { display: none; width: 100%; max-width: 500px; }
+        .item-grupo { background: white; padding: 15px; margin-bottom: 10px; border-radius: 10px; border-left: 5px solid #b78cff; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .resultado-vip { background: #f9fffb; border: 2px dashed #2ecc71; padding: 15px; border-radius: 10px; text-align: center; margin-top: 15px; display: none; }
+        .img-preview { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; margin-right: 10px; }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <h2>Painel Admin</h2>
-        
-        <div id="login-area">
-            <input type="password" id="input-senha" placeholder="Senha Mestra">
-            <button onclick="liberarPainel()">Acessar Painel</button>
-        </div>
-
-        <div id="painel-controle">
-            <label>Tempo de VIP:</label>
-            <select id="tempo-vip">
-                <option value="24">24 Horas</option>
-                <option value="48">48 Horas</option>
-            </select>
-            <button onclick="gerarVip()">Gerar Código VIP ⭐</button>
-            
-            <div id="box-resultado" class="resultado">
-                <strong id="codigo-texto" style="font-size: 20px; color: #2ecc71;"></strong>
-                <br><small id="tempo-texto"></small>
-            </div>
-        </div>
+    <div id="login-box" class="card">
+        <h2>Acesso Restrito</h2>
+        <input type="password" id="pass-admin" placeholder="Sua Senha Mestra">
+        <button onclick="logar()">Entrar no Painel</button>
     </div>
 
-    <script>
-        async function liberarPainel() {
-            const senhaDigitada = document.getElementById('input-senha').value;
-            try {
-                const res = await fetch("https://x23wzp.onrender.com/login-admin", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ senha: senhaDigitada })
-                });
-                if (res.ok) {
-                    document.getElementById('login-area').style.display = 'none';
-                    document.getElementById('painel-controle').style.display = 'block';
-                } else {
-                    alert("Senha Incorreta!");
-                }
-            } catch (e) {
-                alert("Erro ao conectar com o servidor.");
-            }
-        }
+    <div id="area-admin">
+        
+        <div class="card">
+            <h2>⭐ Gerar Código VIP</h2>
+            <label>Duração do Acesso:</label>
+            <select id="tempo-vip">
+                <option value="24">24 Horas (1 dia)</option>
+                <option value="48">48 Horas (2 dias)</option>
+                <option value="168">7 Dias (1 semana)</option>
+            </select>
+            <button id="btn-gerar" onclick="gerarCodigo()">Gerar Agora</button>
+            
+            <div id="box-vip" class="resultado-vip">
+                <span style="display:block; font-size: 12px;">CÓDIGO GERADO:</span>
+                <strong id="cod-gerado" style="font-size: 22px; color: #2ecc71;"></strong>
+                <br><small id="info-tempo"></small>
+            </div>
+        </div>
 
-        async function gerarVip() {
-            const senhaDigitada = document.getElementById('input-senha').value;
-            const horasEscolhidas = document.getElementById('tempo-vip').value;
-            try {
-                const res = await fetch("https://x23wzp.onrender.com/gerar-vip", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ 
-                        senha: senhaDigitada,
-                        duracaoHoras: parseInt(horasEscolhidas)
-                    })
-                });
-                const data = await res.json();
-                if (data.codigo) {
-                    document.getElementById('box-resultado').style.display = 'block';
-                    document.getElementById('codigo-texto').innerText = data.codigo;
-                    document.getElementById('tempo-texto').innerText = "Duração: " + horasEscolhidas + " horas";
-                }
-            } catch (e) {
-                alert("Erro ao gerar VIP.");
+        <div class="card">
+            <h2>📋 Gerenciar Grupos</h2>
+            <div id="lista-grupos">Carregando grupos...</div>
+        </div>
+
+    </div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getDatabase, ref, onValue, remove, update } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDsrYjO2yVTemKqwmJRzNjh5sfaMalPqhE",
+        authDomain: "cliques-4a2c1.firebaseapp.com",
+        databaseURL: "https://cliques-4a2c1-default-rtdb.firebaseio.com",
+        projectId: "cliques-4a2c1",
+        storageBucket: "cliques-4a2c1.firebase storage.app",
+        messagingSenderId: "903875153255",
+        appId: "1:903875153255:web:ff3cf25e059b10d665b3c2"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    let SENHA_SALVA = "";
+
+    // LOGIN
+    window.logar = async function() {
+        const senha = document.getElementById('pass-admin').value;
+        try {
+            const res = await fetch("https://x23wzp.onrender.com/login-admin", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ senha })
+            });
+            if(res.ok) {
+                SENHA_SALVA = senha;
+                document.getElementById('login-box').style.display = 'none';
+                document.getElementById('area-admin').style.display = 'block';
+                carregarGrupos();
+            } else { alert("Senha incorreta!"); }
+        } catch(e) { alert("Erro ao conectar ao Render."); }
+    }
+
+    // GERAR VIP
+    window.gerarCodigo = async function() {
+        const btn = document.getElementById('btn-gerar');
+        const horas = document.getElementById('tempo-vip').value;
+        btn.innerText = "Gerando...";
+        
+        try {
+            const res = await fetch("https://x23wzp.onrender.com/gerar-vip", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ senha: SENHA_SALVA, duracaoHoras: parseInt(horas) })
+            });
+            const data = await res.json();
+            if(data.codigo) {
+                document.getElementById('box-vip').style.display = 'block';
+                document.getElementById('cod-gerado').innerText = data.codigo;
+                document.getElementById('info-tempo').innerText = `Válido por ${horas} horas.`;
             }
+        } catch(e) { alert("Erro no servidor."); }
+        btn.innerText = "Gerar Agora";
+    }
+
+    // CARREGAR E GERENCIAR GRUPOS
+    function carregarGrupos() {
+        onValue(ref(db, 'grupos'), (snapshot) => {
+            const container = document.getElementById('lista-grupos');
+            container.innerHTML = "";
+            if(!snapshot.exists()) { container.innerHTML = "Nenhum grupo."; return; }
+
+            snapshot.forEach((child) => {
+                const g = child.val();
+                const div = document.createElement('div');
+                div.className = 'item-grupo';
+                div.innerHTML = `
+                    <div style="display:flex; align-items:center;">
+                        <img src="${g.imagem || ''}" class="img-preview" onerror="this.src='https://via.placeholder.com/50'">
+                        <div>
+                            <strong>${g.nome}</strong><br>
+                            <small>${g.vip ? '⭐ VIP' : 'Grátis'} | 🔥 ${g.cliques || 0}</small>
+                        </div>
+                    </div>
+                    <div>
+                        <button class="btn-editar" onclick="editarGrupo('${child.key}', '${g.nome}', '${g.imagem}')">✎</button>
+                        <button class="btn-excluir" onclick="excluirGrupo('${child.key}')">X</button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        });
+    }
+
+    window.excluirGrupo = function(id) {
+        if(confirm("Apagar este grupo?")) remove(ref(db, 'grupos/' + id));
+    }
+
+    window.editarGrupo = function(id, nomeAtual, imgAtual) {
+        const novoNome = prompt("Novo nome do grupo:", nomeAtual);
+        const novaImg = prompt("Novo link da foto:", imgAtual);
+        if(novoNome) {
+            update(ref(db, 'grupos/' + id), { nome: novoNome, imagem: novaImg });
         }
-    </script>
+    }
+</script>
 </body>
 </html>
