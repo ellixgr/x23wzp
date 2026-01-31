@@ -634,22 +634,16 @@ footer a{color:#b78cff;text-decoration:none}
       <option value="Namoro">Namoro</option>
     </select>
     
-    <div id="area-botoes-envio" style="display: flex; gap: 10px; margin-top: 15px;">
-    <button type="button" onclick="salvarNovoGrupo('comum')" id="btn-comum" style="background: #95a5a6; flex: 1;">Enviar Grátis</button>
-    <button type="button" onclick="document.getElementById('setor-vip-input').style.display='block'; document.getElementById('area-botoes-envio').style.display='none'" style="background: #f1c40f; color: #000; flex: 1;">🚀 Enviar como VIP</button>
-</div>
+    <div id="container-opcao-vip" style="margin-top: 15px;">
+        <div id="setor-vip-input" style="background: #fff8e1; padding: 10px; border-radius: 10px; border: 1px dashed #ffd700;">
+            <input type="text" id="grupoVipCodigo" placeholder="Cole seu Código VIP aqui (Opcional)">
+            <p id="msg-acordando" style="display:none; font-size: 11px; color: #b8860b; margin-top: 5px;">Validando código...</p>
+        </div>
+    </div>
 
-<div id="setor-vip-input" style="display:none; margin-top:15px; background: #fff8e1; padding: 10px; border-radius: 10px; border: 1px dashed #ffd700;">
-    <input type="text" id="grupoVipCodigo" placeholder="Cole seu Código VIP aqui">
-    <button type="button" onclick="salvarNovoGrupo('vip')" id="btn-vip-confirmar" style="background: #ffd700; color: #000; font-weight: bold;">Confirmar e Enviar VIP</button>
-    <p id="msg-acordando" style="display:none; font-size: 11px; color: #b8860b; margin-top: 5px;">Aguarde... Validando código (o servidor pode levar 30s para acordar).</p>
-</div>
-
-<div id="previewContainer">
-
+    <div id="previewContainer">
         <input type="file" id="grupoFotoUpload" accept="image/*">
         <label for="grupoFotoUpload" id="grupoFotoLabel"> Escolha a foto do grupo</label>
-        
         <img id="previewFoto" src="https://files.catbox.moe/9qdwuz.webp" alt="Prévia da foto">
     </div>
     
@@ -733,7 +727,7 @@ fotoInput.addEventListener("change", (e) => {
 });
 
 // ================== SALVAR NOVO GRUPO (CORRIGIDO) ================== //
-window.salvarNovoGrupo = async function(tipoEnvio) {
+window.salvarNovoGrupo = async function() {
   const nome = document.getElementById('grupoNome').value.trim();
   const link = document.getElementById('grupoLink').value.trim();
   const descricao = document.getElementById('grupoDescricao').value.trim() || "Clique para entrar no grupo!";
@@ -746,9 +740,9 @@ window.salvarNovoGrupo = async function(tipoEnvio) {
     return;
   }
   
-  const linkJaExiste = todosGrupos.some(g => g.link === link);
+  const linkJaExiste = todosGrupos.some(g => g.link === link && g.key !== (typeof grupoOriginal !== 'undefined' ? grupoOriginal.key : (window.grupoSendoEditadoKey || null)));
   if (linkJaExiste) {
-    showAlert('Este link de grupo já foi enviado.');
+    showAlert('Este link de grupo já foi enviado por outro usuário.');
     return; 
   }
   
@@ -808,15 +802,15 @@ salvarGrupoBtn.onclick = salvarNovoGrupo;
 // ================== FUNÇÕES DE EDIÇÃO/EXCLUSÃO, CARREGAR GRUPOS (CORRIGIDAS) ================== //
 
 function abrirEdicao(grupo){
+  window.grupoSendoEditadoKey = grupo.key;
   modal.style.display = 'flex';
+  document.getElementById('setor-vip-input').style.display = 'block';
   document.getElementById('grupoNome').value = grupo.nome;
   document.getElementById('grupoLink').value = grupo.link;
+  document.getElementById('grupoDescricao').value = grupo.descricao || "";
   previewFoto.src = grupo.foto;
   document.getElementById('grupoCategoria').value = grupo.categoria;
-  document.getElementById('grupoVipCodigo').value = ""; // Limpa o campo para novo código se quiserem ativar
-  document.getElementById('grupoFotoUpload').value = null; // Limpa o input file
-  
-  // Define a função de salvar para a edição e passa o objeto completo (com a key)
+  document.getElementById('grupoVipCodigo').value = "";
   salvarGrupoBtn.onclick = () => salvarEdicao(grupo); 
 }
 
@@ -1156,14 +1150,9 @@ fecharVipBtn.onclick = () => { vipModal.style.display = 'none'; };
 
 // ABRIR MODAL ENVIAR GRUPO (RESTAURA O SALVAR POR PADRÃO)
 enviarBtn.onclick = (e) => {
-
-  document.getElementById('area-botoes-envio').style.display = 'flex';
-  document.getElementById('setor-vip-input').style.display = 'none';
-  document.getElementById('msg-acordando').style.display = 'none';
-  document.getElementById('btn-vip-confirmar').disabled = false;
-
-
   e.preventDefault(); 
+  document.getElementById('setor-vip-input').style.display = 'block';
+  document.getElementById('msg-acordando').style.display = 'none';
   modal.style.display = 'flex';
   menu.classList.remove('open');
   
