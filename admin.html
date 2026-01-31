@@ -116,12 +116,13 @@
     }
 
     window.excluir = (id) => confirm("Excluir grupo?") && remove(ref(db, 'grupos/' + id));
-    window.editar = (id, n, i, l) => {
-        const novoNome = prompt("Nome:", n);
-        const novaImg = prompt("Link Foto:", i);
-        const novoLink = prompt("Link Grupo:", l);
-        if(novoNome) update(ref(db, 'grupos/' + id), { nome: novoNome, imagem: novaImg, link: novoLink });
-    }
+window.editar = (id, n, f, l) => {
+    const novoNome = prompt("Nome:", n);
+    const novaFoto = prompt("Link Foto (URL):", f);
+    const novoLink = prompt("Link Grupo:", l);
+    if(novoNome) update(ref(db, 'grupos/' + id), { nome: novoNome, foto: novaFoto, link: novoLink });
+}
+
 </script>
 </body>
 </html>
