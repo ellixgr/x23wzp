@@ -20,11 +20,9 @@ try {
 }
 
 const db = admin.database();
-
-// --- 1. CONFIGURAÇÃO DA SENHA (DICA: USE VARIÁVEL DE AMBIENTE DEPOIS) ---
 const SENHA_MESTRE = "cavalo777_";
 
-// --- 2. NOVA ROTA DE LOGIN DO ADMIN ---
+// LOGIN ADMIN
 app.post('/login-admin', (req, res) => {
     const { senha } = req.body;
     if (senha === SENHA_MESTRE) {
@@ -34,27 +32,27 @@ app.post('/login-admin', (req, res) => {
     }
 });
 
-// --- 3. ROTA DE GERAR VIP (ATUALIZADA COM TEMPO) ---
+// GERAR VIP COM TEMPO
 app.post('/gerar-vip', async (req, res) => {
-    const { senha, duracaoHoras } = req.body; // Agora recebe a duração
+    const { senha, duracaoHoras } = req.body; 
     
-    if (senha !== SENHA_MESTRE) return res.status(403).send("Negado");
+    if (senha !== SENHA_MESTRE) return res.status(403).json({ error: "Negado" });
 
     const codigo = crypto.randomBytes(4).toString('hex').toUpperCase();
     
     try {
         await db.ref('codigos_vips/' + codigo).set({
             status: "disponivel",
-            horasValidade: duracaoHoras || 24, // Salva se é 24h, 48h, etc.
+            horasValidade: parseInt(duracaoHoras) || 24,
             dataCriacao: new Date().toISOString()
         });
         res.json({ codigo });
     } catch (e) {
-        res.status(500).json({ error: "Erro no banco", detalhes: e.message });
+        res.status(500).json({ error: "Erro no banco" });
     }
 });
 
-// ROTA PARA VALIDAR CÓDIGO
+// VALIDAR CÓDIGO
 app.post('/validar-vip', async (req, res) => {
     const { codigo } = req.body;
     try {
