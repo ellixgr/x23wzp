@@ -491,8 +491,8 @@ footer a{color:#b78cff;text-decoration:none}
 <div id="popup-anuncio">
     <div id="popup-content">
         <span id="close-popup-btn">X</span>
-        <a href="https://br.shp.ee/5q1d37e?smtt=0.0.9" target="_blank">
-            <img src="https://files.catbox.moe/xjuhw5.png" alt="Anúncio - Visite a Shop">
+        <a href="" id="popup-link-dinamico" target="_blank">
+            <img src="" id="popup-img-dinamica" alt="Anúncio">
         </a>
     </div>
 </div>
@@ -572,43 +572,45 @@ footer a{color:#b78cff;text-decoration:none}
 </div>
 
 <div id="vipModal" class="modal">
-  <div class="modal-content" id="vip-content-container">
-    <span class="close-modal" id="fecharVipIcon">❌</span>
-    <h3>⭐ Ativar VIP (Pagamento Pix) ⭐</h3>
-    
-    <p style="margin-bottom: 10px;">Grupos VIPs serão mais visíveis e terão mais visitas!</p>
-    
-    <div style="margin: 15px 0;">
-        <img id="qrcode-img" 
-             src="https://files.catbox.moe/kvyq5d.jpg" 
-             alt="QR Code Pix" 
-             style="width: 90%; max-width: 300px; border: 2px solid gold; border-radius: 10px;">
+  <div class="modal-content" style="padding: 20px; max-width: 380px; overflow: hidden; position: relative;">
+    <span class="close-modal" id="fecharVipIcon" style="z-index: 10; position: absolute; right: 15px; top: 10px;">❌</span>
+    <h3 style="color: #ffd700; margin-bottom: 20px;">⭐ Planos VIP ⭐</h3>
+
+    <div id="carrossel-pagamento" style="display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 20px; padding-bottom: 15px; scrollbar-width: none; -webkit-overflow-scrolling: touch;">
+      
+      <div style="min-width: 100%; scroll-snap-align: center; display: flex; flex-direction: column; align-items: center;">
+        <div style="background: #fff8e1; border: 2px solid #ffd700; padding: 15px; border-radius: 15px; width: 90%;">
+          <h4 style="color: #000;">Plano Bronze</h4>
+          <p style="font-size: 20px; font-weight: bold; color: #2ecc71;">R$ 5,00</p>
+          <p style="font-size: 13px; color: #666;">VIP por <b>1 DIA</b></p>
+          <img src="https://files.catbox.moe/kvyq5d.jpg" style="width: 150px; margin: 10px 0; border-radius: 8px;">
+          <button onclick="copiarPixManual('00020126580014BR.GOV.BCB.PIX013689a5c070-cdd1-443b-997d-0cbbcf80e2de52040000530398654045.005802BR5918Elias da Conceicao6009SAO PAULO62140510lRM9nLzEht6304AA83', this)" class="pix-copy-btn" style="width: 100%; font-size: 12px;">📋 Copiar Código Pix</button>
+        </div>
+      </div>
+
+      <div style="min-width: 100%; scroll-snap-align: center; display: flex; flex-direction: column; align-items: center;">
+        <div style="background: #f0f8ff; border: 2px solid #00bfff; padding: 15px; border-radius: 15px; width: 90%;">
+          <h4 style="color: #000;">Plano Prata</h4>
+          <p style="font-size: 20px; font-weight: bold; color: #2ecc71;">R$ 10,00</p>
+          <p style="font-size: 13px; color: #666;">VIP por <b>2 DIAS</b></p>
+          <img src="https://i.postimg.cc/c1trwChX/Screenshot-20260130-205925-(1).jpg" style="width: 150px; margin: 10px 0; border-radius: 8px;">
+          <button onclick="copiarPixManual('00020126720014BR.GOV.BCB.PIX013689a5c070-cdd1-443b-997d-0cbbcf80e2de0210ativar vip520400005303986540510.005802BR5918Elias da Conceicao6009SAO PAULO62140510FCbk23CQPL6304CE8C', this)" class="pix-copy-btn" style="width: 100%; background: #00bfff; font-size: 12px;">📋 Copiar Código Pix</button>
+        </div>
+      </div>
     </div>
 
-    <input type="text" id="pix-code-field" 
-           value="00020126580014BR.GOV.BCB.PIX013689a5c070-cdd1-443b-997d-0cbbcf80e2de52040000530398654045.005802BR5918Elias da Conceicao6009SAO PAULO62140510lRM9nLzEht6304AA83" 
-           style="position: absolute; left: -9999px;">
-           
-    <button id="copy-pix-btn" class="pix-copy-btn">
-        📋 Copiar Código Pix
-    </button>
-    
-    <p style="margin-top: 15px; font-size: 14px; color: #555;">
-        Após pagar, envie o comprovante:
-    </p>
+    <div style="width: 60px; height: 5px; background: #e0e0e0; border-radius: 10px; margin: 5px auto 20px; position: relative; overflow: hidden;">
+        <div id="indicador-scroll" style="width: 30px; height: 100%; background: #ffd700; position: absolute; left: 0; transition: left 0.2s ease-out; border-radius: 10px;"></div>
+    </div>
 
-    <a href="https://wa.me/5521977231625?text=Ol%C3%A1%2C%20acabei%20de%20fazer%20o%20Pix%20para%20o%20VIP.%20Segue%20o%20comprovante!" 
-       target="_blank" 
-       class="whatsapp-btn">
-       Enviar Comprovante (WhatsApp) 📱
+    <a href="https://wa.me/5521977231625?text=Olá, fiz o Pix VIP. Segue o comprovante!" target="_blank" class="whatsapp-btn" style="font-size: 13px; margin-top: 0;">
+       Enviar Comprovante 📱
     </a>
-
-    <button id="fecharVipBtn"
-            style="background:#e74c3c; color:#fff; border:none; padding:8px 15px; border-radius:8px; cursor:pointer; margin-top: 20px;">
-      Fechar
-    </button>
+    
+    <button id="fecharVipBtn" style="display:none;">Fechar</button>
   </div>
 </div>
+
 <div id="modalAvisoVip" class="modal">
   <div class="modal-content">
     <span class="close-modal" id="fecharAvisoVip">❌</span>
@@ -1008,43 +1010,50 @@ function renderizarGrupos(lista) {
 
 
 
-// ================== FUNÇÃO DE COPIAR PIX (MANTIDA) ================== //
-copyPixBtn.onclick = async () => {
+window.copiarPixManual = async function(codigo, botao) {
     try {
-        await navigator.clipboard.writeText(pixCodeField.value);
-        copyPixBtn.textContent = '✅ Código Copiado!';
+        await navigator.clipboard.writeText(codigo);
+        const textoOriginal = botao.textContent;
+        botao.textContent = '✅ Copiado!';
+        botao.style.background = '#27ae60';
+        setTimeout(() => {
+            botao.textContent = textoOriginal;
+            botao.style.background = '';
+        }, 2000);
     } catch (err) {
-        console.error('Falha ao copiar:', err);
-        copyPixBtn.textContent = '❌ Erro ao Copiar!';
+        showAlert('Erro ao copiar. Tente selecionar o código manualmente.');
     }
-    setTimeout(() => {
-        copyPixBtn.textContent = '📋 Copiar Código Pix';
-    }, 3000);
 };
 
 
-// ================== NOVO CÓDIGO PARA O POP-UP DE ANÚNCIO ================== //
-
+// ================== LÓGICA DE ANÚNCIO ALEATÓRIO (50% CHANCE) ================== //
 const popupAnuncio = document.getElementById('popup-anuncio');
 const closePopupBtn = document.getElementById('close-popup-btn');
+const popupLink = document.getElementById('popup-link-dinamico');
+const popupImg = document.getElementById('popup-img-dinamica');
 
-// 1. Função para abrir o pop-up
-function showPopupAd() {
-    popupAnuncio.style.display = 'flex';
+const meusAnuncios = [
+    {
+        link: "https://br.shp.ee/5q1d37e?smtt=0.0.9",
+        foto: "https://files.catbox.moe/xjuhw5.png"
+    },
+    {
+        link: "https://soupopular.net/ref/bagau",
+        foto: "https://i.postimg.cc/FKZDbmb7/k4dtyg.png"
+    }
+];
+
+function gerenciarAnuncio() {
+    if (Math.random() <= 0.5) { 
+        const sorteado = meusAnuncios[Math.floor(Math.random() * meusAnuncios.length)];
+        popupLink.href = sorteado.link;
+        popupImg.src = sorteado.foto;
+        popupAnuncio.style.display = 'flex';
+    }
 }
 
-// 2. Função para fechar o pop-up
-function closePopupAd() {
-    popupAnuncio.style.display = 'none';
-    // Opcional: Armazenar no localStorage que o usuário já viu/fechou, para não mostrar novamente na mesma sessão
-    // localStorage.setItem('popupClosed', 'true');
-}
-
-// 3. Adiciona o evento de fechar ao botão 'X'
-closePopupBtn.addEventListener('click', closePopupAd);
-
-// 4. Adiciona o evento para mostrar o pop-up no carregamento da página
-window.addEventListener('load', showPopupAd);
+closePopupBtn.addEventListener('click', () => { popupAnuncio.style.display = 'none'; });
+window.addEventListener('load', gerenciarAnuncio);
 
 // ================== INICIALIZAÇÃO DE EVENTOS (MANTIDO) ================== //
 
@@ -1217,6 +1226,21 @@ window.showAlert = function(mensagem) {
   document.getElementById('customAlertMessage').textContent = mensagem;
   document.getElementById('customAlert').style.display = 'flex';
 };
+
+// Faz a barrinha de navegação do VIP deslizar
+const carrosselVip = document.getElementById('carrossel-pagamento');
+const indicadorVip = document.getElementById('indicador-scroll');
+
+if(carrosselVip && indicadorVip) {
+    carrosselVip.addEventListener('scroll', () => {
+        const larguraTotal = carrosselVip.scrollWidth - carrosselVip.clientWidth;
+        const posicaoAtual = carrosselVip.scrollLeft;
+        // Ajusta a posição do indicador amarelo proporcionalmente
+        const deslocamento = (posicaoAtual / larguraTotal) * 30;
+        indicadorVip.style.left = deslocamento + 'px';
+    });
+}
+
 
 carregarGrupos();
 </script>
