@@ -547,20 +547,13 @@ footer a{color:#b78cff;text-decoration:none}
 <div style="width: 100%; max-width: 420px; display: flex; flex-direction: column; align-items: center; padding: 0 20px; flex-grow: 1;"> 
     
     <div style="height: 120px; width: 100%;"></div> 
-
-    <div id="vip-container" style="width: 100%; margin-bottom: 20px;">
-      <h3 style="font-size: 14px; color: #ffd700; text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 5px;">
-        ⭐ Destaques VIP
-      </h3>
-      <div id="carrossel-vip" style="display: flex; overflow-x: auto; gap: 15px; padding: 10px 5px; scrollbar-width: none; -ms-overflow-style: none;">
-        </div>
-    </div>
     
-    <div id="lista-grupos" style="padding: 0; padding-bottom: 0; width: 100%;"></div>
+    <div id="lista-grupos" style="padding: 0; padding-bottom: 0;"></div>
 
     <a href="https://soupopular.net/ref/bagau" target="_blank" id="anuncio-afiliado" style="margin-top: auto;">
         <img src="https://files.catbox.moe/k4dtyg.jpg" alt="Anúncio - Compre Seguidores e Curtidas" loading="lazy">
     </a>
+
 </div>
 
 <footer>
@@ -579,41 +572,39 @@ footer a{color:#b78cff;text-decoration:none}
 </div>
 
 <div id="vipModal" class="modal">
-  <div class="modal-content" id="vip-content-container">
-    <span class="close-modal" id="fecharVipIcon">❌</span>
-    <h3>⭐ Ativar VIP (Pagamento Pix) ⭐</h3>
-    
-    <p style="margin-bottom: 10px;">Grupos VIPs serão mais visíveis e terão mais visitas!</p>
-    
-    <div style="margin: 15px 0;">
-        <img id="qrcode-img" 
-             src="https://files.catbox.moe/kvyq5d.jpg" 
-             alt="QR Code Pix" 
-             style="width: 90%; max-width: 300px; border: 2px solid gold; border-radius: 10px;">
+  <div class="modal-content" style="padding: 20px; max-width: 380px; overflow: hidden;">
+    <span class="close-modal" id="fecharVipIcon" style="z-index: 10;">❌</span>
+    <h3 style="color: #ffd700; margin-bottom: 15px;">⭐ Escolha seu Plano VIP ⭐</h3>
+
+    <div id="carrossel-pagamento" style="display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 20px; padding-bottom: 10px; scrollbar-width: none; -ms-overflow-style: none;">
+      
+      <div style="min-width: 100%; scroll-snap-align: center; display: flex; flex-direction: column; align-items: center;">
+        <div style="background: #fff8e1; border: 2px solid #ffd700; padding: 15px; border-radius: 15px; width: 95%;">
+          <h4 style="color: #000;">Plano Bronze</h4>
+          <p style="font-size: 20px; font-weight: bold; color: #2ecc71;">R$ 5,00</p>
+          <p style="font-size: 13px; color: #666;">Grupo VIP por <b>1 DIA</b></p>
+          <img src="https://files.catbox.moe/kvyq5d.jpg" style="width: 180px; margin: 10px 0; border-radius: 8px; border: 1px solid #ddd;">
+          <button onclick="copiarPixManual('00020126580014BR.GOV.BCB.PIX013689a5c070-cdd1-443b-997d-0cbbcf80e2de52040000530398654045.005802BR5918Elias da Conceicao6009SAO PAULO62140510lRM9nLzEht6304AA83', this)" class="pix-copy-btn" style="width: 100%;">📋 Copiar Código Pix</button>
+        </div>
+      </div>
+
+      <div style="min-width: 100%; scroll-snap-align: center; display: flex; flex-direction: column; align-items: center;">
+        <div style="background: #f0f8ff; border: 2px solid #00bfff; padding: 15px; border-radius: 15px; width: 95%;">
+          <h4 style="color: #000;">Plano Prata</h4>
+          <p style="font-size: 20px; font-weight: bold; color: #2ecc71;">R$ 10,00</p>
+          <p style="font-size: 13px; color: #666;">Grupo VIP por <b>2 DIAS</b></p>
+          <img src="URL_DA_SUA_IMAGEM_QRCODE_10_REAIS" style="width: 180px; margin: 10px 0; border-radius: 8px; border: 1px solid #ddd;">
+          <button onclick="copiarPixManual('SEU_CODIGO_PIX_DE_10_REAIS', this)" class="pix-copy-btn" style="width: 100%; background: #00bfff;">📋 Copiar Código Pix</button>
+        </div>
+      </div>
+
     </div>
 
-    <input type="text" id="pix-code-field" 
-           value="00020126580014BR.GOV.BCB.PIX013689a5c070-cdd1-443b-997d-0cbbcf80e2de52040000530398654045.005802BR5918Elias da Conceicao6009SAO PAULO62140510lRM9nLzEht6304AA83" 
-           style="position: absolute; left: -9999px;">
-           
-    <button id="copy-pix-btn" class="pix-copy-btn">
-        📋 Copiar Código Pix
-    </button>
-    
-    <p style="margin-top: 15px; font-size: 14px; color: #555;">
-        Após pagar, envie o comprovante:
-    </p>
+    <p style="font-size: 11px; color: #888; margin-top: 5px;">⬅️ Arraste para o lado para ver o outro plano ➡️</p>
 
-    <a href="https://wa.me/5521977231625?text=Ol%C3%A1%2C%20acabei%20de%20fazer%20o%20Pix%20para%20o%20VIP.%20Segue%20o%20comprovante!" 
-       target="_blank" 
-       class="whatsapp-btn">
+    <a href="https://wa.me/5521977231625?text=Olá, acabei de fazer o Pix para o VIP. Segue o comprovante!" target="_blank" class="whatsapp-btn">
        Enviar Comprovante (WhatsApp) 📱
     </a>
-
-    <button id="fecharVipBtn"
-            style="background:#e74c3c; color:#fff; border:none; padding:8px 15px; border-radius:8px; cursor:pointer; margin-top: 20px;">
-      Fechar
-    </button>
   </div>
 </div>
 <div id="modalAvisoVip" class="modal">
@@ -927,9 +918,7 @@ function ordenarGrupos(lista) {
 
 function renderizarGrupos(lista) {
   const container = document.getElementById('lista-grupos');
-  const carrossel = document.getElementById('carrossel-vip');
   container.innerHTML = '';
-  if (carrossel) carrossel.innerHTML = '';
 
   if (lista.length === 0) {
     container.innerHTML = '<p style="color:#555;">Nenhum grupo encontrado nesta categoria.</p>';
@@ -940,29 +929,22 @@ function renderizarGrupos(lista) {
   const listaOrdenada = ordenarGrupos([...lista]);
 
   listaOrdenada.forEach(g => {
-    // Adiciona ao Carrossel se for VIP
-    if (g.vip && carrossel) {
-      const circle = document.createElement('a');
-      circle.href = g.link;
-      circle.target = '_blank';
-      circle.style = "text-decoration: none; flex: 0 0 auto; text-align: center; width: 70px;";
-      circle.innerHTML = `
-        <img src="${g.foto}" style="width: 60px; height: 60px; border-radius: 50%; border: 2px solid #ffd700; object-fit: cover; box-shadow: 0 0 10px rgba(255,215,0,0.5);">
-        <p style="font-size: 10px; color: #000; margin-top: 5px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: bold;">${g.nome}</p>
-      `;
-      carrossel.appendChild(circle);
-    }
-
-    // Criação dos Cards Normais
     const isOwner = g.dono === usuario;
     const wrapper = document.createElement('div');
-    wrapper.style = "display: flex; flex-direction: column; align-items: center; width: 100%;";
+    wrapper.style.display = 'flex';
+    wrapper.style.flexDirection = 'column';
+    wrapper.style.alignItems = 'center';
+    wrapper.style.width = '100%';
 
     const btn = document.createElement('a');
-    btn.className = g.vip ? 'grupo vip' : 'grupo';
+    let classNames = ['grupo'];
+    if (g.vip) classNames.push('vip');
+    
+    btn.className = classNames.join(' ');
     btn.href = g.link;
     btn.target = '_blank';
 
+    // AQUI ESTÁ O SEGREDO: Adicionei o span com a classe "cliques" de volta
     btn.innerHTML = `
       <div class="card-topo">
         <img class="foto" src="${g.foto}" alt="foto do grupo">
@@ -974,32 +956,47 @@ function renderizarGrupos(lista) {
             <span class="nome">${g.nome}</span>
             <span class="cliques" style="font-size: 11px; color: #b78cff; font-weight: bold; white-space: nowrap; margin-left: 5px;">🔥 ${g.cliques || 0} ACESSO</span>
         </div>
-        <p class="descricao">${g.descricao || "Clique para entrar no grupo!"}</p>
+        <p class="descricao">${g.descricao || "Clique para entrar no grupo e interagir com a galera!"}</p>
         <div class="btn-falso-entrar">Entrar no Grupo</div>
       </div>
     `;
 
     const cliqueRef = ref(db, 'grupos/' + g.key + '/cliques'); 
+    
+    // Atualização em tempo real (Realtime)
     onValue(cliqueRef, snap => {
       const cliquesSpanUpdate = btn.querySelector('.cliques');
-      if (cliquesSpanUpdate) cliquesSpanUpdate.textContent = `🔥 ${snap.val() || 0} ACESSO`;
+      if (cliquesSpanUpdate) {
+        cliquesSpanUpdate.textContent = `🔥 ${snap.val() || 0} ACESSO`;
+      }
     });
 
-    btn.onclick = (e) => {
+    btn.addEventListener('click', e => {
       e.preventDefault();
-      runTransaction(cliqueRef, (currentData) => (currentData || 0) + 1).then(() => {
+      runTransaction(cliqueRef, (currentData) => {
+        return (currentData || 0) + 1;
+      }).then(() => {
         window.open(g.link, '_blank');
+      }).catch(error => {
+          window.open(g.link, '_blank'); 
       });
-    };
+    });
 
     wrapper.appendChild(btn);
 
     if (isOwner) {
       const box = document.createElement('div');
       box.className = 'grupo-acoes-wrapper'; 
-      box.innerHTML = `<button class="edit-btn">Editar</button><button class="delete-btn">Excluir</button>`;
-      box.querySelector('.edit-btn').onclick = () => abrirEdicao(g);
-      box.querySelector('.delete-btn').onclick = () => excluirGrupo(g);
+      const edit = document.createElement('button');
+      edit.textContent = 'Editar';
+      edit.className = 'edit-btn'; 
+      edit.onclick = () => abrirEdicao(g);
+      const del = document.createElement('button');
+      del.textContent = 'Excluir';
+      del.className = 'delete-btn'; 
+      del.onclick = () => excluirGrupo(g);
+      box.appendChild(edit);
+      box.appendChild(del);
       wrapper.appendChild(box);
     }
 
@@ -1009,19 +1006,19 @@ function renderizarGrupos(lista) {
 
 
 
-
-// ================== FUNÇÃO DE COPIAR PIX (MANTIDA) ================== //
-copyPixBtn.onclick = async () => {
+window.copiarPixManual = async function(codigo, botao) {
     try {
-        await navigator.clipboard.writeText(pixCodeField.value);
-        copyPixBtn.textContent = '✅ Código Copiado!';
+        await navigator.clipboard.writeText(codigo);
+        const textoOriginal = botao.textContent;
+        botao.textContent = '✅ Copiado!';
+        botao.style.background = '#27ae60';
+        setTimeout(() => {
+            botao.textContent = textoOriginal;
+            botao.style.background = '';
+        }, 2000);
     } catch (err) {
-        console.error('Falha ao copiar:', err);
-        copyPixBtn.textContent = '❌ Erro ao Copiar!';
+        showAlert('Erro ao copiar. Tente selecionar o código manualmente.');
     }
-    setTimeout(() => {
-        copyPixBtn.textContent = '📋 Copiar Código Pix';
-    }, 3000);
 };
 
 
