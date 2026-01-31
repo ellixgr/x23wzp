@@ -3,46 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel Admin Completo</title>
+    <title>Painel Admin PRO</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 450px; margin-bottom: 20px; }
-        h2 { color: #b78cff; text-align: center; margin-top:0; }
-        input, select, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
-        button { background: #b78cff; color: white; border: none; font-weight: bold; cursor: pointer; }
-        #area-admin { display: none; width: 100%; max-width: 450px; }
-        .item-grupo { background: white; padding: 15px; margin-top: 10px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .btns-acao { display: flex; gap: 8px; }
-        .btn-edit { background: #3498db; width: 40px; }
-        .btn-del { background: #ff4d4d; width: 40px; }
+        :root { --primary: #b78cff; --bg: #f0f2f5; --text: #333; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 15px; margin: 0; }
+        .container { max-width: 500px; margin: 0 auto; }
+        .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.08); margin-bottom: 20px; border: 1px solid #eee; }
+        h2 { color: var(--primary); text-align: center; margin: 0 0 15px 0; font-size: 22px; }
+        
+        input, select, textarea, button { width: 100%; padding: 12px; margin-top: 8px; border-radius: 12px; border: 1px solid #ddd; box-sizing: border-box; font-size: 14px; }
+        button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button:active { transform: scale(0.98); }
+        
+        #area-admin { display: none; }
+        
+        /* Estilo do Card do Grupo (Igual ao site) */
+        .grupo-card { background: white; border-radius: 15px; overflow: hidden; margin-bottom: 20px; border: 1px solid #ddd; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .grupo-img { width: 100%; height: 180px; object-fit: cover; background: #eee; }
+        .grupo-info { padding: 15px; }
+        .grupo-nome { font-weight: bold; font-size: 18px; margin-bottom: 5px; display: block; }
+        .grupo-desc { font-size: 13px; color: #666; height: 40px; overflow: hidden; }
+        
+        .btns-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .btn-edit { background: #3498db; }
+        .btn-del { background: #ff4d4d; }
+
+        /* Modal de Edição */
+        #modal-edit { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.7); z-index: 100; overflow-y: auto; }
+        .modal-content { background: white; margin: 20px auto; padding: 20px; width: 90%; max-width: 400px; border-radius: 20px; }
+        .close-modal { background: #666; margin-top: 10px; }
     </style>
 </head>
 <body>
 
+<div class="container">
     <div id="login-box" class="card">
-        <h2>Painel Admin</h2>
-        <input type="password" id="pass-input" placeholder="Senha Mestra">
-        <button onclick="logar()">Acessar</button>
+        <h2>Acesso Restrito</h2>
+        <input type="password" id="pass-input" placeholder="Digite a Senha Mestra">
+        <button onclick="logar()">ENTRAR NO PAINEL</button>
     </div>
 
     <div id="area-admin">
         <div class="card">
-            <h2>⭐ Gerar VIP</h2>
-            <label style="font-size:12px; color:#666;">Duração do Código:</label>
+            <h2>⭐ Gerador VIP</h2>
             <select id="tempo-vip">
-                <option value="24">24 Horas</option>
-                <option value="48">48 Horas</option>
-                <option value="168">7 Dias</option>
+                <option value="24">Válido por 24 Horas</option>
+                <option value="48">Válido por 48 Horas</option>
+                <option value="168">Válido por 7 Dias</option>
             </select>
-            <button id="btn-gerar" onclick="gerarCodigo()">Gerar Código VIP</button>
-            <div id="res-vip" style="margin-top:15px; text-align:center; font-weight:bold; color:#2ecc71; font-size:20px;"></div>
+            <button onclick="gerarCodigo()">GERAR NOVO CÓDIGO</button>
+            <div id="res-vip" style="margin-top:15px; text-align:center; font-weight:bold; color:#2ecc71; font-size:24px; letter-spacing: 2px;"></div>
         </div>
 
-        <div class="card">
-            <h2>📋 Gerenciar Grupos</h2>
-            <div id="lista-grupos">Carregando...</div>
-        </div>
+        <h2 style="color:#555">Gerenciar Grupos</h2>
+        <div id="lista-grupos">Carregando grupos...</div>
     </div>
+</div>
+
+<div id="modal-edit">
+    <div class="modal-content card">
+        <h2>Editar Grupo</h2>
+        <input type="hidden" id="edit-id">
+        <label>Nome do Grupo:</label>
+        <input type="text" id="edit-nome">
+        <label>Link da Foto (URL):</label>
+        <input type="text" id="edit-foto">
+        <label>Link do WhatsApp:</label>
+        <input type="text" id="edit-link">
+        <label>Descrição:</label>
+        <textarea id="edit-desc" rows="3"></textarea>
+        <label>Categoria:</label>
+        <select id="edit-cat">
+            <option value="Amizade">Amizade</option>
+            <option value="Zoeira">Zoeira</option>
+            <option value="Namoro">Namoro</option>
+            <option value="Geral">Geral</option>
+        </select>
+        <button style="background:#2ecc71" onclick="salvarEdicao()">SALVAR ALTERAÇÕES</button>
+        <button class="close-modal" onclick="fecharModal()">CANCELAR</button>
+    </div>
+</div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
@@ -53,8 +93,7 @@
         authDomain: "cliques-4a2c1.firebaseapp.com",
         databaseURL: "https://cliques-4a2c1-default-rtdb.firebaseio.com",
         projectId: "cliques-4a2c1",
-        storageBucket: "cliques-4a2c1.firebase storage.app",
-        messagingSenderId: "903875153255",
+        storageBucket: "cliques-4a2c1.appspot.com",
         appId: "1:903875153255:web:ff3cf25e059b10d665b3c2"
     };
 
@@ -81,8 +120,6 @@
 
     window.gerarCodigo = async function() {
         const h = document.getElementById('tempo-vip').value;
-        const btn = document.getElementById('btn-gerar');
-        btn.innerText = "Processando...";
         try {
             const res = await fetch("https://x23wzp.onrender.com/gerar-vip", {
                 method: "POST",
@@ -92,7 +129,6 @@
             const data = await res.json();
             document.getElementById('res-vip').innerText = data.codigo;
         } catch(e) { alert("Erro ao gerar."); }
-        btn.innerText = "Gerar Código VIP";
     }
 
     function carregarGrupos() {
@@ -102,12 +138,16 @@
             snap.forEach((child) => {
                 const g = child.val();
                 const item = document.createElement('div');
-                item.className = 'item-grupo';
+                item.className = 'grupo-card';
                 item.innerHTML = `
-                    <span>${g.nome}</span>
-                    <div class="btns-acao">
-                        <button class="btn-edit" onclick="editar('${child.key}', '${g.nome}', '${g.imagem}', '${g.link}')">✎</button>
-                        <button class="btn-del" onclick="excluir('${child.key}')">X</button>
+                    <img src="${g.foto || g.imagem}" class="grupo-img">
+                    <div class="grupo-info">
+                        <span class="grupo-nome">${g.nome}</span>
+                        <div class="grupo-desc">${g.descricao || 'Sem descrição'}</div>
+                        <div class="btns-layout">
+                            <button class="btn-edit" onclick="abrirEdicao('${child.key}', ${JSON.stringify(g).replace(/"/g, '&quot;')})">EDITAR</button>
+                            <button class="btn-del" onclick="excluir('${child.key}')">EXCLUIR</button>
+                        </div>
                     </div>
                 `;
                 div.appendChild(item);
@@ -115,13 +155,34 @@
         });
     }
 
-    window.excluir = (id) => confirm("Excluir grupo?") && remove(ref(db, 'grupos/' + id));
-window.editar = (id, n, f, l) => {
-    const novoNome = prompt("Nome:", n);
-    const novaFoto = prompt("Link Foto (URL):", f);
-    const novoLink = prompt("Link Grupo:", l);
-    if(novoNome) update(ref(db, 'grupos/' + id), { nome: novoNome, foto: novaFoto, link: novoLink });
-}
+    window.abrirEdicao = (id, dados) => {
+        document.getElementById('edit-id').value = id;
+        document.getElementById('edit-nome').value = dados.nome || '';
+        document.getElementById('edit-foto').value = dados.foto || dados.imagem || '';
+        document.getElementById('edit-link').value = dados.link || '';
+        document.getElementById('edit-desc').value = dados.descricao || '';
+        document.getElementById('edit-cat').value = dados.categoria || 'Geral';
+        document.getElementById('modal-edit').style.display = 'block';
+    }
+
+    window.fecharModal = () => document.getElementById('modal-edit').style.display = 'none';
+
+    window.salvarEdicao = () => {
+        const id = document.getElementById('edit-id').value;
+        const dados = {
+            nome: document.getElementById('edit-nome').value,
+            foto: document.getElementById('edit-foto').value,
+            link: document.getElementById('edit-link').value,
+            descricao: document.getElementById('edit-desc').value,
+            categoria: document.getElementById('edit-cat').value
+        };
+        update(ref(db, 'grupos/' + id), dados).then(() => {
+            alert("Atualizado!");
+            fecharModal();
+        });
+    }
+
+    window.excluir = (id) => confirm("Tem certeza que quer apagar este grupo?") && remove(ref(db, 'grupos/' + id));
 
 </script>
 </body>
