@@ -572,39 +572,40 @@ footer a{color:#b78cff;text-decoration:none}
 </div>
 
 <div id="vipModal" class="modal">
-  <div class="modal-content" style="padding: 20px; max-width: 380px; overflow: hidden;">
-    <span class="close-modal" id="fecharVipIcon" style="z-index: 10;">❌</span>
-    <h3 style="color: #ffd700; margin-bottom: 15px;">⭐ Escolha seu Plano VIP ⭐</h3>
+  <div class="modal-content" style="padding: 20px; max-width: 380px; overflow: hidden; position: relative;">
+    <span class="close-modal" id="fecharVipIcon" style="z-index: 10; position: absolute; right: 15px; top: 10px;">❌</span>
+    <h3 style="color: #ffd700; margin-bottom: 15px;">⭐ Planos VIP ⭐</h3>
 
-    <div id="carrossel-pagamento" style="display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 20px; padding-bottom: 10px; scrollbar-width: none; -ms-overflow-style: none;">
+    <div id="carrossel-pagamento" style="display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 20px; padding-bottom: 10px; scrollbar-width: none; -webkit-overflow-scrolling: touch;">
       
       <div style="min-width: 100%; scroll-snap-align: center; display: flex; flex-direction: column; align-items: center;">
-        <div style="background: #fff8e1; border: 2px solid #ffd700; padding: 15px; border-radius: 15px; width: 95%;">
+        <div style="background: #fff8e1; border: 2px solid #ffd700; padding: 15px; border-radius: 15px; width: 90%;">
           <h4 style="color: #000;">Plano Bronze</h4>
           <p style="font-size: 20px; font-weight: bold; color: #2ecc71;">R$ 5,00</p>
-          <p style="font-size: 13px; color: #666;">Grupo VIP por <b>1 DIA</b></p>
-          <img src="https://files.catbox.moe/kvyq5d.jpg" style="width: 180px; margin: 10px 0; border-radius: 8px; border: 1px solid #ddd;">
-          <button onclick="copiarPixManual('00020126580014BR.GOV.BCB.PIX013689a5c070-cdd1-443b-997d-0cbbcf80e2de52040000530398654045.005802BR5918Elias da Conceicao6009SAO PAULO62140510lRM9nLzEht6304AA83', this)" class="pix-copy-btn" style="width: 100%;">📋 Copiar Código Pix</button>
+          <p style="font-size: 13px; color: #666;">VIP por <b>1 DIA</b></p>
+          <img src="https://files.catbox.moe/kvyq5d.jpg" style="width: 150px; margin: 10px 0; border-radius: 8px;">
+          <button onclick="copiarPixManual('00020126580014BR.GOV.BCB.PIX013689a5c070-cdd1-443b-997d-0cbbcf80e2de52040000530398654045.005802BR5918Elias da Conceicao6009SAO PAULO62140510lRM9nLzEht6304AA83', this)" class="pix-copy-btn" style="width: 100%; font-size: 12px;">📋 Copiar Código Pix</button>
         </div>
       </div>
 
       <div style="min-width: 100%; scroll-snap-align: center; display: flex; flex-direction: column; align-items: center;">
-        <div style="background: #f0f8ff; border: 2px solid #00bfff; padding: 15px; border-radius: 15px; width: 95%;">
+        <div style="background: #f0f8ff; border: 2px solid #00bfff; padding: 15px; border-radius: 15px; width: 90%;">
           <h4 style="color: #000;">Plano Prata</h4>
           <p style="font-size: 20px; font-weight: bold; color: #2ecc71;">R$ 10,00</p>
-          <p style="font-size: 13px; color: #666;">Grupo VIP por <b>2 DIAS</b></p>
-          <img src="URL_DA_SUA_IMAGEM_QRCODE_10_REAIS" style="width: 180px; margin: 10px 0; border-radius: 8px; border: 1px solid #ddd;">
-          <button onclick="copiarPixManual('SEU_CODIGO_PIX_DE_10_REAIS', this)" class="pix-copy-btn" style="width: 100%; background: #00bfff;">📋 Copiar Código Pix</button>
+          <p style="font-size: 13px; color: #666;">VIP por <b>2 DIAS</b></p>
+          <img src="https://files.catbox.moe/kvyq5d.jpg" style="width: 150px; margin: 10px 0; border-radius: 8px;">
+          <button onclick="copiarPixManual('COLOQUE_AQUI_O_PIX_DE_10_REAIS', this)" class="pix-copy-btn" style="width: 100%; background: #00bfff; font-size: 12px;">📋 Copiar Código Pix</button>
         </div>
       </div>
-
     </div>
 
-    <p style="font-size: 11px; color: #888; margin-top: 5px;">⬅️ Arraste para o lado para ver o outro plano ➡️</p>
+    <p style="font-size: 10px; color: #888; margin-top: 5px;">⬅️ Arraste para o lado para ver planos ➡️</p>
 
-    <a href="https://wa.me/5521977231625?text=Olá, acabei de fazer o Pix para o VIP. Segue o comprovante!" target="_blank" class="whatsapp-btn">
-       Enviar Comprovante (WhatsApp) 📱
+    <a href="https://wa.me/5521977231625?text=Olá, fiz o Pix VIP. Segue o comprovante!" target="_blank" class="whatsapp-btn" style="font-size: 13px;">
+       Enviar Comprovante 📱
     </a>
+    
+    <button id="fecharVipBtn" style="display:none;">Fechar</button>
   </div>
 </div>
 <div id="modalAvisoVip" class="modal">
