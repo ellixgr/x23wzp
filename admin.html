@@ -1,47 +1,86 @@
-// Função para liberar o painel (Login)
-async function liberarPainel() {
-    const senhaDigitada = document.getElementById('input-senha').value;
-    
-    try {
-        const res = await fetch("https://x23wzp.onrender.com/login-admin", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ senha: senhaDigitada }) // Envia como 'senha'
-        });
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Admin - VIP</title>
+    <style>
+        body { font-family: sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
+        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        h2 { color: #b78cff; text-align: center; }
+        input, select, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
+        button { background: #b78cff; color: white; border: none; font-weight: bold; cursor: pointer; }
+        #painel-controle { display: none; }
+        .resultado { margin-top: 15px; padding: 10px; border: 2px dashed #2ecc71; border-radius: 8px; text-align: center; display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>Painel Admin</h2>
         
-        if (res.ok) { // Se o servidor responder 200 (autorizado)
-            document.getElementById('login-area').style.display = 'none';
-            document.getElementById('painel-controle').style.display = 'block';
-        } else {
-            alert("Senha Incorreta!");
+        <div id="login-area">
+            <input type="password" id="input-senha" placeholder="Senha Mestra">
+            <button onclick="liberarPainel()">Acessar Painel</button>
+        </div>
+
+        <div id="painel-controle">
+            <label>Tempo de VIP:</label>
+            <select id="tempo-vip">
+                <option value="24">24 Horas</option>
+                <option value="48">48 Horas</option>
+            </select>
+            <button onclick="gerarVip()">Gerar Código VIP ⭐</button>
+            
+            <div id="box-resultado" class="resultado">
+                <strong id="codigo-texto" style="font-size: 20px; color: #2ecc71;"></strong>
+                <br><small id="tempo-texto"></small>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function liberarPainel() {
+            const senhaDigitada = document.getElementById('input-senha').value;
+            try {
+                const res = await fetch("https://x23wzp.onrender.com/login-admin", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ senha: senhaDigitada })
+                });
+                if (res.ok) {
+                    document.getElementById('login-area').style.display = 'none';
+                    document.getElementById('painel-controle').style.display = 'block';
+                } else {
+                    alert("Senha Incorreta!");
+                }
+            } catch (e) {
+                alert("Erro ao conectar com o servidor.");
+            }
         }
-    } catch (e) {
-        alert("Erro ao conectar com o servidor Render.");
-    }
-}
 
-// Função para gerar o VIP
-async function gerarVip() {
-    const senhaDigitada = document.getElementById('input-senha').value;
-    const horasEscolhidas = document.getElementById('tempo-vip').value;
-
-    try {
-        const res = await fetch("https://x23wzp.onrender.com/gerar-vip", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ 
-                senha: senhaDigitada, // O servidor espera 'senha'
-                duracaoHoras: parseInt(horasEscolhidas) // O servidor espera 'duracaoHoras'
-            })
-        });
-        const data = await res.json();
-
-        if (data.codigo) {
-            document.getElementById('box-resultado').style.display = 'block';
-            document.getElementById('codigo-texto').innerText = data.codigo;
-            document.getElementById('tempo-texto').innerText = "Duração: " + horasEscolhidas + " horas";
+        async function gerarVip() {
+            const senhaDigitada = document.getElementById('input-senha').value;
+            const horasEscolhidas = document.getElementById('tempo-vip').value;
+            try {
+                const res = await fetch("https://x23wzp.onrender.com/gerar-vip", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ 
+                        senha: senhaDigitada,
+                        duracaoHoras: parseInt(horasEscolhidas)
+                    })
+                });
+                const data = await res.json();
+                if (data.codigo) {
+                    document.getElementById('box-resultado').style.display = 'block';
+                    document.getElementById('codigo-texto').innerText = data.codigo;
+                    document.getElementById('tempo-texto').innerText = "Duração: " + horasEscolhidas + " horas";
+                }
+            } catch (e) {
+                alert("Erro ao gerar VIP.");
+            }
         }
-    } catch (e) {
-        alert("Erro ao gerar VIP.");
-    }
-}
+    </script>
+</body>
+</html>
