@@ -546,10 +546,6 @@ footer a{color:#b78cff;text-decoration:none}
     
     <div id="lista-grupos" style="padding: 0; padding-bottom: 0;"></div>
 
-    <a href="https://soupopular.net/ref/bagau" target="_blank" id="anuncio-afiliado" style="margin-top: auto;">
-        <img src="https://files.catbox.moe/k4dtyg.jpg" alt="Anúncio - Compre Seguidores e Curtidas" loading="lazy">
-    </a>
-
 </div>
 
 <footer>
@@ -965,7 +961,7 @@ function renderizarGrupos(lista) {
   const usuario = localStorage.getItem('usuarioID');
   const listaOrdenada = ordenarGrupos([...lista]);
 
-  listaOrdenada.forEach(g => {
+  listaOrdenada.forEach((g, index) => {
     const isOwner = g.dono === usuario;
     const wrapper = document.createElement('div');
     wrapper.style.display = 'flex';
@@ -981,7 +977,6 @@ function renderizarGrupos(lista) {
     btn.href = g.link;
     btn.target = '_blank';
 
-    // AQUI ESTÁ O SEGREDO: Adicionei o span com a classe "cliques" de volta
     btn.innerHTML = `
       <div class="card-topo">
         <img class="foto" src="${g.foto}" alt="foto do grupo">
@@ -999,8 +994,6 @@ function renderizarGrupos(lista) {
     `;
 
     const cliqueRef = ref(db, 'grupos/' + g.key + '/cliques'); 
-    
-    // Atualização em tempo real (Realtime)
     onValue(cliqueRef, snap => {
       const cliquesSpanUpdate = btn.querySelector('.cliques');
       if (cliquesSpanUpdate) {
@@ -1020,11 +1013,41 @@ function renderizarGrupos(lista) {
     });
 
     wrapper.appendChild(btn);
+    container.appendChild(wrapper);
+
+    // --- AQUI A MÁGICA DE ESPALHAR OS ANÚNCIOS ---
+    
+    // Anúncio do TIKTOK após o 2º grupo
+    if (index === 1) { 
+        const adDiv = document.createElement('div');
+        adDiv.style.width = '100%';
+        adDiv.style.maxWidth = '380px';
+        adDiv.innerHTML = `
+            <div id="anuncio-tiktok" style="margin: 10px 0 25px; cursor: pointer; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border: 2px solid #b78cff;" onclick="copiarECaminhar()">
+                <img src="https://i.postimg.cc/dQjhrMsK/1769968251192-(1).jpg" style="width: 100%; display: block;">
+                <div style="text-align:center; font-size:12px; color:#fff; font-weight:bold; padding: 8px; background: #b78cff;">
+                   CÓDIGO: DLN60488006165 (CLIQUE PARA COPIAR)
+                </div>
+            </div>`;
+        container.appendChild(adDiv);
+    }
+
+    // Anúncio do SOU POPULAR após o 5º grupo
+    if (index === 4) { 
+        const adDiv2 = document.createElement('div');
+        adDiv2.style.width = '100%';
+        adDiv2.style.maxWidth = '380px';
+        adDiv2.innerHTML = `
+            <a href="https://soupopular.net/ref/bagau" target="_blank" style="display: block; margin: 10px 0 25px; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);">
+                <img src="https://files.catbox.moe/k4dtyg.jpg" style="width: 100%; display: block;">
+            </a>`;
+        container.appendChild(adDiv2);
+    }
 
     if (isOwner) {
       const box = document.createElement('div');
       box.className = 'grupo-acoes-wrapper'; 
-      
+      // ... (resto dos botões de editar/excluir que você já tem)
       const edit = document.createElement('button');
       edit.textContent = 'Editar ✎';
       edit.className = 'edit-btn'; 
@@ -1042,7 +1065,6 @@ function renderizarGrupos(lista) {
           turbinar.onclick = () => {
               abrirEdicao(g);
               document.getElementById('setor-vip-input').style.display='block';
-              document.getElementById('area-botoes-envio').style.display='none';
           };
       }
 
@@ -1056,10 +1078,9 @@ function renderizarGrupos(lista) {
       box.appendChild(del);
       wrapper.appendChild(box);
     }
-
-    container.appendChild(wrapper);
   });
 }
+
 
 
 
@@ -1310,6 +1331,31 @@ carregarGrupos();
     </button>
   </div>
 </div>
+
+<script>
+function copiarECaminhar() {
+    const codigo = "DLN60488006165";
+    const linkConvite = "https://www.tiktok.com/d/4/ZS91q1HKdapRv-ki0E3/";
+
+    // Copia o código para o celular do usuário
+    navigator.clipboard.writeText(codigo).then(() => {
+        // Usa o seu sistema de alerta roxo
+        if(window.showAlert) {
+            window.showAlert("✅ Código Copiado! Baixe o app e cole o código para ganhar seu bônus.");
+        } else {
+            alert("✅ Código Copiado!");
+        }
+        
+        // Abre o link do TikTok após 1.5 segundos
+        setTimeout(() => {
+            window.open(linkConvite, '_blank');
+        }, 1500);
+    }).catch(err => {
+        window.open(linkConvite, '_blank');
+    });
+}
+</script>
+
 
 </body>
 </html>
