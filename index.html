@@ -108,7 +108,7 @@ header{
     z-index:1000; 
     box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
     transition: transform 0.3s ease-out;
-    transform: translateY(0); /* ELE DEVE COMEÇAR EM 0 PARA FICAR VISÍVEL */
+    transform: translateY(-100%); /* Começa escondido para o JS controlar */
 }
 
 /* ---------------------------------------------------- */
@@ -157,7 +157,7 @@ header p{margin-top:4px;text-shadow:none;}
 
 
 /* --- Lista de Grupos --- */
-#lista-grupos{width:100%;max-width:420px;padding:30px 20px 0;
+#lista-grupos{width:100%;max-width:420px;padding:120px 20px 0;
     display:flex;flex-direction:column;align-items:center;gap:22px}
 
 /* ESTILO DO ANÚNCIO */
@@ -492,7 +492,7 @@ footer a{color:#b78cff;text-decoration:none}
         </a>
     </div>
 </div>
-<header>
+<header class="header-visible">
   <h1>Grupos WhatsApp</h1>
   <p></p>
   <div id="categorias">
