@@ -510,6 +510,9 @@ footer a{color:#b78cff;text-decoration:none}
 </head>
 <body>
 
+<script src="https://pl28642215.effectivegatecpm.com/b9/7f/04/b97f0402af5fa803ef8d137e4050caf4.js"></script>
+
+
 <div id="popup-anuncio">
     <div id="popup-content">
         <span id="close-popup-btn">X</span>
@@ -591,7 +594,7 @@ footer a{color:#b78cff;text-decoration:none}
 <footer>
   <a href="#" id="termosLink">Termos de Uso</a>
   <a href="#" id="privacidadeLink">Politica de Privacidade</a><br>
-  © COPYRIGHT 2026 - <a href="https://ellixgr.github.io/x23wzp/" target="_blank">gruposWhats</a>
+  © 2024 - 2030 - <a href="https://ellixgr.github.io/x23wzp/" target="_blank">gruposWhats</a>
 </footer>
 
 
@@ -1268,24 +1271,40 @@ enviarBtn.onclick = (e) => {
   document.getElementById('mensagemEnvio').style.display = 'none'; 
 };
 
-// TERMOS E PRIVACIDADE (MANTIDO)
+// TERMOS DE USO
 document.getElementById('termosLink').onclick = (e) => {
   e.preventDefault();
+  
+  // O script do Adsterra (Social Bar) vai detectar este clique e abrir o banner com o "X"
   modalTitulo.textContent = "Termos de Uso";
   modalTexto.innerHTML = `
     <p>Bem-vindo ao nosso site de grupos WhatsApp. Ao utilizar este site, você concorda com os seguintes termos:</p>
     <ul>
-      <li>Você é responsável por todo o conteúdo que enviar, incluindo links e imagens.</li>
-      <li>Não é permitido enviar conteúdo ilegal, ofensivo ou que viole direitos de terceiros.</li>
-      <li>O site não se responsabiliza pelo conteúdo dos grupos externos do WhatsApp.</li>
-      <li>Os grupos VIPs são destacados apenas para fins de visibilidade dentro do site.</li>
-      <li>Podemos alterar os termos de uso a qualquer momento, sendo sua responsabilidade consultar atualizações.</li>
-      <li>O uso do site é gratuito, mas o envio de grupos e pagamentos VIP seguem as regras aqui descritas.</li>
-      </ul>
-    <p>Se você não concorda com estes termos, por favor, não utilize o site.</p>
+      <li>Você é responsável por todo o conteúdo que enviar.</li>
+      <li>Não é permitido enviar conteúdo ilegal ou ofensivo.</li>
+      <li>O site não se responsabiliza pelos grupos externos.</li>
+      <li>Direitos reservados © 2024 - 2030.</li>
+    </ul>
   `; 
   modalTermos.style.display = "flex";
 };
+
+// POLÍTICA DE PRIVACIDADE
+document.getElementById('privacidadeLink').onclick = (e) => {
+  e.preventDefault();
+  
+  modalTitulo.textContent = "Política de Privacidade";
+  modalTexto.innerHTML = `
+    <p>Esta Política explica como usamos os dados:</p>
+    <ul>
+      <li>Armazenamos seu usuarioID localmente para salvar seus grupos.</li>
+      <li>Usamos cookies de parceiros para exibir anúncios e manter o site grátis.</li>
+      <li>Você pode limpar os dados do navegador para resetar seu ID.</li>
+    </ul>
+  `;
+  modalTermos.style.display = "flex";
+};
+
 
 document.getElementById('privacidadeLink').onclick = (e) => {
   e.preventDefault();
