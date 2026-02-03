@@ -273,7 +273,12 @@
     window.excluirGrp = (id) => confirm("Apagar grupo permanentemente?") && remove(ref(db, 'grupos/' + id));
     window.excluirAtual = () => { excluirGrp(idSendoEditado); fecharModal(); }
     window.fecharModal = () => document.getElementById('modalEdicao').style.display = 'none';
-    window.logout = () => { localStorage.clear(); location.reload(); };
+    window.logout = () => { 
+    // Remove apenas a credencial do admin
+    localStorage.removeItem('admin_acesso'); 
+    // Recarrega a página para voltar ao login
+    location.reload(); 
+};
 </script>
 </body>
 </html>
