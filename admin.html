@@ -21,13 +21,16 @@
 
         #area-admin { display: none; width: 100%; max-width: 450px; }
         
-        .lista-codigos { background: #fdfdfd; border: 1px solid #eee; border-radius: 10px; margin-top: 10px; max-height: 150px; overflow-y: auto; }
-        .codigo-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #f5f5f5; font-size: 14px; }
+        .lista-codigos { background: #fdfdfd; border: 1px solid #eee; border-radius: 10px; margin-top: 10px; max-height: 200px; overflow-y: auto; }
+        .codigo-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #f5f5f5; font-size: 13px; }
+        .status-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold; text-transform: uppercase; }
+        .status-livre { background: #e8f5e9; color: #2e7d32; }
+        .status-uso { background: #fff3e0; color: #ef6c00; }
         
-        .item-grupo { background: white; padding: 15px; margin-top: 12px; border-radius: 12px; border-left: 5px solid #ccc; }
+        .item-grupo { background: white; padding: 15px; margin-top: 12px; border-radius: 12px; border-left: 5px solid #ccc; position: relative; }
         .item-grupo.is-vip { border-left-color: var(--vip); background: #fffdf0; }
         
-        .btns-acao-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 10px; }
+        .btns-acao-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top: 10px; }
         .btns-acao-grid button { padding: 8px 0; font-size: 12px; margin-top: 0; }
 
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 1000; }
@@ -64,7 +67,7 @@
             <button onclick="gerarCodigo()">GERAR AGORA</button>
             <button id="btn-copiar" onclick="copiarCodigo()"></button>
             
-            <h4 style="margin: 15px 0 5px; font-size: 11px; color: #999;">CÓDIGOS ATIVOS (CRIADOS E NÃO USADOS):</h4>
+            <h4 style="margin: 15px 0 5px; font-size: 11px; color: #999;">MONITOR DE CÓDIGOS (ESTADO NO BANCO):</h4>
             <div id="lista-codigos-ativos" class="lista-codigos">Carregando...</div>
         </div>
 
@@ -78,7 +81,7 @@
             <label>NOME</label><input type="text" id="edit-nome">
             <label>LINK WHATSAPP</label><input type="text" id="edit-link">
             <label>LINK FOTO</label><input type="text" id="edit-foto">
-            <label>CÓDIGO VIP</label><input type="text" id="edit-cod-vip" placeholder="COLE O CÓDIGO AQUI">
+            <label>CÓDIGO VIP (OPCIONAL)</label><input type="text" id="edit-cod-vip" placeholder="COLE O CÓDIGO AQUI">
 
             <div style="display: flex; gap: 10px; margin-top: 20px;">
                 <button onclick="salvarEdicao()" style="background:var(--success)">SALVAR</button>
@@ -106,6 +109,7 @@
     const db = getDatabase(app);
     let SENHA_MASTER = localStorage.getItem('admin_acesso') || "";
     let idSendoEditado = null;
+    let gruposCache = {};
 
     if(SENHA_MASTER) mostrarPainel();
 
@@ -139,6 +143,7 @@
             const totalTxt = document.getElementById('count-total');
             const vipTxt = document.getElementById('count-vip');
             lista.innerHTML = "";
+            gruposCache = snap.val() || {};
             let t = 0, v = 0;
             snap.forEach(c => {
                 const g = c.val(); t++; if(g.vip) v++;
@@ -146,7 +151,7 @@
                 div.className = `item-grupo ${g.vip ? 'is-vip' : ''}`;
                 div.innerHTML = `<b>${g.nome}</b> ${g.vip ? '⭐' : ''}
                     <div class="btns-acao-grid">
-                        <button style="background:var(--blue)" onclick="abrirModal('${c.key}', ${JSON.stringify(g).replace(/"/g, '&quot;')})">EDITAR</button>
+                        <button style="background:var(--blue)" onclick="abrirModal('${c.key}')">EDITAR</button>
                         <button style="background:#555" onclick="window.open('${g.link}')">LINK</button>
                         <button style="background:var(--danger)" onclick="excluirGrp('${c.key}')">DEL</button>
                     </div>`;
@@ -155,16 +160,40 @@
             totalTxt.innerText = t; vipTxt.innerText = v;
         });
 
-        // Lista de Códigos Ativos (Lê da pasta 'vips')
-        onValue(ref(db, 'vips'), (snap) => {
+        // Lista de Códigos (Lê de 'codigos_vips' conforme a sua imagem)
+        onValue(ref(db, 'codigos_vips'), (snap) => {
             const cont = document.getElementById('lista-codigos-ativos');
             cont.innerHTML = "";
-            if(!snap.exists()) cont.innerHTML = "<p style='color:#999;padding:10px'>Nenhum código pendente.</p>";
+            if(!snap.exists()) {
+                cont.innerHTML = "<p style='color:#999;padding:10px'>Nenhum código gerado.</p>";
+                return;
+            }
+
             snap.forEach(c => {
+                const codKey = c.key;
+                const dadosCod = c.val();
+                
+                // Verifica se este código consta em algum grupo no cache
+                let grupoEmUso = "NÃO";
+                let badgeClass = "status-livre";
+                
+                for(let gid in gruposCache) {
+                    if(gruposCache[gid].codigoVip === codKey) {
+                        grupoEmUso = "EM USO";
+                        badgeClass = "status-uso";
+                        break;
+                    }
+                }
+
                 const div = document.createElement('div');
                 div.className = 'codigo-item';
-                div.innerHTML = `<span><b>${c.key}</b></span>
-                    <i class="fa fa-trash" style="color:var(--danger);cursor:pointer" onclick="apagarCod('${c.key}')"></i>`;
+                div.innerHTML = `
+                    <div style="display:flex; flex-direction:column">
+                        <span style="font-weight:bold; font-family:monospace">${codKey}</span>
+                        <span class="status-badge ${badgeClass}">${grupoEmUso}</span>
+                    </div>
+                    <i class="fa fa-trash" style="color:var(--danger);cursor:pointer" onclick="apagarCod('${codKey}')"></i>
+                `;
                 cont.appendChild(div);
             });
         });
@@ -190,8 +219,9 @@
         setTimeout(() => { b.innerText = original; }, 1000);
     }
 
-    window.abrirModal = (id, g) => {
+    window.abrirModal = (id) => {
         idSendoEditado = id;
+        const g = gruposCache[id];
         document.getElementById('edit-nome').value = g.nome;
         document.getElementById('edit-link').value = g.link;
         document.getElementById('edit-foto').value = g.foto || "";
@@ -201,23 +231,27 @@
 
     window.salvarEdicao = async () => {
         const cod = document.getElementById('edit-cod-vip').value.trim();
+        const updateData = {
+            nome: document.getElementById('edit-nome').value,
+            link: document.getElementById('edit-link').value,
+            foto: document.getElementById('edit-foto').value
+        };
+
         if(cod) {
             const res = await fetch("https://x23wzp.onrender.com/validar-vip", {
                 method: "POST", headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ codigo: cod, grupoId: idSendoEditado })
             });
-            if(!res.ok) return alert("Código Inválido!");
+            if(!res.ok) return alert("Código Inválido ou em Uso!");
+            // Nota: Se o servidor validar, ele já deve atualizar o status VIP no Firebase.
         }
-        await update(ref(db, 'grupos/' + idSendoEditado), {
-            nome: document.getElementById('edit-nome').value,
-            link: document.getElementById('edit-link').value,
-            foto: document.getElementById('edit-foto').value
-        });
+        
+        await update(ref(db, 'grupos/' + idSendoEditado), updateData);
         fecharModal();
     }
 
-    window.apagarCod = (c) => confirm("Apagar código?") && remove(ref(db, 'vips/' + c));
-    window.excluirGrp = (id) => confirm("Apagar grupo?") && remove(ref(db, 'grupos/' + id));
+    window.apagarCod = (c) => confirm("Apagar este código permanentemente?") && remove(ref(db, 'codigos_vips/' + c));
+    window.excluirGrp = (id) => confirm("Apagar grupo definitivamente?") && remove(ref(db, 'grupos/' + id));
     window.excluirAtual = () => { excluirGrp(idSendoEditado); fecharModal(); }
     window.fecharModal = () => document.getElementById('modalEdicao').style.display = 'none';
     window.logout = () => { localStorage.clear(); location.reload(); };
