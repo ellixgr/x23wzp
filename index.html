@@ -964,11 +964,10 @@ function ordenarGrupos(lista) {
 
 function renderizarGrupos(lista) {
   const container = document.getElementById('lista-grupos');
-  if (!container) return; 
   container.innerHTML = '';
 
-  if (!lista || lista.length === 0) {
-    container.innerHTML = '<p style="text-align:center; color:#666; padding:20px;">Nenhum grupo encontrado.</p>';
+  if (lista.length === 0) {
+    container.innerHTML = '<p style="color:#555;">Nenhum grupo encontrado nesta categoria.</p>';
     return;
   }
 
@@ -976,105 +975,124 @@ function renderizarGrupos(lista) {
   const listaOrdenada = ordenarGrupos([...lista]);
 
   listaOrdenada.forEach((g, index) => {
-    // PROTEÇÃO: Se o grupo não tiver os dados básicos, pula para o próximo para não travar o site
-    if (!g.nome || !g.link) return;
-
     const isOwner = g.dono === usuario;
     const wrapper = document.createElement('div');
-    wrapper.className = "wrapper-grupo"; // Use classe para organizar melhor o CSS
-    wrapper.style.width = '100%';
     wrapper.style.display = 'flex';
     wrapper.style.flexDirection = 'column';
     wrapper.style.alignItems = 'center';
+    wrapper.style.width = '100%';
 
     const btn = document.createElement('a');
-    btn.className = g.vip ? 'grupo vip' : 'grupo';
-    btn.style.cursor = "pointer";
+    let classNames = ['grupo'];
+    if (g.vip) classNames.push('vip');
+    
+    btn.className = classNames.join(' ');
+    btn.href = g.link;
+    btn.target = '_blank';
 
     btn.innerHTML = `
       <div class="card-topo">
-        <img class="foto" src="${g.foto || 'https://i.postimg.cc/t4sRSJ6w/whatsapp-logo.png'}" alt="foto">
+        <img class="foto" src="${g.foto}" alt="foto do grupo">
         <span class="badge-categoria">${g.categoria || 'Geral'}</span>
         ${g.vip ? '<span class="estrela-vip">⭐</span>' : ''}
       </div>
       <div class="card-corpo">
         <div style="display: flex; justify-content: space-between; align-items: flex-start;">
             <span class="nome">${g.nome}</span>
-            <span class="cliques" style="font-size: 11px; color: #b78cff; font-weight: bold;">🔥 ${g.cliques || 0} ACESSO</span>
+            <span class="cliques" style="font-size: 11px; color: #b78cff; font-weight: bold; white-space: nowrap; margin-left: 5px;">🔥 ${g.cliques || 0} ACESSO</span>
         </div>
-        <p class="descricao">${g.descricao || "Clique para entrar!"}</p>
-        <div class="btn-falso-entrar">${g.vip ? 'ENTRAR AGORA' : 'ENTRAR NO GRUPO'}</div>
+        <p class="descricao">${g.descricao || "Clique para entrar no grupo e interagir com a galera!"}</p>
+        <div class="btn-falso-entrar">Entrar no Grupo</div>
       </div>
     `;
 
-    btn.onclick = (e) => {
-      e.preventDefault();
-      const cliqueRef = ref(db, 'grupos/' + g.key + '/cliques');
-
-      if (g.vip) {
-        runTransaction(cliqueRef, (c) => (c || 0) + 1);
-        window.location.href = g.link;
-        return;
+    const cliqueRef = ref(db, 'grupos/' + g.key + '/cliques'); 
+    onValue(cliqueRef, snap => {
+      const cliquesSpanUpdate = btn.querySelector('.cliques');
+      if (cliquesSpanUpdate) {
+        cliquesSpanUpdate.textContent = `🔥 ${snap.val() || 0} ACESSO`;
       }
+    });
 
-      // LÓGICA GRUPO NORMAL
-      window.open('https://www.effectivegatecpm.com/afavj9a2y?key=5875f3c51a281666d53e659422973930', '_blank');
-      
-      const labelBotao = btn.querySelector('.btn-falso-entrar');
-      btn.style.pointerEvents = "none";
-      let contagem = 7;
-
-      const intervalo = setInterval(() => {
-        labelBotao.textContent = `AGUARDE... ${contagem}s`;
-        contagem--;
-
-        if (contagem < 0) {
-          clearInterval(intervalo);
-          labelBotao.textContent = "CLIQUE PARA ENTRAR";
-          btn.style.pointerEvents = "auto";
-          // Muda o comportamento do clique após o timer
-          btn.onclick = () => {
-            runTransaction(cliqueRef, (c) => (c || 0) + 1);
-            window.location.href = g.link;
-          };
-        }
-      }, 1000);
-    };
+    btn.addEventListener('click', e => {
+      e.preventDefault();
+      runTransaction(cliqueRef, (currentData) => {
+        return (currentData || 0) + 1;
+      }).then(() => {
+        window.open(g.link, '_blank');
+      }).catch(error => {
+          window.open(g.link, '_blank'); 
+      });
+    });
 
     wrapper.appendChild(btn);
     container.appendChild(wrapper);
 
-    // Inserção de Anúncios
-    if (index === 1) renderAnuncioTikTok(container);
-    if (index === 4) renderAnuncioPopular(container);
+    // --- AQUI A MÁGICA DE ESPALHAR OS ANÚNCIOS ---
+    
+    // Anúncio do TIKTOK após o 2º grupo
+    if (index === 1) { 
+        const adDiv = document.createElement('div');
+        adDiv.style.width = '100%';
+        adDiv.style.maxWidth = '380px';
+        adDiv.innerHTML = `
+            <div id="anuncio-tiktok" style="margin: 10px 0 25px; cursor: pointer; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border: 2px solid #b78cff;" onclick="copiarECaminhar()">
+                <img src="https://i.postimg.cc/dQjhrMsK/1769968251192-(1).jpg" style="width: 100%; display: block;">
+                <div style="text-align:center; font-size:12px; color:#fff; font-weight:bold; padding: 8px; background: #b78cff;">
+                   CÓDIGO: DLN60488006165 (CLIQUE PARA COPIAR)
+                </div>
+            </div>`;
+        container.appendChild(adDiv);
+    }
 
-    // Tenta adicionar botões do dono, se a função existir
-    if (isOwner && typeof window.adicionarBotoesDono === 'function') {
-       window.adicionarBotoesDono(wrapper, g); 
+    // Anúncio do SOU POPULAR após o 5º grupo
+    if (index === 4) { 
+        const adDiv2 = document.createElement('div');
+        adDiv2.style.width = '100%';
+        adDiv2.style.maxWidth = '380px';
+        adDiv2.innerHTML = `
+            <a href="https://soupopular.net/ref/bagau" target="_blank" style="display: block; margin: 10px 0 25px; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);">
+                <img src="https://files.catbox.moe/k4dtyg.jpg" style="width: 100%; display: block;">
+            </a>`;
+        container.appendChild(adDiv2);
+    }
+
+    if (isOwner) {
+      const box = document.createElement('div');
+      box.className = 'grupo-acoes-wrapper'; 
+      // ... (resto dos botões de editar/excluir que você já tem)
+      const edit = document.createElement('button');
+      edit.textContent = 'Editar ✎';
+      edit.className = 'edit-btn'; 
+      edit.onclick = () => abrirEdicao(g);
+
+      const turbinar = document.createElement('button');
+      if (g.vip) {
+          turbinar.textContent = 'VIP ATIVO ✅';
+          turbinar.style.background = '#2ecc71';
+          turbinar.disabled = true;
+      } else {
+          turbinar.textContent = 'TURBINAR 🚀';
+          turbinar.style.background = '#f1c40f';
+          turbinar.style.color = '#000';
+          turbinar.onclick = () => {
+              abrirEdicao(g);
+              document.getElementById('setor-vip-input').style.display='block';
+          };
+      }
+
+      const del = document.createElement('button');
+      del.textContent = 'Excluir X';
+      del.className = 'delete-btn'; 
+      del.onclick = () => excluirGrupo(g);
+      
+      box.appendChild(edit);
+      box.appendChild(turbinar);
+      box.appendChild(del);
+      wrapper.appendChild(box);
     }
   });
 }
-
-// Funções auxiliares para não poluir o código principal
-function renderAnuncioTikTok(container) {
-    const div = document.createElement('div');
-    div.style.width = '100%'; div.style.maxWidth = '380px';
-    div.innerHTML = `<div id="anuncio-tiktok" style="margin: 10px 0 25px; cursor: pointer; border-radius: 15px; overflow: hidden; border: 2px solid #b78cff;" onclick="copiarECaminhar()">
-        <img src="https://i.postimg.cc/dQjhrMsK/1769968251192-(1).jpg" style="width: 100%;">
-        <div style="text-align:center; font-size:12px; color:#fff; padding: 8px; background: #b78cff;">CÓDIGO: DLN60488006165 (COPIAR)</div>
-    </div>`;
-    container.appendChild(div);
-}
-
-function renderAnuncioPopular(container) {
-    const div = document.createElement('div');
-    div.style.width = '100%'; div.style.maxWidth = '380px';
-    div.innerHTML = `<a href="https://soupopular.net/ref/bagau" target="_blank" style="display: block; margin: 10px 0 25px; border-radius: 15px; overflow: hidden;">
-        <img src="https://files.catbox.moe/k4dtyg.jpg" style="width: 100%;">
-    </a>`;
-    container.appendChild(div);
-}
-
 
 
 
@@ -1274,7 +1292,7 @@ window.addEventListener("scroll", function() {
    lastScrollTop = st <= 0 ? 0 : st;
 }, false);
 
-// Forçar aparecer ao carregar oi
+// Forçar aparecer ao carregar
 document.addEventListener('DOMContentLoaded', () => {
     meuHeader.classList.add('header-visible');
 });
