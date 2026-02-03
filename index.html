@@ -766,40 +766,49 @@ fotoInput.addEventListener("change", (e) => {
 
 window.salvarNovoGrupo = async function() {
   const nome = document.getElementById('grupoNome').value.trim();
-  const linkCampo = document.getElementById('grupoLink').value.trim(); // Pegamos o que foi digitado
-  const descricao = document.getElementById('grupoDescricao').value.trim() || "Clique para entrar no grupo!";
-  const foto = previewFoto.src.trim().includes('9qdwuz.webp') ? 'https://i.postimg.cc/t4sRSJ6w/whatsapp-logo.png' : previewFoto.src.trim();
+  const linkCampo = document.getElementById('grupoLink').value.trim(); // O que o cara digitou
   const categoria = document.getElementById('grupoCategoria').value;
+  const descricao = document.getElementById('grupoDescricao').value.trim() || "Clique para entrar!";
   const vipCodigo = document.getElementById('grupoVipCodigo').value.trim();
+  const foto = previewFoto.src.trim().includes('9qdwuz.webp') ? 'https://i.postimg.cc/t4sRSJ6w/whatsapp-logo.png' : previewFoto.src.trim();
 
-  // --- INÍCIO DA CORREÇÃO DO LINK ---
-  // Esta regex extrai apenas o link do WhatsApp, mesmo que tenha texto em volta
-  const regexExtrair = /(https:\/\/chat\.whatsapp\.com\/[A-Za-z0-9_-]{20,30})/;
-  const match = linkCampo.match(regexExtrair);
+  // 1️⃣ A REGEX QUE MANDA O "OI" PRO INFERNO
+  // Explicação: ^https significa que OBRIGATORIAMENTE tem que começar com https. 
+  // Se tiver um "a" ou um espaço antes, ela BLOQUEIA.
+  const regexBlindada = /^https:\/\/chat\.whatsapp\.com\/[A-Za-z0-9_-]{20,30}(\?.*)?$/;
 
-  if (!match) {
-    showAlert('❌ Link de grupo inválido! Cole um link válido do WhatsApp.');
+  if (!regexBlindada.test(linkCampo)) {
+    showAlert('❌ Use um link válido');
+    return; // Mata a execução aqui. Nada é salvo.
+  }
+
+  // 2️⃣ TRAVA DE REPETIDO (Comparando o ID do grupo)
+  // Extrai só o código (ex: D02lBo9OUbx92q0m0rz9Y5) para não ser enganado por ?mode=gi_t
+  const idAtual = linkCampo.split('chat.whatsapp.com/')[1].split('?')[0];
+
+  const jaExiste = todosGrupos.some(g => {
+    if(!g.link.includes('chat.whatsapp.com/')) return false;
+    const idBanco = g.link.split('chat.whatsapp.com/')[1].split('?')[0];
+    return idBanco === idAtual;
+  });
+
+  if (jaExiste) {
+    showAlert('⚠️ ESSE GRUPO JÁ ESTÁ NO SITE! Não aceitamos links repetidos.');
     return;
   }
 
-  const link = match[1]; // Aqui o link está limpo, apenas a URL
-  // --- FIM DA CORREÇÃO ---
-
-  if (!nome || !link || !categoria) {
-    showAlert('Preencha nome, link e categoria!');
+  // 3️⃣ VALIDAÇÃO DE CAMPOS VAZIOS
+  if (!nome || !categoria) {
+    showAlert('❌ Preencha o nome e a categoria!');
     return;
   }
-  
-  const linkJaExiste = todosGrupos.some(g => g.link === link);
-  if (linkJaExiste) {
-    showAlert('Este link de grupo já foi enviado.');
-    return; 
-  }
+
+  // --- SE CHEGOU AQUI, O LINK É SAGRADO E VAI SER SALVO ---
   
   let isVip = false;
   let dataExpiracaoVip = null;
 
-  if (vipCodigo && vipCodigo !== "") {
+  if (vipCodigo) {
     document.getElementById('msg-acordando').style.display = 'block';
     try {
         const response = await fetch("https://x23wzp.onrender.com/validar-vip", {
@@ -808,50 +817,45 @@ window.salvarNovoGrupo = async function() {
             body: JSON.stringify({ codigo: vipCodigo })
         });
         const data = await response.json();
-        
         if (data.valido) {
             isVip = true;
-            const horasEmMs = (data.duracaoHoras || 24) * 60 * 60 * 1000;
-            dataExpiracaoVip = Date.now() + horasEmMs;
-            localStorage.setItem('meuCodigoVip', vipCodigo); 
+            dataExpiracaoVip = Date.now() + ((data.duracaoHoras || 24) * 60 * 60 * 1000);
         } else {
-            showAlert("❌ Código VIP inválido ou já usado.");
+            showAlert("❌ Código VIP inválido.");
             document.getElementById('msg-acordando').style.display = 'none';
             return;
         }
-    } catch (err) { 
-        showAlert("Erro ao conectar com o servidor.");
-        return;
-    }
+    } catch (err) { showAlert("Erro de conexão."); return; }
   }
 
-  // MANTÉM O MESMO ID DE USUÁRIO PARA NÃO PERDER OS GRUPOS
   const usuario = localStorage.getItem('usuarioID') || crypto.randomUUID();
   localStorage.setItem('usuarioID', usuario);
 
   const novoGrupo = { 
-    nome: nome, 
-    link: link, 
-    descricao: descricao, 
-    foto: foto, 
-    categoria: categoria, 
+    nome, 
+    link: linkCampo, // Salva o link original (incluindo o ?mode se tiver, mas sem o lixo de texto)
+    descricao, 
+    foto, 
+    categoria, 
     dono: usuario, 
     vip: isVip, 
     vipAte: dataExpiracaoVip,
     vipCodigo: vipCodigo || null,
     cliques: 0,
-    criadoEm: Date.now()
+    criadoEm: Date.now(),
+    ultimoImpulso: 0
   };
 
   try {
-    const gruposRef = ref(db, 'grupos');
-    await push(gruposRef, novoGrupo);
+    const { push, ref: dbRef } = await import("https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js");
+    await push(dbRef(db, 'grupos'), novoGrupo);
     document.getElementById('mensagemEnvio').style.display = 'block';
-    setTimeout(() => { location.reload(); }, 1500);
+    setTimeout(() => { location.reload(); }, 1200);
   } catch (error) {
-    showAlert('Erro ao salvar no Firebase.');
+    showAlert('Erro ao salvar no banco.');
   }
 };
+
 
 
 
@@ -885,9 +889,34 @@ async function salvarEdicao(grupoOriginal){
   const codDigitado = document.getElementById('grupoVipCodigo').value.trim();
   const fotoNova = previewFoto.src;
 
-  let vipNovo = grupoOriginal.vip;
+  // 1️⃣ TRAVA CONTRA LIXO (O MESMO FILTRO DO ENVIO)
+  const regexBlindada = /^https:\/\/chat\.whatsapp\.com\/[A-Za-z0-9_-]{20,30}(\?.*)?$/;
 
-  // Se o cara digitou um código novo na edição, valida
+  if (!regexBlindada.test(linkNovo)) {
+    showAlert('❌ ERRO: Link inválido ou com texto extra! Use apenas o link puro do WhatsApp.');
+    return;
+  }
+
+  // 2️⃣ TRAVA CONTRA REPETIDOS (DURANTE A EDIÇÃO)
+  // Extrai o ID do link que o cara quer colocar agora
+  const idNovo = linkNovo.split('chat.whatsapp.com/')[1].split('?')[0];
+
+  const jaExiste = todosGrupos.some(g => {
+    // Não comparar o grupo com ele mesmo (por isso checamos a key)
+    if (g.key === grupoOriginal.key) return false;
+    
+    if(!g.link.includes('chat.whatsapp.com/')) return false;
+    const idBanco = g.link.split('chat.whatsapp.com/')[1].split('?')[0];
+    return idBanco === idNovo;
+  });
+
+  if (jaExiste) {
+    showAlert('⚠️ Esse link já foi enviado');
+    return;
+  }
+
+  // 3️⃣ VALIDAÇÃO VIP
+  let vipNovo = grupoOriginal.vip;
   if (codDigitado !== "" && codDigitado !== grupoOriginal.vipCodigo) {
       try {
           const resVip = await fetch("https://x23wzp.onrender.com/validar-vip", {
@@ -901,28 +930,31 @@ async function salvarEdicao(grupoOriginal){
       } catch (e) { console.log("Erro servidor"); }
   }
 
+  // 4️⃣ MONTAGEM DO OBJETO PARA SALVAR
   const grupoEditado = {
       nome: nomeNovo, 
-      link: linkNovo, 
+      link: linkNovo, // Salva o link validado
       descricao: descricaoNova,
       foto: fotoNova,
       categoria: categoriaNova,
       vip: vipNovo,
-      vipCodigo: codDigitado, // SALVA O CÓDIGO NO BANCO PARA NÃO SUMIR
+      vipCodigo: codDigitado,
       dono: grupoOriginal.dono, 
       cliques: grupoOriginal.cliques || 0,
       ultimoImpulso: grupoOriginal.ultimoImpulso || 0
   };
   
   try {
-    await set(ref(db, 'grupos/' + grupoOriginal.key), grupoEditado);
+    const { ref: dbRef, set: dbSet } = await import("https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js");
+    await dbSet(dbRef(db, 'grupos/' + grupoOriginal.key), grupoEditado);
     document.getElementById('mensagemEnvio').textContent = '✅ Editado com sucesso!';
     document.getElementById('mensagemEnvio').style.display = 'block';
     setTimeout(() => { modal.style.display = 'none'; location.reload(); }, 1000);
   } catch (error) {
-    showAlert('Erro ao salvar.');
+    showAlert('Erro ao salvar edição.');
   }
 }
+
 
 
 
@@ -1426,7 +1458,5 @@ function copiarECaminhar() {
     });
 }
 </script>
-
-
 </body>
 </html>
