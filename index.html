@@ -823,7 +823,7 @@ window.salvarNovoGrupo = async function() {
 // SALVAR GRUPO AGORA APONTA PARA A FUNÇÃO DE NOVO GRUPO POR PADRÃO
 salvarGrupoBtn.onclick = () => window.salvarNovoGrupo();
 
-// ================== FUNÇÕES DE EDIÇÃO/EXCLUSÃO, CARREGAR GRUPOS (CORRIGIDAS) ================== //
+// FUNÇÕES DE EDIÇÃO/EXCLUSÃO, CARREGAR GRUPOS (CORRIGIDAS)  //
 
 function abrirEdicao(grupo){
   window.grupoSendoEditadoKey = grupo.key;
@@ -834,9 +834,13 @@ function abrirEdicao(grupo){
   document.getElementById('grupoDescricao').value = grupo.descricao || "";
   previewFoto.src = grupo.foto;
   document.getElementById('grupoCategoria').value = grupo.categoria;
-  document.getElementById('grupoVipCodigo').value = "";
+  
+  // Agora ele busca o código que já estava salvo no banco
+  document.getElementById('grupoVipCodigo').value = grupo.vipCodigo || ""; 
+  
   salvarGrupoBtn.onclick = () => salvarEdicao(grupo); 
 }
+
 
 // *** FUNÇÃO SALVAREDICAO (CORRIGIDA PARA PRESERVAR CLIQUES) ***
 async function salvarEdicao(grupoOriginal){
