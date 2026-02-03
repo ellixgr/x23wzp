@@ -1106,7 +1106,7 @@ function ordenarGrupos(lista) {
 window.impulsionarGrupo = function(key) {
     const gRef = ref(db, 'grupos/' + key + '/ultimoImpulso');
     set(gRef, Date.now()).then(() => {
-        window.showAlert("🚀 Grupo Impulsionado! Ele ficará no topo por 1 hora.");
+        window.showAlert("🚀 Grupo Impulsionado para o topo da página🥳");
         const usuario = localStorage.getItem('usuarioID');
         const meus = todosGrupos.filter(g => g.dono === usuario);
         renderizarGrupos(meus, true);
@@ -1126,18 +1126,6 @@ function renderAnuncioPopular(container) {
     ad2.innerHTML = `<a href="https://soupopular.net/ref/bagau" target="_blank" style="display: block; border-radius: 15px; overflow: hidden;"><img src="https://files.catbox.moe/k4dtyg.jpg" style="width: 100%; display: block;"></a>`;
     container.appendChild(ad2);
 }
-
-// FUNÇÃO PARA IMPULSIONAR
-window.impulsionarGrupo = function(key) {
-    const gRef = ref(db, 'grupos/' + key + '/ultimoImpulso');
-    set(gRef, Date.now()).then(() => {
-        showAlert("🚀 Grupo Impulsionado! Ele ficará no topo por 1 hora.");
-        // Recarrega a aba "Meus Grupos"
-        const usuario = localStorage.getItem('usuarioID');
-        const meus = todosGrupos.filter(g => g.dono === usuario);
-        renderizarGrupos(meus, true);
-    });
-};
 
 // AJUSTE NO BOTÃO "MEUS GRUPOS" DO MENU
 meusBtn.onclick = (e) => {
