@@ -3,25 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel Admin PRO</title>
+    <title>PAINEL ADMIN PRO</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --primary: #b78cff; --vip: #ffd700; --danger: #ff4d4d; --success: #2ecc71; --blue: #3498db; }
         body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; display: flex; flex-direction: column; align-items: center; margin: 0; }
         
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 450px; margin-bottom: 20px; box-sizing: border-box; }
-        input, select, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
-        button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
+        .stats-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 450px; margin-bottom: 20px; }
+        .stat-card { background: white; padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .stat-card p { margin: 5px 0 0; font-size: 22px; font-weight: bold; color: var(--primary); }
 
-        /* Botão Copiar sem Frescura */
-        #btn-copiar { background: #f0ebff; color: #7d5fff; border: 2px dashed var(--primary); margin-top: 15px; display: none; font-size: 18px; transition: 0.3s; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 450px; margin-bottom: 20px; box-sizing: border-box; }
+        input, select, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; font-weight: bold; }
+        button { background: var(--primary); color: white; border: none; cursor: pointer; }
+
+        #btn-copiar { background: #f0ebff; color: #7d5fff; border: 2px dashed var(--primary); margin-top: 15px; display: none; font-size: 18px; }
 
         #area-admin { display: none; width: 100%; max-width: 450px; }
         
         .lista-codigos { background: #fdfdfd; border: 1px solid #eee; border-radius: 10px; margin-top: 10px; max-height: 150px; overflow-y: auto; }
         .codigo-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #f5f5f5; font-size: 14px; }
         
-        .item-grupo { background: white; padding: 15px; margin-top: 12px; border-radius: 12px; border-left: 5px solid #ccc; position: relative; }
+        .item-grupo { background: white; padding: 15px; margin-top: 12px; border-radius: 12px; border-left: 5px solid #ccc; }
         .item-grupo.is-vip { border-left-color: var(--vip); background: #fffdf0; }
         
         .btns-acao-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 10px; }
@@ -29,25 +32,31 @@
 
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 1000; }
         .modal-content { background: white; padding: 20px; border-radius: 15px; width: 90%; max-width: 400px; }
+        label { font-size: 11px; font-weight: bold; color: #888; display: block; margin-top: 10px; }
     </style>
 </head>
 <body>
 
     <div id="login-box" class="card">
-        <h2 style="text-align:center;">🛡️ Admin</h2>
+        <h2 style="text-align:center; color:var(--primary)">🛡️ Admin Login</h2>
         <input type="text" id="user-input" placeholder="Usuário">
-        <input type="password" id="pass-input" placeholder="Senha">
-        <button onclick="logar()">ENTRAR</button>
+        <input type="password" id="pass-input" placeholder="Senha Mestra">
+        <button onclick="logar()">ENTRAR NO PAINEL</button>
     </div>
 
     <div id="area-admin">
-        <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:12px;">
-            <span>User: <b>https67</b></span>
-            <a href="#" onclick="logout()" style="color:red">Sair</a>
+        <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 10px;">
+            <span style="font-size: 12px; color: #888;">User: <b>https67</b></span>
+            <a href="#" onclick="logout()" style="color:red; font-size: 12px; text-decoration: none; font-weight: bold;">SAIR</a>
+        </div>
+
+        <div class="stats-container">
+            <div class="stat-card"><h4>Grupos</h4><p id="count-total">0</p></div>
+            <div class="stat-card"><h4>VIPs</h4><p id="count-vip">0</p></div>
         </div>
 
         <div class="card">
-            <h3>⭐ Criar VIP</h3>
+            <h3 style="margin:0">⭐ Gerar VIP</h3>
             <select id="tempo-vip">
                 <option value="24">24 Horas</option>
                 <option value="48">48 Horas</option>
@@ -55,21 +64,27 @@
             <button onclick="gerarCodigo()">GERAR AGORA</button>
             <button id="btn-copiar" onclick="copiarCodigo()"></button>
             
-            <div id="lista-codigos-ativos" class="lista-codigos"></div>
+            <h4 style="margin: 15px 0 5px; font-size: 11px; color: #999;">CÓDIGOS ATIVOS (CRIADOS E NÃO USADOS):</h4>
+            <div id="lista-codigos-ativos" class="lista-codigos">Carregando...</div>
         </div>
 
+        <h2 style="font-size: 16px; color: #555;">LISTA DE GRUPOS</h2>
         <div id="lista-grupos"></div>
     </div>
 
     <div id="modalEdicao" class="modal">
         <div class="modal-content">
-            <h3>Editar Grupo</h3>
-            <input type="text" id="edit-nome" placeholder="Nome">
-            <input type="text" id="edit-link" placeholder="Link">
-            <input type="text" id="edit-foto" placeholder="Link Foto">
-            <input type="text" id="edit-cod-vip" placeholder="COLE O CÓDIGO AQUI">
-            <button onclick="salvarEdicao()" style="background:var(--success)">SALVAR ALTERAÇÕES</button>
-            <button onclick="fecharModal()" style="background:#888; margin-top:5px">CANCELAR</button>
+            <h3 style="margin-top:0">Editar Grupo</h3>
+            <label>NOME</label><input type="text" id="edit-nome">
+            <label>LINK WHATSAPP</label><input type="text" id="edit-link">
+            <label>LINK FOTO</label><input type="text" id="edit-foto">
+            <label>CÓDIGO VIP</label><input type="text" id="edit-cod-vip" placeholder="COLE O CÓDIGO AQUI">
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button onclick="salvarEdicao()" style="background:var(--success)">SALVAR</button>
+                <button onclick="fecharModal()" style="background:#888">CANCELAR</button>
+            </div>
+            <button onclick="excluirAtual()" style="background:var(--danger); margin-top:10px">EXCLUIR GRUPO</button>
         </div>
     </div>
 
@@ -97,7 +112,7 @@
     window.logar = async function() {
         const u = document.getElementById('user-input').value;
         const s = document.getElementById('pass-input').value;
-        if(u !== "https67") return alert("Usuário Errado");
+        if(u !== "https67") return alert("Usuário Errado!");
 
         const res = await fetch("https://x23wzp.onrender.com/login-admin", {
             method: "POST", headers: { "Content-Type": "application/json" },
@@ -108,39 +123,49 @@
             SENHA_MASTER = s;
             localStorage.setItem('admin_acesso', s);
             mostrarPainel();
-        } else { alert("Senha Errada"); }
+        } else { alert("Senha Incorreta!"); }
     }
 
     function mostrarPainel() {
         document.getElementById('login-box').style.display = 'none';
         document.getElementById('area-admin').style.display = 'block';
-        
-        // Monitorar Códigos VIP
-        onValue(ref(db, 'vips'), (snap) => {
-            const cont = document.getElementById('lista-codigos-ativos');
-            cont.innerHTML = "";
-            snap.forEach(c => {
-                const div = document.createElement('div');
-                div.className = 'codigo-item';
-                div.innerHTML = `<span>${c.key}</span><i class="fa fa-trash" style="color:red;cursor:pointer" onclick="apagarCod('${c.key}')"></i>`;
-                cont.appendChild(div);
-            });
-        });
+        carregarDados();
+    }
 
-        // Monitorar Grupos
+    function carregarDados() {
+        // Estatísticas e Grupos
         onValue(ref(db, 'grupos'), (snap) => {
             const lista = document.getElementById('lista-grupos');
+            const totalTxt = document.getElementById('count-total');
+            const vipTxt = document.getElementById('count-vip');
             lista.innerHTML = "";
+            let t = 0, v = 0;
             snap.forEach(c => {
-                const g = c.val();
+                const g = c.val(); t++; if(g.vip) v++;
                 const div = document.createElement('div');
                 div.className = `item-grupo ${g.vip ? 'is-vip' : ''}`;
                 div.innerHTML = `<b>${g.nome}</b> ${g.vip ? '⭐' : ''}
                     <div class="btns-acao-grid">
                         <button style="background:var(--blue)" onclick="abrirModal('${c.key}', ${JSON.stringify(g).replace(/"/g, '&quot;')})">EDITAR</button>
+                        <button style="background:#555" onclick="window.open('${g.link}')">LINK</button>
                         <button style="background:var(--danger)" onclick="excluirGrp('${c.key}')">DEL</button>
                     </div>`;
                 lista.appendChild(div);
+            });
+            totalTxt.innerText = t; vipTxt.innerText = v;
+        });
+
+        // Lista de Códigos Ativos (Lê da pasta 'vips')
+        onValue(ref(db, 'vips'), (snap) => {
+            const cont = document.getElementById('lista-codigos-ativos');
+            cont.innerHTML = "";
+            if(!snap.exists()) cont.innerHTML = "<p style='color:#999;padding:10px'>Nenhum código pendente.</p>";
+            snap.forEach(c => {
+                const div = document.createElement('div');
+                div.className = 'codigo-item';
+                div.innerHTML = `<span><b>${c.key}</b></span>
+                    <i class="fa fa-trash" style="color:var(--danger);cursor:pointer" onclick="apagarCod('${c.key}')"></i>`;
+                cont.appendChild(div);
             });
         });
     }
@@ -176,26 +201,24 @@
 
     window.salvarEdicao = async () => {
         const cod = document.getElementById('edit-cod-vip').value.trim();
-        const payload = {
-            nome: document.getElementById('edit-nome').value,
-            link: document.getElementById('edit-link').value,
-            foto: document.getElementById('edit-foto').value
-        };
-
         if(cod) {
             const res = await fetch("https://x23wzp.onrender.com/validar-vip", {
                 method: "POST", headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ codigo: cod, grupoId: idSendoEditado })
             });
-            if(!res.ok) return alert("CÓDIGO INVÁLIDO!");
+            if(!res.ok) return alert("Código Inválido!");
         }
-
-        await update(ref(db, 'grupos/' + idSendoEditado), payload);
+        await update(ref(db, 'grupos/' + idSendoEditado), {
+            nome: document.getElementById('edit-nome').value,
+            link: document.getElementById('edit-link').value,
+            foto: document.getElementById('edit-foto').value
+        });
         fecharModal();
     }
 
-    window.apagarCod = (c) => remove(ref(db, 'vips/' + c));
-    window.excluirGrp = (id) => confirm("Apagar?") && remove(ref(db, 'grupos/' + id));
+    window.apagarCod = (c) => confirm("Apagar código?") && remove(ref(db, 'vips/' + c));
+    window.excluirGrp = (id) => confirm("Apagar grupo?") && remove(ref(db, 'grupos/' + id));
+    window.excluirAtual = () => { excluirGrp(idSendoEditado); fecharModal(); }
     window.fecharModal = () => document.getElementById('modalEdicao').style.display = 'none';
     window.logout = () => { localStorage.clear(); location.reload(); };
 </script>
