@@ -16,7 +16,6 @@
             font-family: sans-serif;
         }
 
-        /* Conteúdo principal com desfoque inicial */
         #main-content {
             filter: blur(15px);
             pointer-events: none;
@@ -27,13 +26,11 @@
             padding: 20px;
         }
 
-        /* Overlay do Filtro 18+ TRANSPARENTE para mostrar o fundo */
         #age-gate {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            /* Fundo quase invisível para não tapar a imagem atrás */
             background: rgba(0, 0, 0, 0.1); 
-            backdrop-filter: blur(5px); /* Reforça o embaçado do que está atrás */
+            backdrop-filter: blur(5px);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -53,7 +50,6 @@
 
         .modal h2 { margin-top: 0; font-size: 1.2em; color: #333; }
         .emoji { font-size: 45px; display: block; margin-bottom: 10px; }
-
         .btn-group { display: flex; gap: 10px; margin-top: 20px; }
 
         .btn {
@@ -69,7 +65,6 @@
         .btn-ok { background: #0088cc; color: white; }
         .btn-close { background: #eee; color: #444; }
 
-        /* Estilo dos Ads */
         .ad-wrapper { width: 100%; max-width: 480px; text-align: center; }
         .ad-link img { width: 100%; height: auto; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         #container-1fd37c2a1d9d1e19537dc1d7d97cdc9b { margin-top: 25px; width: 100%; }
@@ -83,7 +78,7 @@
             <h2>AVISO</h2>
             <p>Este site contém anúncios e conteúdo para maiores de 18 anos.</p>
             <div class="btn-group">
-                <button class="btn btn-close" onclick="window.location.href='https://google.com'">FECHAR</button>
+                <button class="btn btn-close" onclick="window.location.href='https://ellixgr.github.io/x23wzp/'">FECHAR</button>
                 <button class="btn btn-ok" onclick="unlockContent()">OK</button>
             </div>
         </div>
