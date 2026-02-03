@@ -186,6 +186,23 @@ header p{margin-top:4px;text-shadow:none;}
 }
 
 
+/* Quadrado azul de aviso nos Meus Grupos */
+.aviso-meus-grupos {
+    background: #e3f2fd; 
+    border: 1px solid #90caf9;
+    border-radius: 12px;
+    padding: 15px;
+    margin: 20px auto;
+    width: 90%;
+    max-width: 380px;
+    color: #1565c0; 
+    font-size: 13px;
+    line-height: 1.5;
+    text-align: left;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+
 /* --- NOVO ESTILO CARD IGUAL A FOTO --- */
 .grupo {
     width: 100%;
@@ -488,6 +505,7 @@ footer a{color:#b78cff;text-decoration:none}
 #modalEnvioGrupo #salvarGrupo:hover {
     background: #27ae60;
 }
+
 </style>
 </head>
 <body>
@@ -947,7 +965,6 @@ async function carregarGrupos() {
 
 // ================== RENDERIZAR GRUPOS (CORRIGIDO) ================== //
 
-
 function renderizarGrupos(lista, modoMeusGrupos = false) {
   const container = document.getElementById('lista-grupos');
   container.innerHTML = '';
@@ -1078,7 +1095,20 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
         if (index === 4) renderAnuncioPopular(container);
     }
   });
+
+  // --- ADICIONE ESTA PARTE ABAIXO PARA O AVISO APARECER ---
+  if (modoMeusGrupos) {
+      const aviso = document.createElement('div');
+      aviso.className = 'aviso-meus-grupos';
+      aviso.innerHTML = `
+        💾 <b>Seus grupos ficam salvos neste dispositivo</b> para sua segurança e privacidade. 
+        Acesse sempre do mesmo navegador para acessá-los facilmente.<br><br>
+        💡 <b>Dica:</b> Se limpar os dados do navegador, basta reenviar seus grupos novamente.
+      `;
+      container.appendChild(aviso);
+  }
 }
+
 
 
 function ordenarGrupos(lista) {
