@@ -743,7 +743,6 @@ fotoInput.addEventListener("change", (e) => {
   }
 });
 
-// ================== SALVAR NOVO GRUPO (CORRIGIDO) ================== //
 window.salvarNovoGrupo = async function() {
   const nome = document.getElementById('grupoNome').value.trim();
   const link = document.getElementById('grupoLink').value.trim();
@@ -752,7 +751,6 @@ window.salvarNovoGrupo = async function() {
   const categoria = document.getElementById('grupoCategoria').value;
   const vipCodigo = document.getElementById('grupoVipCodigo').value.trim();
 
-  // Validação simplificada para evitar erros de Regex rigoroso demais
   if (!nome || !link || !categoria) {
     showAlert('Preencha nome, link e categoria!');
     return;
@@ -767,8 +765,7 @@ window.salvarNovoGrupo = async function() {
   let isVip = false;
   let dataExpiracaoVip = null;
 
-// Dentro da sua função salvarNovoGrupo
-if (vipCodigo && vipCodigo !== "") {
+  if (vipCodigo && vipCodigo !== "") {
     document.getElementById('msg-acordando').style.display = 'block';
     try {
         const response = await fetch("https://x23wzp.onrender.com/validar-vip", {
@@ -780,16 +777,21 @@ if (vipCodigo && vipCodigo !== "") {
         
         if (data.valido) {
             isVip = true;
-            // SALVA O CÓDIGO NO NAVEGADOR DO USUÁRIO
+            // Cálculo do tempo: Agora + (Horas que o código vale)
+            const horasEmMs = (data.duracaoHoras || 24) * 60 * 60 * 1000;
+            dataExpiracaoVip = Date.now() + horasEmMs;
+            
             localStorage.setItem('meuCodigoVip', vipCodigo); 
-            localStorage.setItem('vipExpira', Date.now() + (data.duracaoHoras * 60 * 60 * 1000));
         } else {
-            showAlert("❌ Código VIP inválido.");
+            showAlert("❌ Código VIP inválido ou já usado.");
+            document.getElementById('msg-acordando').style.display = 'none';
             return;
         }
-    } catch (err) { console.log("Erro ao validar"); }
-}
-
+    } catch (err) { 
+        showAlert("Erro ao conectar com o servidor.");
+        return;
+    }
+  }
 
   const usuario = localStorage.getItem('usuarioID') || crypto.randomUUID();
   localStorage.setItem('usuarioID', usuario);
@@ -802,10 +804,11 @@ if (vipCodigo && vipCodigo !== "") {
     categoria: categoria, 
     dono: usuario, 
     vip: isVip, 
-    vipAte: dataExpiracaoVip,
-    cliques: 0 
+    vipAte: dataExpiracaoVip, // Crucial para o Render apagar sozinho
+    vipCodigo: vipCodigo || null,
+    cliques: 0,
+    criadoEm: Date.now()
   };
-
 
   try {
     const gruposRef = ref(db, 'grupos');
@@ -813,7 +816,7 @@ if (vipCodigo && vipCodigo !== "") {
     document.getElementById('mensagemEnvio').style.display = 'block';
     setTimeout(() => { location.reload(); }, 1500);
   } catch (error) {
-    showAlert('Erro ao salvar no Firebase. Verifique suas regras de banco de dados.');
+    showAlert('Erro ao salvar no Firebase.');
   }
 };
 
