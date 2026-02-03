@@ -23,14 +23,53 @@ if (!admin.apps.length) {
 const db = admin.database();
 const SENHA_MESTRE = "cavalo777_";
 
-// ROTA QUE FALTAVA (O SEU SITE PRECISA DESTA)
+/**
+ * FUNÇÃO DE FAXINA AUTOMÁTICA
+ * Verifica grupos com VIP vencido e os transforma em grupos normais.
+ */
+async function limparVipsVencidos() {
+    console.log("🔍 Iniciando faxina de VIPs vencidos...");
+    const agora = Date.now();
+    try {
+        const gruposRef = db.ref('grupos');
+        const snapshot = await gruposRef.once('value');
+
+        if (snapshot.exists()) {
+            snapshot.forEach((child) => {
+                const grupo = child.val();
+                // Verifica se é VIP e se a data 'vipAte' já passou
+                if (grupo.vip === true && grupo.vipAte && agora > grupo.vipAte) {
+                    db.ref(`grupos/${child.key}`).update({
+                        vip: false,
+                        vipAte: null
+                    });
+                    console.log(`🚫 VIP removido do grupo: ${grupo.nome}`);
+                }
+            });
+        }
+    } catch (error) {
+        console.error("❌ Erro na faxina:", error.message);
+    }
+}
+
+// Executa a limpeza a cada 15 minutos (900.000 milissegundos)
+setInterval(limparVipsVencidos, 15 * 60 * 1000);
+
+// ROTA PARA VALIDAR O CÓDIGO E RETORNAR O TEMPO DE VIP
 app.post('/validar-vip', async (req, res) => {
     const { codigo } = req.body;
     try {
         const snapshot = await db.ref(`codigos_vips/${codigo}`).once('value');
         if (snapshot.exists() && snapshot.val().status === "disponivel") {
+            const dadosVip = snapshot.val();
+            // Marca como usado
             await db.ref(`codigos_vips/${codigo}`).update({ status: "usado" });
-            res.json({ valido: true });
+            
+            // Retorna 'valido' e a quantidade de horas que o VIP deve durar
+            res.json({ 
+                valido: true, 
+                duracaoHoras: dadosVip.validadeHoras || 24 
+            });
         } else {
             res.json({ valido: false });
         }
@@ -61,4 +100,8 @@ app.post('/login-admin', (req, res) => {
 });
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`Rodando na porta ${PORT}`));
+app.listen(PORT, () => {
+    console.log(`🚀 Servidor rodando na porta ${PORT}`);
+    // Executa uma limpeza assim que o servidor ligar
+    limparVipsVencidos();
+});
