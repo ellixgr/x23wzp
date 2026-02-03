@@ -239,6 +239,10 @@ header p{margin-top:4px;text-shadow:none;}
     display: block;
     margin-bottom: 5px;
     color: #000;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 90%;
 }
 
 .descricao {
@@ -246,6 +250,11 @@ header p{margin-top:4px;text-shadow:none;}
     color: #666;
     margin-bottom: 15px;
     line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    height: 36px;
 }
 
 .btn-falso-entrar {
@@ -630,7 +639,7 @@ footer a{color:#b78cff;text-decoration:none}
     <span class="close-modal" onclick="document.getElementById('modalEnvioGrupo').style.display = 'none';" style="position:absolute; top:10px; right:15px; font-size:22px; cursor:pointer;">❌</span>
     <h3>Enviar Meu Grupo</h3>
     
-    <input type="text" id="grupoNome" placeholder=" Nome do grupo" required>
+    <input type="text" id="grupoNome" placeholder=" Nome do grupo" maxlength="25" required>
     <input type="text" id="grupoLink" placeholder=" Link do grupo (https://chat.whatsapp.com/...)" required>
  
     <input type="text" id="grupoDescricao" placeholder=" Descrição curta (Máx 60 letras)" maxlength="60" required>
@@ -713,7 +722,7 @@ const copyPixBtn = document.getElementById('copy-pix-btn');
 let todosGrupos = []; 
 
 // REGEX CORRIGIDO: Mais robusto para links de convite do WhatsApp
-const WHATSAPP_LINK_REGEX = /^https?:\/\/(chat\.whatsapp\.com\/|wa\.me\/invite\/|whatsapp\.com\/)([A-Za-z0-9_-]{22}|[0-9]{1,4})\/?(\?.*)?$/i;
+const WHATSAPP_LINK_REGEX = /^https?:\/\/(chat\.whatsapp\.com|whatsapp\.com\/chat)\/[A-Za-z0-9_-]{20,30}$/i;
 
 
 // ================== CRIAÇÃO E MANIPULAÇÃO DO MODAL DE GRUPO (MANTIDO) ================== //
@@ -1209,19 +1218,11 @@ document.querySelectorAll('.cat-btn').forEach(btn => {
     btn.classList.add('active');
     const cat = btn.dataset.cat.toLowerCase();
     
-    // Filtra e depois ordena
-    let listaFiltrada;
-    if (cat === 'todos') {
-        listaFiltrada = todosGrupos;
-    } else {
-        // Filtragem segura
-        listaFiltrada = todosGrupos.filter(g => g.categoria?.toLowerCase() === cat);
-    }
+    let listaFiltrada = (cat === 'todos') 
+        ? todosGrupos 
+        : todosGrupos.filter(g => g.categoria?.toLowerCase() === cat);
 
-    // Re-ordena a lista filtrada (necessário para manter VIPs no topo da categoria)
-    const listaFinal = ordenarGrupos(listaFiltrada);
-
-    renderizarGrupos(listaFinal);
+    renderizarGrupos(ordenarGrupos(listaFiltrada), false);
   });
 });
 
@@ -1329,7 +1330,7 @@ window.showAlert = function(mensagem) {
   document.getElementById('customAlert').style.display = 'flex';
 };
 
-// Faz a barrinha de navegação da porra VIP deslizar 
+// Faz a barrinha de navegação do VIP deslizar
 const carrosselVip = document.getElementById('carrossel-pagamento');
 const indicadorVip = document.getElementById('indicador-scroll');
 
