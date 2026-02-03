@@ -9,71 +9,53 @@
         :root { --primary: #b78cff; --vip: #ffd700; --danger: #ff4d4d; --success: #2ecc71; --blue: #3498db; }
         body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; display: flex; flex-direction: column; align-items: center; margin: 0; }
         
-        .stats-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 450px; margin-bottom: 20px; }
-        .stat-card { background: white; padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        .stat-card p { margin: 5px 0 0; font-size: 20px; font-weight: bold; color: var(--primary); }
-
         .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 450px; margin-bottom: 20px; box-sizing: border-box; }
-        
-        .pass-wrapper { position: relative; width: 100%; }
-        .pass-wrapper i { position: absolute; right: 15px; top: 22px; cursor: pointer; color: #666; }
-
         input, select, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
         button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
 
-        #btn-copiar { background: #f0ebff; color: #7d5fff; border: 2px dashed var(--primary); margin-top: 15px; display: none; font-size: 18px; }
+        /* Botão Copiar sem Frescura */
+        #btn-copiar { background: #f0ebff; color: #7d5fff; border: 2px dashed var(--primary); margin-top: 15px; display: none; font-size: 18px; transition: 0.3s; }
 
         #area-admin { display: none; width: 100%; max-width: 450px; }
-        #login-box { display: block; }
-
-        .lista-codigos { background: #fdfdfd; border: 1px solid #eee; border-radius: 10px; margin-top: 10px; max-height: 200px; overflow-y: auto; }
+        
+        .lista-codigos { background: #fdfdfd; border: 1px solid #eee; border-radius: 10px; margin-top: 10px; max-height: 150px; overflow-y: auto; }
         .codigo-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #f5f5f5; font-size: 14px; }
-        .btn-del-cod { color: var(--danger); cursor: pointer; background: none; width: auto; padding: 5px; margin: 0; }
-
-        .item-grupo { background: white; padding: 15px; margin-top: 12px; border-radius: 12px; border-left: 5px solid #ccc; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        
+        .item-grupo { background: white; padding: 15px; margin-top: 12px; border-radius: 12px; border-left: 5px solid #ccc; position: relative; }
         .item-grupo.is-vip { border-left-color: var(--vip); background: #fffdf0; }
+        
         .btns-acao-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 10px; }
         .btns-acao-grid button { padding: 8px 0; font-size: 12px; margin-top: 0; }
 
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 1000; }
         .modal-content { background: white; padding: 20px; border-radius: 15px; width: 90%; max-width: 400px; }
-        label { font-size: 11px; font-weight: bold; color: #888; display: block; margin-top: 10px; }
     </style>
 </head>
 <body>
 
     <div id="login-box" class="card">
-        <h2 style="text-align:center; color:var(--primary)">🛡️ Admin Login</h2>
+        <h2 style="text-align:center;">🛡️ Admin</h2>
         <input type="text" id="user-input" placeholder="Usuário">
-        <div class="pass-wrapper">
-            <input type="password" id="pass-input" placeholder="Senha Mestra">
-            <i class="fa-solid fa-eye" id="togglePass" onclick="toggleSenha()"></i>
-        </div>
-        <button onclick="logar()" style="margin-top:20px">ENTRAR NO PAINEL</button>
+        <input type="password" id="pass-input" placeholder="Senha">
+        <button onclick="logar()">ENTRAR</button>
     </div>
 
     <div id="area-admin">
-        <div style="display: flex; justify-content: space-between; width: 100%; max-width: 450px;">
-            <p style="font-size: 12px; color: #888;">Logado como: <b>https67</b></p>
-            <a href="#" onclick="logout()" style="font-size: 12px; color: var(--danger); text-decoration: none;">Sair</a>
-        </div>
-
-        <div class="stats-container">
-            <div class="stat-card"><h4>Grupos</h4><p id="count-total">0</p></div>
-            <div class="stat-card"><h4>VIPs</h4><p id="count-vip">0</p></div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:12px;">
+            <span>User: <b>https67</b></span>
+            <a href="#" onclick="logout()" style="color:red">Sair</a>
         </div>
 
         <div class="card">
-            <h2 style="font-size: 18px; margin: 0;">⭐ Criar VIP</h2>
+            <h3>⭐ Criar VIP</h3>
             <select id="tempo-vip">
                 <option value="24">24 Horas</option>
                 <option value="48">48 Horas</option>
             </select>
-            <button onclick="gerarCodigo()">GERAR CÓDIGO</button>
+            <button onclick="gerarCodigo()">GERAR AGORA</button>
             <button id="btn-copiar" onclick="copiarCodigo()"></button>
             
-            <h4 style="margin: 20px 0 5px; font-size: 11px; color: #999; text-transform: uppercase;">Códigos Ativos:</h4>
-            <div id="lista-codigos-ativos" class="lista-codigos">Carregando...</div>
+            <div id="lista-codigos-ativos" class="lista-codigos"></div>
         </div>
 
         <div id="lista-grupos"></div>
@@ -81,17 +63,13 @@
 
     <div id="modalEdicao" class="modal">
         <div class="modal-content">
-            <h3 style="margin-top:0">Editar Grupo</h3>
-            <label>NOME</label><input type="text" id="edit-nome">
-            <label>LINK WHATSAPP</label><input type="text" id="edit-link">
-            <label>LINK FOTO</label><input type="text" id="edit-foto">
-            <label>CÓDIGO VIP</label><input type="text" id="edit-cod-vip" placeholder="VIP-XXXX">
-
-            <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button onclick="salvarEdicao()" style="background:var(--success)">SALVAR</button>
-                <button onclick="fecharModal()" style="background:#888">FECHAR</button>
-            </div>
-            <button onclick="excluirAtual()" style="background:var(--danger); margin-top:10px">EXCLUIR GRUPO</button>
+            <h3>Editar Grupo</h3>
+            <input type="text" id="edit-nome" placeholder="Nome">
+            <input type="text" id="edit-link" placeholder="Link">
+            <input type="text" id="edit-foto" placeholder="Link Foto">
+            <input type="text" id="edit-cod-vip" placeholder="COLE O CÓDIGO AQUI">
+            <button onclick="salvarEdicao()" style="background:var(--success)">SALVAR ALTERAÇÕES</button>
+            <button onclick="fecharModal()" style="background:#888; margin-top:5px">CANCELAR</button>
         </div>
     </div>
 
@@ -111,28 +89,15 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    let SENHA_MASTER = "";
+    let SENHA_MASTER = localStorage.getItem('admin_acesso') || "";
     let idSendoEditado = null;
 
-    // VERIFICA SE JÁ ESTÁ LOGADO AO CARREGAR
-    window.onload = () => {
-        const salva = localStorage.getItem('admin_acesso');
-        if(salva) {
-            SENHA_MASTER = salva;
-            mostrarPainel();
-        }
-    }
-
-    window.toggleSenha = () => {
-        const input = document.getElementById('pass-input');
-        input.type = input.type === "password" ? "text" : "password";
-    }
+    if(SENHA_MASTER) mostrarPainel();
 
     window.logar = async function() {
         const u = document.getElementById('user-input').value;
         const s = document.getElementById('pass-input').value;
-
-        if(u !== "https67") { alert("Usuário incorreto!"); return; }
+        if(u !== "https67") return alert("Usuário Errado");
 
         const res = await fetch("https://x23wzp.onrender.com/login-admin", {
             method: "POST", headers: { "Content-Type": "application/json" },
@@ -141,54 +106,41 @@
 
         if(res.ok) {
             SENHA_MASTER = s;
-            localStorage.setItem('admin_acesso', s); // SALVA PARA NÃO PEDIR DE NOVO
+            localStorage.setItem('admin_acesso', s);
             mostrarPainel();
-        } else { alert("Senha incorreta!"); }
+        } else { alert("Senha Errada"); }
     }
 
     function mostrarPainel() {
         document.getElementById('login-box').style.display = 'none';
         document.getElementById('area-admin').style.display = 'block';
-        carregarTudo();
-    }
-
-    window.logout = () => {
-        localStorage.removeItem('admin_acesso');
-        location.reload();
-    }
-
-    function carregarTudo() {
-        onValue(ref(db, 'grupos'), (snap) => {
-            const div = document.getElementById('lista-grupos');
-            let total = 0, vips = 0;
-            div.innerHTML = "";
-            snap.forEach(child => {
-                const g = child.val();
-                total++; if(g.vip) vips++;
-                const item = document.createElement('div');
-                item.className = `item-grupo ${g.vip ? 'is-vip' : ''}`;
-                item.innerHTML = `<strong>${g.nome}</strong> ${g.vip ? '⭐' : ''}
-                    <div class="btns-acao-grid">
-                        <button style="background:var(--blue)" onclick="abrirModal('${child.key}', ${JSON.stringify(g).replace(/"/g, '&quot;')})">✏️</button>
-                        <button style="background:#555" onclick="window.open('${g.link}')">🔗</button>
-                        <button style="background:var(--danger)" onclick="excluirGrupo('${child.key}')">🗑️</button>
-                    </div>`;
-                div.appendChild(item);
+        
+        // Monitorar Códigos VIP
+        onValue(ref(db, 'vips'), (snap) => {
+            const cont = document.getElementById('lista-codigos-ativos');
+            cont.innerHTML = "";
+            snap.forEach(c => {
+                const div = document.createElement('div');
+                div.className = 'codigo-item';
+                div.innerHTML = `<span>${c.key}</span><i class="fa fa-trash" style="color:red;cursor:pointer" onclick="apagarCod('${c.key}')"></i>`;
+                cont.appendChild(div);
             });
-            document.getElementById('count-total').innerText = total;
-            document.getElementById('count-vip').innerText = vips;
         });
 
-        onValue(ref(db, 'vips'), (snap) => {
-            const container = document.getElementById('lista-codigos-ativos');
-            container.innerHTML = "";
-            if(!snap.exists()) { container.innerHTML = "<p style='padding:10px;color:#999'>Nenhum código.</p>"; return; }
-            snap.forEach(child => {
-                const item = document.createElement('div');
-                item.className = 'codigo-item';
-                item.innerHTML = `<span><b>${child.key}</b></span>
-                    <button class="btn-del-cod" onclick="apagarCodigo('${child.key}')"><i class="fa-solid fa-trash"></i></button>`;
-                container.appendChild(item);
+        // Monitorar Grupos
+        onValue(ref(db, 'grupos'), (snap) => {
+            const lista = document.getElementById('lista-grupos');
+            lista.innerHTML = "";
+            snap.forEach(c => {
+                const g = c.val();
+                const div = document.createElement('div');
+                div.className = `item-grupo ${g.vip ? 'is-vip' : ''}`;
+                div.innerHTML = `<b>${g.nome}</b> ${g.vip ? '⭐' : ''}
+                    <div class="btns-acao-grid">
+                        <button style="background:var(--blue)" onclick="abrirModal('${c.key}', ${JSON.stringify(g).replace(/"/g, '&quot;')})">EDITAR</button>
+                        <button style="background:var(--danger)" onclick="excluirGrp('${c.key}')">DEL</button>
+                    </div>`;
+                lista.appendChild(div);
             });
         });
     }
@@ -200,17 +152,18 @@
             body: JSON.stringify({ senha: SENHA_MASTER, duracaoHoras: parseInt(h) })
         });
         const data = await res.json();
-        const btn = document.getElementById('btn-copiar');
-        btn.style.display = "block";
-        btn.innerText = data.codigo;
+        const b = document.getElementById('btn-copiar');
+        b.innerText = data.codigo;
+        b.style.display = "block";
     }
 
     window.copiarCodigo = () => {
-        navigator.clipboard.writeText(document.getElementById('btn-copiar').innerText);
-        alert("Copiado!");
+        const b = document.getElementById('btn-copiar');
+        navigator.clipboard.writeText(b.innerText);
+        const original = b.innerText;
+        b.innerText = "COPIADO!";
+        setTimeout(() => { b.innerText = original; }, 1000);
     }
-
-    window.apagarCodigo = (cod) => confirm("Apagar código?") && remove(ref(db, 'vips/' + cod));
 
     window.abrirModal = (id, g) => {
         idSendoEditado = id;
@@ -221,28 +174,30 @@
         document.getElementById('modalEdicao').style.display = 'flex';
     }
 
-    window.fecharModal = () => document.getElementById('modalEdicao').style.display = 'none';
-
     window.salvarEdicao = async () => {
         const cod = document.getElementById('edit-cod-vip').value.trim();
-        if(cod !== "") {
+        const payload = {
+            nome: document.getElementById('edit-nome').value,
+            link: document.getElementById('edit-link').value,
+            foto: document.getElementById('edit-foto').value
+        };
+
+        if(cod) {
             const res = await fetch("https://x23wzp.onrender.com/validar-vip", {
                 method: "POST", headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ codigo: cod, grupoId: idSendoEditado })
             });
-            if(!res.ok) { alert("Código VIP inválido!"); return; }
+            if(!res.ok) return alert("CÓDIGO INVÁLIDO!");
         }
-        await update(ref(db, 'grupos/' + idSendoEditado), {
-            nome: document.getElementById('edit-nome').value,
-            link: document.getElementById('edit-link').value,
-            foto: document.getElementById('edit-foto').value
-        });
-        alert("✅ Grupo Atualizado!");
+
+        await update(ref(db, 'grupos/' + idSendoEditado), payload);
         fecharModal();
     }
 
-    window.excluirGrupo = (id) => confirm("Apagar?") && remove(ref(db, 'grupos/' + id));
-    window.excluirAtual = () => { excluirGrupo(idSendoEditado); fecharModal(); }
+    window.apagarCod = (c) => remove(ref(db, 'vips/' + c));
+    window.excluirGrp = (id) => confirm("Apagar?") && remove(ref(db, 'grupos/' + id));
+    window.fecharModal = () => document.getElementById('modalEdicao').style.display = 'none';
+    window.logout = () => { localStorage.clear(); location.reload(); };
 </script>
 </body>
 </html>
