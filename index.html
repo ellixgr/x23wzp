@@ -778,10 +778,12 @@ window.salvarNovoGrupo = async function() {
       });
       const data = await response.json();
       if (data.valido) {
-        isVip = true;
-        const horasVip = parseInt(data.duracaoHoras) || 24; 
-        dataExpiracaoVip = Date.now() + (horasVip * 60 * 60 * 1000);
-      } else {
+    isVip = true;
+    const horasVip = parseInt(data.duracaoHoras) || 24; 
+    dataExpiracaoVip = Date.now() + (horasVip * 60 * 60 * 1000);
+    // Salva o código para ele não sumir na edição
+    window.vipCodigoValidado = vipCodigo; 
+  } else {
         showAlert("❌ Código VIP inválido.");
         document.getElementById('msg-acordando').style.display = 'none';
         return;
@@ -867,10 +869,11 @@ async function salvarEdicao(grupoOriginal){
       } catch (e) { showAlert("Erro no servidor VIP"); return; }
   }
 
-  if (!nomeNovo || !WHATSAPP_LINK_REGEX.test(linkNovo) || !categoriaNova) {
-    showAlert('Preencha corretamente o nome, link válido do WhatsApp e a categoria!');
+  if (!nomeNovo || !categoriaNova || linkNovo.length < 15) {
+    showAlert('Ops! Verifique se o nome, a categoria e o link do Zap estão preenchidos.');
     return;
-  }
+}
+
   
   const isLinkRepetido = todosGrupos.some(g => 
       g.link === linkNovo && 
