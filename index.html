@@ -958,18 +958,29 @@ async function salvarEdicao(grupoOriginal){
 
 
 
-// *** FUNÇÃO EXCLUIR GRUPO (CORRIGIDA PARA USAR A CHAVE ÚNICA/KEY) ***
-function excluirGrupo(grupo){
-  if (!confirm('Deseja realmente excluir este grupo?')) return;
-  // CORRIGIDO: Remove no Firebase usando a chave única
-  try {
-    remove(ref(db, 'grupos/' + grupo.key));
-  } catch (error) {
-    showAlert('Erro ao excluir o grupo.');
-    console.error('Erro ao excluir do Firebase:', error);
-  }
-}
+// *** FUNÇÃO EXCLUIR GRUPO PERSONALIZADA (SEM CAIXA FEIA) ***
+window.excluirGrupo = function(grupo){
+  const modalConfirm = document.getElementById('confirmDeleteModal');
+  const btnSim = document.getElementById('confirmBtnSim');
+  const btnNao = document.getElementById('confirmBtnNao');
 
+  modalConfirm.style.display = 'flex';
+
+  btnNao.onclick = () => {
+    modalConfirm.style.display = 'none';
+  };
+
+  btnSim.onclick = async () => {
+    modalConfirm.style.display = 'none';
+    try {
+      const { ref: dbRef, remove: dbRemove } = await import("https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js");
+      await dbRemove(dbRef(db, 'grupos/' + grupo.key));
+      showAlert('✅ Grupo excluído!');
+    } catch (error) {
+      showAlert('❌ Erro ao excluir.');
+    }
+  };
+}
 
 // *** FUNÇÃO CARREGAR GRUPOS (CORRIGIDA E SIMPLIFICADA) ***
 async function carregarGrupos() {
@@ -1458,5 +1469,17 @@ function copiarECaminhar() {
     });
 }
 </script>
+
+<div id="confirmDeleteModal" class="modal" style="display:none; z-index: 11000;">
+  <div class="modal-content" style="border: 2px solid #e74c3c; padding: 30px;">
+    <h3 style="color: #e74c3c;">Aviso</h3>
+    <p style="margin: 15px 0; color: #333; font-weight: 500;">Deseja excluir esse grupo?</p>
+    <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+      <button id="confirmBtnSim" style="background: #e74c3c; border: none; padding: 10px 25px; color: white; border-radius: 12px; cursor: pointer; font-weight: bold;">Sim</button>
+      <button id="confirmBtnNao" style="background: #ccc; border: none; padding: 10px 25px; color: #333; border-radius: 12px; cursor: pointer; font-weight: bold;">Não</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
