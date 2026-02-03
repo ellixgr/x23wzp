@@ -81,7 +81,7 @@
             <label>NOME</label><input type="text" id="edit-nome">
             <label>LINK WHATSAPP</label><input type="text" id="edit-link">
             <label>LINK FOTO</label><input type="text" id="edit-foto">
-            <label>CÓDIGO VIP (OPCIONAL)</label><input type="text" id="edit-cod-vip" placeholder="COLE O CÓDIGO AQUI">
+            <label>CÓDIGO VIP (PASTA: codigos_vips)</label><input type="text" id="edit-cod-vip" placeholder="COLE O CÓDIGO AQUI">
 
             <div style="display: flex; gap: 10px; margin-top: 20px;">
                 <button onclick="salvarEdicao()" style="background:var(--success)">SALVAR</button>
@@ -93,7 +93,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getDatabase, ref, onValue, remove, update } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+    import { getDatabase, ref, onValue, remove, update, get } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDsrYjO2yVTemKqwmJRzNjh5sfaMalPqhE",
@@ -137,7 +137,6 @@
     }
 
     function carregarDados() {
-        // Estatísticas e Grupos
         onValue(ref(db, 'grupos'), (snap) => {
             const lista = document.getElementById('lista-grupos');
             const totalTxt = document.getElementById('count-total');
@@ -160,7 +159,6 @@
             totalTxt.innerText = t; vipTxt.innerText = v;
         });
 
-        // Lista de Códigos (Lê de 'codigos_vips' conforme a sua imagem)
         onValue(ref(db, 'codigos_vips'), (snap) => {
             const cont = document.getElementById('lista-codigos-ativos');
             cont.innerHTML = "";
@@ -168,15 +166,10 @@
                 cont.innerHTML = "<p style='color:#999;padding:10px'>Nenhum código gerado.</p>";
                 return;
             }
-
             snap.forEach(c => {
                 const codKey = c.key;
-                const dadosCod = c.val();
-                
-                // Verifica se este código consta em algum grupo no cache
                 let grupoEmUso = "NÃO";
                 let badgeClass = "status-livre";
-                
                 for(let gid in gruposCache) {
                     if(gruposCache[gid].codigoVip === codKey) {
                         grupoEmUso = "EM USO";
@@ -184,16 +177,9 @@
                         break;
                     }
                 }
-
                 const div = document.createElement('div');
                 div.className = 'codigo-item';
-                div.innerHTML = `
-                    <div style="display:flex; flex-direction:column">
-                        <span style="font-weight:bold; font-family:monospace">${codKey}</span>
-                        <span class="status-badge ${badgeClass}">${grupoEmUso}</span>
-                    </div>
-                    <i class="fa fa-trash" style="color:var(--danger);cursor:pointer" onclick="apagarCod('${codKey}')"></i>
-                `;
+                div.innerHTML = `<div style="display:flex; flex-direction:column"><span style="font-weight:bold">${codKey}</span><span class="status-badge ${badgeClass}">${grupoEmUso}</span></div><i class="fa fa-trash" style="color:var(--danger);cursor:pointer" onclick="apagarCod('${codKey}')"></i>`;
                 cont.appendChild(div);
             });
         });
@@ -238,20 +224,29 @@
         };
 
         if(cod) {
-            const res = await fetch("https://x23wzp.onrender.com/validar-vip", {
-                method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ codigo: cod, grupoId: idSendoEditado })
-            });
-            if(!res.ok) return alert("Código Inválido ou em Uso!");
-            // Nota: Se o servidor validar, ele já deve atualizar o status VIP no Firebase.
+            // BUSCA DIRETA NA PASTA 'codigos_vips'
+            const codSnap = await get(ref(db, 'codigos_vips/' + cod));
+            
+            if(codSnap.exists()) {
+                const horas = codSnap.val().duracaoHoras || 24;
+                updateData.vip = true;
+                updateData.codigoVip = cod;
+                updateData.vipAte = Date.now() + (horas * 60 * 60 * 1000);
+                
+                // Remove o código para não ser usado de novo
+                await remove(ref(db, 'codigos_vips/' + cod));
+                alert("VIP Ativado com Sucesso!");
+            } else {
+                return alert("Código não encontrado em 'codigos_vips'!");
+            }
         }
         
         await update(ref(db, 'grupos/' + idSendoEditado), updateData);
         fecharModal();
     }
 
-    window.apagarCod = (c) => confirm("Apagar este código permanentemente?") && remove(ref(db, 'codigos_vips/' + c));
-    window.excluirGrp = (id) => confirm("Apagar grupo definitivamente?") && remove(ref(db, 'grupos/' + id));
+    window.apagarCod = (c) => confirm("Apagar?") && remove(ref(db, 'codigos_vips/' + c));
+    window.excluirGrp = (id) => confirm("Apagar?") && remove(ref(db, 'grupos/' + id));
     window.excluirAtual = () => { excluirGrp(idSendoEditado); fecharModal(); }
     window.fecharModal = () => document.getElementById('modalEdicao').style.display = 'none';
     window.logout = () => { localStorage.clear(); location.reload(); };
