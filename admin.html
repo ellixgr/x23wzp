@@ -3,50 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel Admin PRO - GruposWhats</title>
+    <title>Painel Admin PRO</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root {
-            --primary: #b78cff;
-            --vip: #ffd700;
-            --danger: #ff4d4d;
-            --success: #2ecc71;
-            --blue: #3498db;
-        }
-
+        :root { --primary: #b78cff; --vip: #ffd700; --danger: #ff4d4d; --success: #2ecc71; --blue: #3498db; }
         body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; display: flex; flex-direction: column; align-items: center; margin: 0; }
         
+        /* Stats */
         .stats-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 450px; margin-bottom: 20px; }
         .stat-card { background: white; padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        .stat-card h4 { margin: 0; font-size: 10px; color: #666; text-transform: uppercase; }
         .stat-card p { margin: 5px 0 0; font-size: 20px; font-weight: bold; color: var(--primary); }
 
         .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 450px; margin-bottom: 20px; box-sizing: border-box; }
         
+        /* Input Login com Olhinho */
         .pass-wrapper { position: relative; width: 100%; }
         .pass-wrapper i { position: absolute; right: 15px; top: 22px; cursor: pointer; color: #666; }
 
-        input, select, textarea, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; font-size: 14px; }
+        input, select, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
         button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
 
-        #btn-copiar { background: #e8f5e9; color: #2e7d32; border: 1px dashed #2e7d32; margin-top: 15px; font-size: 16px; cursor: copy; }
+        /* Botão de Cópia */
+        #btn-copiar { background: #f0ebff; color: #7d5fff; border: 2px dashed var(--primary); margin-top: 15px; display: none; font-size: 18px; }
 
         #area-admin { display: none; width: 100%; max-width: 450px; }
 
+        /* Lista de Códigos no Firebase */
+        .lista-codigos { background: #fdfdfd; border: 1px solid #eee; border-radius: 10px; margin-top: 10px; max-height: 200px; overflow-y: auto; }
+        .codigo-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #f5f5f5; font-size: 14px; }
+        .codigo-item b { color: #555; }
+        .btn-del-cod { color: var(--danger); cursor: pointer; background: none; width: auto; padding: 5px; margin: 0; }
+
+        /* Lista de Grupos */
         .item-grupo { background: white; padding: 15px; margin-top: 12px; border-radius: 12px; border-left: 5px solid #ccc; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
         .item-grupo.is-vip { border-left-color: var(--vip); background: #fffdf0; }
-        
         .btns-acao-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 10px; }
         .btns-acao-grid button { padding: 8px 0; font-size: 12px; margin-top: 0; }
 
-        /* Lista de Códigos VIP */
-        .lista-codigos { margin-top: 10px; font-size: 13px; max-height: 150px; overflow-y: auto; }
-        .codigo-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #eee; }
-        .btn-delete-code { background: none; color: var(--danger); width: auto; padding: 0; margin: 0; font-size: 16px; }
-
+        /* Modal */
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 1000; }
         .modal-content { background: white; padding: 20px; border-radius: 15px; width: 90%; max-width: 400px; }
-        label { font-size: 11px; font-weight: bold; color: #555; display: block; margin-top: 10px; text-transform: uppercase; }
+        label { font-size: 11px; font-weight: bold; color: #888; display: block; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -62,35 +59,33 @@
 
     <div id="area-admin">
         <div class="stats-container">
-            <div class="stat-card"><h4>Total Grupos</h4><p id="count-total">0</p></div>
-            <div class="stat-card"><h4>Vips Ativos</h4><p id="count-vip">0</p></div>
+            <div class="stat-card"><h4>Grupos</h4><p id="count-total">0</p></div>
+            <div class="stat-card"><h4>VIPs</h4><p id="count-vip">0</p></div>
         </div>
 
         <div class="card">
-            <h2>⭐ Gerar Código VIP</h2>
+            <h2 style="font-size: 18px; margin: 0;">⭐ Criar VIP</h2>
             <select id="tempo-vip">
-                <option value="24">24 Horas</option>
-                <option value="48">48 Horas</option>
+                <option value="24">24 Horas (Bronze)</option>
+                <option value="48">48 Horas (Prata)</option>
             </select>
-            <button onclick="gerarCodigo()">GERAR AGORA</button>
-            <button id="btn-copiar" style="display:none;" onclick="copiarCodigo()"></button>
+            <button onclick="gerarCodigo()">GERAR CÓDIGO</button>
+            <button id="btn-copiar" onclick="copiarCodigo()"></button>
             
-            <hr style="margin-top:20px; border: 0; border-top: 1px solid #eee;">
-            <h4 style="margin: 10px 0 5px; font-size: 12px; color: #888;">CÓDIGOS ATIVOS NO BANCO:</h4>
-            <div id="lista-codigos-ativos" class="lista-codigos">Carregando códigos...</div>
+            <h4 style="margin: 20px 0 5px; font-size: 11px; color: #999; text-transform: uppercase;">Códigos Ativos para Uso:</h4>
+            <div id="lista-codigos-ativos" class="lista-codigos">Carregando...</div>
         </div>
 
-        <h2 style="color: #555; font-size: 16px;">GRUPOS CADASTRADOS</h2>
         <div id="lista-grupos"></div>
     </div>
 
     <div id="modalEdicao" class="modal">
         <div class="modal-content">
-            <h3 style="margin:0 0 15px 0; color:var(--primary)">Editar Grupo</h3>
-            <label>Nome do Grupo</label><input type="text" id="edit-nome">
-            <label>Link do WhatsApp</label><input type="text" id="edit-link">
-            <label>Link da Foto</label><input type="text" id="edit-foto">
-            <label>Código VIP (Para Ativar)</label><input type="text" id="edit-cod-vip" placeholder="VIP-XXXX-XXXX">
+            <h3 style="margin-top:0">Editar Grupo</h3>
+            <label>NOME</label><input type="text" id="edit-nome">
+            <label>LINK WHATSAPP</label><input type="text" id="edit-link">
+            <label>LINK FOTO</label><input type="text" id="edit-foto">
+            <label>COLE O CÓDIGO VIP AQUI</label><input type="text" id="edit-cod-vip" placeholder="VIP-XXXX">
 
             <div style="display: flex; gap: 10px; margin-top: 20px;">
                 <button onclick="salvarEdicao()" style="background:var(--success)">SALVAR</button>
@@ -121,91 +116,79 @@
 
     window.toggleSenha = () => {
         const input = document.getElementById('pass-input');
-        const icon = document.getElementById('togglePass');
         input.type = input.type === "password" ? "text" : "password";
-        icon.className = input.type === "password" ? "fa-solid fa-eye" : "fa-solid fa-eye-slash";
     }
 
     window.logar = async function() {
         const s = document.getElementById('pass-input').value;
-        try {
-            const res = await fetch("https://x23wzp.onrender.com/login-admin", {
-                method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ senha: s })
-            });
-            if(res.ok) {
-                SENHA_MASTER = s;
-                document.getElementById('login-box').style.display = 'none';
-                document.getElementById('area-admin').style.display = 'block';
-                carregarGrupos();
-                carregarCodigosVIP();
-            } else { alert("Senha errada!"); }
-        } catch(e) { alert("Erro de conexão."); }
-    }
-
-    window.gerarCodigo = async function() {
-        const h = document.getElementById('tempo-vip').value;
-        const btnCopiar = document.getElementById('btn-copiar');
-        const res = await fetch("https://x23wzp.onrender.com/gerar-vip", {
+        const res = await fetch("https://x23wzp.onrender.com/login-admin", {
             method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ senha: SENHA_MASTER, duracaoHoras: parseInt(h) })
+            body: JSON.stringify({ senha: s })
         });
-        const data = await res.json();
-        btnCopiar.style.display = "block";
-        btnCopiar.innerText = data.codigo;
+        if(res.ok) {
+            SENHA_MASTER = s;
+            document.getElementById('login-box').style.display = 'none';
+            document.getElementById('area-admin').style.display = 'block';
+            carregarTudo();
+        } else { alert("Senha incorreta!"); }
     }
 
-    window.copiarCodigo = () => {
-        const txt = document.getElementById('btn-copiar').innerText;
-        navigator.clipboard.writeText(txt);
-        alert("Código copiado: " + txt);
-    }
+    function carregarTudo() {
+        // Carrega Grupos
+        onValue(ref(db, 'grupos'), (snap) => {
+            const div = document.getElementById('lista-grupos');
+            let total = 0, vips = 0;
+            div.innerHTML = "";
+            snap.forEach(child => {
+                const g = child.val();
+                total++; if(g.vip) vips++;
+                const item = document.createElement('div');
+                item.className = `item-grupo ${g.vip ? 'is-vip' : ''}`;
+                item.innerHTML = `<strong>${g.nome}</strong> ${g.vip ? '⭐' : ''}
+                    <div class="btns-acao-grid">
+                        <button style="background:var(--blue)" onclick="abrirModal('${child.key}', ${JSON.stringify(g).replace(/"/g, '&quot;')})">✏️</button>
+                        <button style="background:#555" onclick="window.open('${g.link}')">🔗</button>
+                        <button style="background:var(--danger)" onclick="excluirGrupo('${child.key}')">🗑️</button>
+                    </div>`;
+                div.appendChild(item);
+            });
+            document.getElementById('count-total').innerText = total;
+            document.getElementById('count-vip').innerText = vips;
+        });
 
-    function carregarCodigosVIP() {
-        onValue(ref(db, 'codigos_vip'), (snap) => {
+        // CORREÇÃO: Carrega Códigos VIP (Caminho correto: 'vips')
+        onValue(ref(db, 'vips'), (snap) => {
             const container = document.getElementById('lista-codigos-ativos');
             container.innerHTML = "";
-            if(!snap.exists()) container.innerHTML = "Nenhum código pendente.";
-            snap.forEach((child) => {
+            if(!snap.exists()) { container.innerHTML = "<p style='padding:10px;color:#999'>Nenhum código disponível.</p>"; return; }
+            snap.forEach(child => {
                 const item = document.createElement('div');
                 item.className = 'codigo-item';
-                item.innerHTML = `
-                    <span><b>${child.key}</b> (${child.val().duracao}h)</span>
-                    <button class="btn-delete-code" onclick="apagarCodigo('${child.key}')"> <i class="fa-solid fa-trash"></i> </button>
-                `;
+                item.innerHTML = `<span><b>${child.key}</b></span>
+                    <button class="btn-del-cod" onclick="apagarCodigo('${child.key}')"><i class="fa-solid fa-trash"></i></button>`;
                 container.appendChild(item);
             });
         });
     }
 
-    window.apagarCodigo = (cod) => confirm("Apagar esse código VIP?") && remove(ref(db, 'codigos_vip/' + cod));
-
-    function carregarGrupos() {
-        onValue(ref(db, 'grupos'), (snap) => {
-            const div = document.getElementById('lista-grupos');
-            const totalTxt = document.getElementById('count-total');
-            const vipTxt = document.getElementById('count-vip');
-            div.innerHTML = "";
-            let total = 0, vips = 0;
-            snap.forEach((child) => {
-                const g = child.val();
-                const id = child.key;
-                total++; if(g.vip) vips++;
-                const item = document.createElement('div');
-                item.className = `item-grupo ${g.vip ? 'is-vip' : ''}`;
-                item.innerHTML = `
-                    <strong>${g.nome}</strong> ${g.vip ? '⭐' : ''}
-                    <div class="btns-acao-grid">
-                        <button style="background:var(--blue)" onclick="abrirModal('${id}', ${JSON.stringify(g).replace(/"/g, '&quot;')})">✏️ EDITAR</button>
-                        <button style="background:#555" onclick="window.open('${g.link}')">🔗 LINK</button>
-                        <button style="background:var(--danger)" onclick="excluirGrupo('${id}')">🗑️</button>
-                    </div>`;
-                div.appendChild(item);
-            });
-            totalTxt.innerText = total;
-            vipTxt.innerText = vips;
+    window.gerarCodigo = async function() {
+        const h = document.getElementById('tempo-vip').value;
+        const res = await fetch("https://x23wzp.onrender.com/gerar-vip", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ senha: SENHA_MASTER, duracaoHoras: parseInt(h) })
         });
+        const data = await res.json();
+        const btn = document.getElementById('btn-copiar');
+        btn.style.display = "block";
+        btn.innerText = data.codigo;
     }
+
+    window.copiarCodigo = () => {
+        navigator.clipboard.writeText(document.getElementById('btn-copiar').innerText);
+        alert("Copiado!");
+    }
+
+    window.apagarCodigo = (cod) => confirm("Apagar código?") && remove(ref(db, 'vips/' + cod));
 
     window.abrirModal = (id, g) => {
         idSendoEditado = id;
@@ -220,12 +203,6 @@
 
     window.salvarEdicao = async () => {
         const cod = document.getElementById('edit-cod-vip').value.trim();
-        const payload = {
-            nome: document.getElementById('edit-nome').value,
-            link: document.getElementById('edit-link').value,
-            foto: document.getElementById('edit-foto').value
-        };
-
         if(cod !== "") {
             const res = await fetch("https://x23wzp.onrender.com/validar-vip", {
                 method: "POST", headers: { "Content-Type": "application/json" },
@@ -233,15 +210,17 @@
             });
             if(!res.ok) { alert("Código VIP inválido!"); return; }
         }
-
-        await update(ref(db, 'grupos/' + idSendoEditado), payload);
-        alert("✅ Grupo atualizado com sucesso!");
+        await update(ref(db, 'grupos/' + idSendoEditado), {
+            nome: document.getElementById('edit-nome').value,
+            link: document.getElementById('edit-link').value,
+            foto: document.getElementById('edit-foto').value
+        });
+        alert("✅ Grupo Atualizado!");
         fecharModal();
     }
 
-    window.excluirGrupo = (id) => confirm("Apagar grupo?") && remove(ref(db, 'grupos/' + id));
+    window.excluirGrupo = (id) => confirm("Apagar?") && remove(ref(db, 'grupos/' + id));
     window.excluirAtual = () => { excluirGrupo(idSendoEditado); fecharModal(); }
-
 </script>
 </body>
 </html>
