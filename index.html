@@ -653,24 +653,24 @@ footer a{color:#b78cff;text-decoration:none}
     </select>
     
     <input type="text" id="grupoVipCodigo" placeholder="Cole seu Código VIP aqui (Opcional)" 
-       style="width: 100%; padding: 10px; border: 1px solid #ffd700; border-radius: 8px; background: #fff; margin-top: 10px;">
-    
-    <p id="msg-acordando" style="display:none; font-size: 11px; color: #b8860b; margin-top: 5px;">Validando código...</p>
+       style="width: 100%; padding: 10px; border: 1px solid #ffd700; border-radius: 8px; background: #fff;">
+<p id="msg-acordando" style="display:none; font-size: 11px; color: #b8860b; margin-top: 5px;">Validando código...</p>
+        </div>
+    </div>
 
-    <div id="previewContainer" style="margin-top: 15px; text-align: center;">
-        <input type="file" id="grupoFotoUpload" accept="image/*" style="display: none;">
-        <label for="grupoFotoUpload" id="grupoFotoLabel" style="display: block; background: #eee; padding: 10px; border-radius: 8px; cursor: pointer; margin-bottom: 10px;"> 
-            📸 Escolha a foto do grupo
-        </label>
-        <img id="previewFoto" src="https://files.catbox.moe/9qdwuz.webp" alt="Prévia" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid #b78cff;">
+    <div id="previewContainer">
+        <input type="file" id="grupoFotoUpload" accept="image/*">
+        <label for="grupoFotoUpload" id="grupoFotoLabel"> Escolha a foto do grupo</label>
+        <img id="previewFoto" src="https://files.catbox.moe/9qdwuz.webp" alt="Prévia da foto">
     </div>
     
-    <button id="salvarGrupo" style="width: 100%; margin-top: 20px; background: #2ecc71; color: white; border: none; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer;">
-      ENVIAR GRUPO
+    <button id="salvarGrupo">
+      Enviar Grupo
     </button>
-    
-    <p id="mensagemEnvio" style="margin-top:10px; color:#2ecc71; font-weight:bold; display:none;">✅ Grupo enviado com sucesso!</p>
-  </div> </div>
+    <p id="mensagemEnvio" style="margin-top:10px; color:#2ecc71; font-weight:bold; display:none;">Grupo enviado com sucesso!</p>
+  </div>
+</div>
+
 
 <script type="module">
 // Versões mais recentes e modulares do Firebase
