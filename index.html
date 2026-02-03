@@ -1128,18 +1128,23 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
       box.style.cssText = "display:flex; gap:10px; margin-top:10px;";
       
       const edit = document.createElement('button');
-      edit.innerHTML = '✏️ Editar';
+      edit.innerHTML = '✏️Editar';
       edit.className = 'edit-btn';
       edit.onclick = () => abrirEdicao(g);
 
       const vipAction = document.createElement('button');
-      vipAction.innerHTML = '⭐ Virar VIP';
-      vipAction.style.background = '#ffd700';
-      vipAction.style.color = '#000';
-      vipAction.onclick = () => { abrirEdicao(g); document.getElementById('setor-vip-input').style.display='block'; };
+      vipAction.innerHTML = '🔥 Ser VIP';
+      vipAction.style.background = '#daa520'; // Dourado mais intenso (Goldenrod)
+      vipAction.style.color = '#fff';        // Texto Branco
+      vipAction.style.fontWeight = 'bold';   // Deixa o texto em negrito para destacar
+      vipAction.onclick = () => { 
+        abrirEdicao(g); 
+        document.getElementById('setor-vip-input').style.display = 'block'; 
+      };
+
 
       const del = document.createElement('button');
-      del.innerHTML = '🗑️ Excluir';
+      del.innerHTML = '🗑️Excluir';
       del.className = 'delete-btn';
       del.onclick = () => excluirGrupo(g);
       
