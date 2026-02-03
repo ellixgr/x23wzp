@@ -3,35 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PAINEL ADMIN PRO</title>
+    <title>🛡️ PAINEL ADMIN PRO - GESTÃO</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --primary: #b78cff; --vip: #ffd700; --danger: #ff4d4d; --success: #2ecc71; --blue: #3498db; }
+        :root { --primary: #b78cff; --vip: #ffd700; --danger: #ff4d4d; --success: #2ecc71; --blue: #3498db; --boost: #f1c40f; }
         body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; display: flex; flex-direction: column; align-items: center; margin: 0; }
         
-        .stats-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 450px; margin-bottom: 20px; }
-        .stat-card { background: white; padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        .stat-card p { margin: 5px 0 0; font-size: 22px; font-weight: bold; color: var(--primary); }
+        .stats-container { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; width: 100%; max-width: 500px; margin-bottom: 20px; }
+        .stat-card { background: white; padding: 12px; border-radius: 12px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .stat-card h4 { margin: 0; font-size: 12px; color: #666; text-transform: uppercase; }
+        .stat-card p { margin: 5px 0 0; font-size: 18px; font-weight: bold; color: var(--primary); }
 
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 450px; margin-bottom: 20px; box-sizing: border-box; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 500px; margin-bottom: 20px; box-sizing: border-box; }
         input, select, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; font-weight: bold; }
-        button { background: var(--primary); color: white; border: none; cursor: pointer; }
+        button { background: var(--primary); color: white; border: none; cursor: pointer; transition: 0.2s; }
+        button:hover { opacity: 0.9; }
 
         #btn-copiar { background: #f0ebff; color: #7d5fff; border: 2px dashed var(--primary); margin-top: 15px; display: none; font-size: 18px; }
 
-        #area-admin { display: none; width: 100%; max-width: 450px; }
+        #area-admin { display: none; width: 100%; max-width: 500px; }
         
-        .lista-codigos { background: #fdfdfd; border: 1px solid #eee; border-radius: 10px; margin-top: 10px; max-height: 200px; overflow-y: auto; }
+        .lista-codigos { background: #fdfdfd; border: 1px solid #eee; border-radius: 10px; margin-top: 10px; max-height: 150px; overflow-y: auto; }
         .codigo-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #f5f5f5; font-size: 13px; }
-        .status-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold; text-transform: uppercase; }
-        .status-livre { background: #e8f5e9; color: #2e7d32; }
-        .status-uso { background: #fff3e0; color: #ef6c00; }
         
-        .item-grupo { background: white; padding: 15px; margin-top: 12px; border-radius: 12px; border-left: 5px solid #ccc; position: relative; }
+        .item-grupo { background: white; padding: 15px; margin-top: 12px; border-radius: 12px; border-left: 5px solid #ccc; position: relative; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .item-grupo.is-vip { border-left-color: var(--vip); background: #fffdf0; }
+        .item-grupo.is-boosted { border-left-color: var(--boost); }
         
-        .btns-acao-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top: 10px; }
-        .btns-acao-grid button { padding: 8px 0; font-size: 12px; margin-top: 0; }
+        .badge-boost { background: var(--boost); color: #000; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 5px; }
+        .tempo-restante { font-size: 11px; color: #e67e22; font-weight: bold; display: block; margin-top: 4px; }
+
+        .btns-acao-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 10px; }
+        .btns-acao-grid button { padding: 8px 0; font-size: 10px; margin-top: 0; }
 
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 1000; }
         .modal-content { background: white; padding: 20px; border-radius: 15px; width: 90%; max-width: 400px; }
@@ -56,10 +59,11 @@
         <div class="stats-container">
             <div class="stat-card"><h4>Grupos</h4><p id="count-total">0</p></div>
             <div class="stat-card"><h4>VIPs</h4><p id="count-vip">0</p></div>
+            <div class="stat-card"><h4>Boost</h4><p id="count-boost">0</p></div>
         </div>
 
         <div class="card">
-            <h3 style="margin:0">⭐ Gerar VIP</h3>
+            <h3 style="margin:0">⭐ Gerar Código VIP</h3>
             <select id="tempo-vip">
                 <option value="24">24 Horas</option>
                 <option value="48">48 Horas</option>
@@ -67,11 +71,11 @@
             <button onclick="gerarCodigo()">GERAR AGORA</button>
             <button id="btn-copiar" onclick="copiarCodigo()"></button>
             
-            <h4 style="margin: 15px 0 5px; font-size: 11px; color: #999;">MONITOR DE CÓDIGOS (ESTADO NO BANCO):</h4>
+            <h4 style="margin: 15px 0 5px; font-size: 11px; color: #999;">CÓDIGOS DISPONÍVEIS:</h4>
             <div id="lista-codigos-ativos" class="lista-codigos">Carregando...</div>
         </div>
 
-        <h2 style="font-size: 16px; color: #555;">LISTA DE GRUPOS</h2>
+        <h2 style="font-size: 16px; color: #555;">GERENCIAR GRUPOS</h2>
         <div id="lista-grupos"></div>
     </div>
 
@@ -81,7 +85,7 @@
             <label>NOME</label><input type="text" id="edit-nome">
             <label>LINK WHATSAPP</label><input type="text" id="edit-link">
             <label>LINK FOTO</label><input type="text" id="edit-foto">
-            <label>CÓDIGO VIP ATIVO</label><input type="text" id="edit-cod-vip" placeholder="COLE UM NOVO CÓDIGO OU APAGUE PARA TIRAR O VIP">
+            <label>CÓDIGO VIP (ATIVO)</label><input type="text" id="edit-cod-vip" placeholder="Cole novo ou deixe em branco">
 
             <div style="display: flex; gap: 10px; margin-top: 20px;">
                 <button onclick="salvarEdicao()" style="background:var(--success)">SALVAR</button>
@@ -141,48 +145,66 @@
             const lista = document.getElementById('lista-grupos');
             const totalTxt = document.getElementById('count-total');
             const vipTxt = document.getElementById('count-vip');
+            const boostTxt = document.getElementById('count-boost');
+            
             lista.innerHTML = "";
             gruposCache = snap.val() || {};
-            let t = 0, v = 0;
+            let t = 0, v = 0, b = 0;
+            const agora = Date.now();
+
             snap.forEach(c => {
-                const g = c.val(); t++; if(g.vip) v++;
+                const g = c.val(); t++; 
+                if(g.vip) v++;
+                
+                const tempoImpulso = agora - (g.ultimoImpulso || 0);
+                const isBoosted = tempoImpulso < 3600000;
+                if(isBoosted) b++;
+
                 const div = document.createElement('div');
-                div.className = `item-grupo ${g.vip ? 'is-vip' : ''}`;
-                div.innerHTML = `<b>${g.nome}</b> ${g.vip ? '⭐' : ''}
+                div.className = `item-grupo ${g.vip ? 'is-vip' : ''} ${isBoosted ? 'is-boosted' : ''}`;
+                
+                let infoBoost = "";
+                if(isBoosted) {
+                    const minFaltando = Math.ceil((3600000 - tempoImpulso) / 60000);
+                    infoBoost = `<span class="badge-boost">🚀 BOOST</span> <span class="tempo-restante">Faltam ${minFaltando} min</span>`;
+                }
+
+                div.innerHTML = `
+                    <div style="display:flex; justify-content:space-between">
+                        <b>${g.nome}</b> 
+                        <div>${g.vip ? '⭐' : ''} ${infoBoost}</div>
+                    </div>
                     <div class="btns-acao-grid">
                         <button style="background:var(--blue)" onclick="abrirModal('${c.key}')">EDITAR</button>
-                        <button style="background:#555" onclick="window.open('${g.link}')">LINK</button>
+                        <button style="background:#555" onclick="window.open('${g.link}')">VER</button>
+                        <button style="background:var(--boost); color:#000" onclick="removerBoost('${c.key}')">LIMPAR BOOST</button>
                         <button style="background:var(--danger)" onclick="excluirGrp('${c.key}')">DEL</button>
                     </div>`;
                 lista.appendChild(div);
             });
-            totalTxt.innerText = t; vipTxt.innerText = v;
+            totalTxt.innerText = t; vipTxt.innerText = v; boostTxt.innerText = b;
         });
 
         onValue(ref(db, 'codigos_vips'), (snap) => {
             const cont = document.getElementById('lista-codigos-ativos');
             cont.innerHTML = "";
             if(!snap.exists()) {
-                cont.innerHTML = "<p style='color:#999;padding:10px'>Nenhum código gerado.</p>";
+                cont.innerHTML = "<p style='color:#999;padding:10px'>Nenhum código disponível.</p>";
                 return;
             }
             snap.forEach(c => {
-                const codKey = c.key;
-                let grupoEmUso = "NÃO";
-                let badgeClass = "status-livre";
-                for(let gid in gruposCache) {
-                    if(gruposCache[gid].codigoVip === codKey) {
-                        grupoEmUso = "EM USO";
-                        badgeClass = "status-uso";
-                        break;
-                    }
-                }
                 const div = document.createElement('div');
                 div.className = 'codigo-item';
-                div.innerHTML = `<div style="display:flex; flex-direction:column"><span style="font-weight:bold">${codKey}</span><span class="status-badge ${badgeClass}">${grupoEmUso}</span></div><i class="fa fa-trash" style="color:var(--danger);cursor:pointer" onclick="apagarCod('${codKey}')"></i>`;
+                div.innerHTML = `<span><b>${c.key}</b> (${c.val().duracaoHoras}h)</span><i class="fa fa-trash" style="color:var(--danger);cursor:pointer" onclick="apagarCod('${c.key}')"></i>`;
                 cont.appendChild(div);
             });
         });
+    }
+
+    window.removerBoost = (id) => {
+        if(confirm("Deseja remover o impulso desse grupo? Ele voltará para a posição normal.")) {
+            update(ref(db, 'grupos/' + id), { ultimoImpulso: 0 });
+        }
     }
 
     window.gerarCodigo = async function() {
@@ -211,7 +233,6 @@
         document.getElementById('edit-nome').value = g.nome;
         document.getElementById('edit-link').value = g.link;
         document.getElementById('edit-foto').value = g.foto || "";
-        // Agora o código ativo aparece aqui
         document.getElementById('edit-cod-vip').value = g.codigoVip || "";
         document.getElementById('modalEdicao').style.display = 'flex';
     }
@@ -226,14 +247,11 @@
             foto: document.getElementById('edit-foto').value
         };
 
-        // Se o usuário APAGOU o código que estava lá, tira o VIP
         if (gAtual.vip && inputCod === "") {
             updateData.vip = false;
             updateData.codigoVip = "";
             updateData.vipAte = null;
-        } 
-        // Se o código digitado for DIFERENTE do que já está lá, tenta ativar um novo
-        else if (inputCod !== "" && inputCod !== gAtual.codigoVip) {
+        } else if (inputCod !== "" && inputCod !== gAtual.codigoVip) {
             const codSnap = await get(ref(db, 'codigos_vips/' + inputCod));
             if(codSnap.exists()) {
                 const horas = codSnap.val().duracaoHoras || 24;
@@ -243,17 +261,16 @@
                 await remove(ref(db, 'codigos_vips/' + inputCod));
                 alert("Novo VIP Ativado!");
             } else {
-                return alert("Este código não existe ou já foi usado!");
+                return alert("Código VIP inválido ou já usado!");
             }
         }
-        // Se for igual, não faz nada com o VIP, apenas mantém.
-
+        
         await update(ref(db, 'grupos/' + idSendoEditado), updateData);
         fecharModal();
     }
 
-    window.apagarCod = (c) => confirm("Apagar?") && remove(ref(db, 'codigos_vips/' + c));
-    window.excluirGrp = (id) => confirm("Apagar?") && remove(ref(db, 'grupos/' + id));
+    window.apagarCod = (c) => confirm("Apagar código?") && remove(ref(db, 'codigos_vips/' + c));
+    window.excluirGrp = (id) => confirm("Apagar grupo permanentemente?") && remove(ref(db, 'grupos/' + id));
     window.excluirAtual = () => { excluirGrp(idSendoEditado); fecharModal(); }
     window.fecharModal = () => document.getElementById('modalEdicao').style.display = 'none';
     window.logout = () => { localStorage.clear(); location.reload(); };
