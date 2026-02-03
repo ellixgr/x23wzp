@@ -766,11 +766,24 @@ fotoInput.addEventListener("change", (e) => {
 
 window.salvarNovoGrupo = async function() {
   const nome = document.getElementById('grupoNome').value.trim();
-  const link = document.getElementById('grupoLink').value.trim();
+  const linkCampo = document.getElementById('grupoLink').value.trim(); // Pegamos o que foi digitado
   const descricao = document.getElementById('grupoDescricao').value.trim() || "Clique para entrar no grupo!";
   const foto = previewFoto.src.trim().includes('9qdwuz.webp') ? 'https://i.postimg.cc/t4sRSJ6w/whatsapp-logo.png' : previewFoto.src.trim();
   const categoria = document.getElementById('grupoCategoria').value;
   const vipCodigo = document.getElementById('grupoVipCodigo').value.trim();
+
+  // --- INÍCIO DA CORREÇÃO DO LINK ---
+  // Esta regex extrai apenas o link do WhatsApp, mesmo que tenha texto em volta
+  const regexExtrair = /(https:\/\/chat\.whatsapp\.com\/[A-Za-z0-9_-]{20,30})/;
+  const match = linkCampo.match(regexExtrair);
+
+  if (!match) {
+    showAlert('❌ Link de grupo inválido! Cole um link válido do WhatsApp.');
+    return;
+  }
+
+  const link = match[1]; // Aqui o link está limpo, apenas a URL
+  // --- FIM DA CORREÇÃO ---
 
   if (!nome || !link || !categoria) {
     showAlert('Preencha nome, link e categoria!');
@@ -798,10 +811,8 @@ window.salvarNovoGrupo = async function() {
         
         if (data.valido) {
             isVip = true;
-            // Cálculo do tempo: Agora + (Horas que o código vale)
             const horasEmMs = (data.duracaoHoras || 24) * 60 * 60 * 1000;
             dataExpiracaoVip = Date.now() + horasEmMs;
-            
             localStorage.setItem('meuCodigoVip', vipCodigo); 
         } else {
             showAlert("❌ Código VIP inválido ou já usado.");
@@ -814,6 +825,7 @@ window.salvarNovoGrupo = async function() {
     }
   }
 
+  // MANTÉM O MESMO ID DE USUÁRIO PARA NÃO PERDER OS GRUPOS
   const usuario = localStorage.getItem('usuarioID') || crypto.randomUUID();
   localStorage.setItem('usuarioID', usuario);
 
@@ -825,7 +837,7 @@ window.salvarNovoGrupo = async function() {
     categoria: categoria, 
     dono: usuario, 
     vip: isVip, 
-    vipAte: dataExpiracaoVip, // Crucial para o Render apagar sozinho
+    vipAte: dataExpiracaoVip,
     vipCodigo: vipCodigo || null,
     cliques: 0,
     criadoEm: Date.now()
@@ -840,6 +852,7 @@ window.salvarNovoGrupo = async function() {
     showAlert('Erro ao salvar no Firebase.');
   }
 };
+
 
 
 
