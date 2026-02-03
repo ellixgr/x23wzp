@@ -951,27 +951,18 @@ async function carregarGrupos() {
 
 // ================== RENDERIZAR GRUPOS (CORRIGIDO) ================== //
 
-function ordenarGrupos(lista) {
-    return lista.sort((a, b) => {
-        // 1. VIPs SEMPRE no topo
-        if (a.vip && !b.vip) return -1;
-        if (!a.vip && b.vip) return 1;
-        // 2. Critério de desempate: alfabética
-        return (a.nome || '').localeCompare(b.nome || ''); 
-    });
-}
 
-
-function renderizarGrupos(lista) {
+function renderizarGrupos(lista, modoMeusGrupos = false) {
   const container = document.getElementById('lista-grupos');
   container.innerHTML = '';
 
   if (lista.length === 0) {
-    container.innerHTML = '<p style="color:#555;">Nenhum grupo encontrado nesta categoria.</p>';
+    container.innerHTML = '<p style="color:#555; text-align:center;">Nenhum grupo encontrado.</p>';
     return;
   }
 
   const usuario = localStorage.getItem('usuarioID');
+  // Ordena: VIPs primeiro, depois Impulsionados (última hora), depois o resto
   const listaOrdenada = ordenarGrupos([...lista]);
 
   listaOrdenada.forEach((g, index) => {
@@ -980,118 +971,180 @@ function renderizarGrupos(lista) {
     wrapper.style.cssText = "display:flex; flex-direction:column; align-items:center; width:100%;";
 
     const btn = document.createElement('a');
-    let classNames = ['grupo'];
-    if (g.vip) classNames.push('vip');
-    btn.className = classNames.join(' ');
+    btn.className = g.vip ? 'grupo vip' : 'grupo';
     btn.style.cursor = "pointer";
+
+    // LÓGICA DO BOTÃO CENTRAL (ENTRAR OU IMPULSIONAR)
+    let botaoCentroHTML = '';
+    
+    if (modoMeusGrupos && isOwner) {
+        // Se estiver na aba MEUS GRUPOS, mostra o botão de Impulsionar
+        const agora = Date.now();
+        const espera = 3600000; // 1 hora em milisegundos
+        const tempoPassado = agora - (g.ultimoImpulso || 0);
+        
+        if (tempoPassado < espera) {
+            const restante = Math.ceil((espera - tempoPassado) / 60000);
+            botaoCentroHTML = `<div class="btn-impulsionar" style="background: #95a5a6; color: white; text-align: center; padding: 12px; border-radius: 5px; font-weight: bold; cursor: not-allowed;">AGUARDE ${restante} MIN</div>`;
+        } else {
+            botaoCentroHTML = `<div class="btn-impulsionar" onclick="impulsionarGrupo('${g.key}')" style="background: #f1c40f; color: #000; text-align: center; padding: 12px; border-radius: 5px; font-weight: bold;">🚀 IMPULSIONAR AGORA</div>`;
+        }
+    } else {
+        // Aba normal, mostra o botão de Entrar
+        botaoCentroHTML = `<div class="btn-falso-entrar" style="background: #25d366; color: white; text-align: center; padding: 12px; border-radius: 5px; font-weight: bold;">ENTRAR NO GRUPO</div>`;
+    }
 
     btn.innerHTML = `
       <div class="card-topo">
-        <img class="foto" src="${g.foto}" alt="foto do grupo">
+        <img class="foto" src="${g.foto}" alt="foto">
         <span class="badge-categoria">${g.categoria || 'Geral'}</span>
         ${g.vip ? '<span class="estrela-vip">⭐</span>' : ''}
       </div>
       <div class="card-corpo">
         <div style="display: flex; justify-content: space-between; align-items: flex-start;">
             <span class="nome">${g.nome}</span>
-            <span class="cliques" style="font-size: 11px; color: #b78cff; font-weight: bold; white-space: nowrap; margin-left: 5px;">🔥 ${g.cliques || 0} ACESSO</span>
+            <span class="cliques" style="font-size: 11px; color: #b78cff; font-weight: bold;">🔥 ${g.cliques || 0} ACESSO</span>
         </div>
-        <p class="descricao">${g.descricao || "Clique para entrar no grupo!"}</p>
-        <div class="btn-falso-entrar" style="background: #25d366; transition: background 0.3s;">ENTRAR NO GRUPO</div>
+        <p class="descricao">${g.descricao || "Clique para entrar!"}</p>
+        ${botaoCentroHTML}
       </div>
     `;
 
-    // --- LÓGICA DE CLIQUE COM ANÚNCIO E CONTADOR ---
-    btn.onclick = (e) => {
-      e.preventDefault();
-      const cliqueRef = ref(db, 'grupos/' + g.key + '/cliques');
-
-      // SE FOR VIP: VAI DIRETO SEM FRESCURA
-      if (g.vip) {
-        runTransaction(cliqueRef, (c) => (c || 0) + 1);
-        window.location.href = g.link;
-        return;
-      }
-
-      // SE FOR NORMAL: ABRE ANÚNCIO E COMEÇA A TRAVA
-      window.open('https://www.effectivegatecpm.com/afavj9a2y?key=5875f3c51a281666d53e659422973930', '_blank');
-
-      const labelBotao = btn.querySelector('.btn-falso-entrar');
-      let contagem = 5; 
-      
-      btn.style.pointerEvents = "none"; // Bloqueia cliques repetidos
-      labelBotao.style.background = "#e74c3c"; // Fica VERMELHO
-      labelBotao.textContent = `AGUARDE... ${contagem}s`;
-
-      const intervalo = setInterval(() => {
-        // SÓ DIMINUI O TEMPO SE O USUÁRIO VOLTAR PRO SITE
-        if (!document.hidden) {
-          contagem--;
-          labelBotao.textContent = `AGUARDE... ${contagem}s`;
-
-          if (contagem <= 0) {
-            clearInterval(intervalo);
-            labelBotao.textContent = "✅ LIBERADO (ENTRAR)";
-            labelBotao.style.background = "#2ecc71"; // Fica VERDE
-            btn.style.pointerEvents = "auto"; // Libera o clique
-
-            // Segundo clique após liberar:
-            btn.onclick = () => {
-              runTransaction(cliqueRef, (c) => (c || 0) + 1);
-              window.location.href = g.link;
-            };
-          }
-        } else {
-          labelBotao.textContent = "VOLTE PARA O SITE...";
-        }
-      }, 1000);
-    };
+    // Lógica de clique (Só funciona se NÃO for modo impulsionar)
+    if (!(modoMeusGrupos && isOwner)) {
+        btn.onclick = (e) => {
+            e.preventDefault();
+            const cliqueRef = ref(db, 'grupos/' + g.key + '/cliques');
+            if (g.vip) {
+                runTransaction(cliqueRef, (c) => (c || 0) + 1);
+                window.location.href = g.link;
+                return;
+            }
+            window.open('https://www.effectivegatecpm.com/afavj9a2y?key=5875f3c51a281666d53e659422973930', '_blank');
+            const label = btn.querySelector('.btn-falso-entrar');
+            let cont = 5;
+            btn.style.pointerEvents = "none";
+            label.style.background = "#e74c3c";
+            const timer = setInterval(() => {
+                if (!document.hidden) {
+                    cont--;
+                    label.textContent = `AGUARDE... ${cont}s`;
+                    if (cont <= 0) {
+                        clearInterval(timer);
+                        label.textContent = "✅ LIBERADO";
+                        label.style.background = "#2ecc71";
+                        btn.style.pointerEvents = "auto";
+                        btn.onclick = () => {
+                            runTransaction(cliqueRef, (c) => (c || 0) + 1);
+                            window.location.href = g.link;
+                        };
+                    }
+                }
+            }, 1000);
+        };
+    }
 
     wrapper.appendChild(btn);
     container.appendChild(wrapper);
 
-    // --- ANÚNCIOS NO MEIO DA LISTA ---
-    if (index === 1) { 
-        const ad1 = document.createElement('div');
-        ad1.style.cssText = "width:100%; max-width:380px;";
-        ad1.innerHTML = `<div style="margin: 10px 0 25px; cursor: pointer; border-radius: 15px; overflow: hidden; border: 2px solid #b78cff;" onclick="copiarECaminhar()">
-            <img src="https://i.postimg.cc/dQjhrMsK/1769968251192-(1).jpg" style="width: 100%; display: block;">
-            <div style="text-align:center; font-size:12px; color:#fff; font-weight:bold; padding: 8px; background: #b78cff;">CÓDIGO: DLN60488006165 (COPIAR)</div>
-        </div>`;
-        container.appendChild(ad1);
-    }
-    if (index === 4) {
-        const ad2 = document.createElement('div');
-        ad2.style.cssText = "width:100%; max-width:380px;";
-        ad2.innerHTML = `<a href="https://soupopular.net/ref/bagau" target="_blank" style="display: block; margin: 10px 0 25px; border-radius: 15px; overflow: hidden;">
-            <img src="https://files.catbox.moe/k4dtyg.jpg" style="width: 100%; display: block;">
-        </a>`;
-        container.appendChild(ad2);
-    }
-
-    // BOTÕES DO DONO (EDITAR/EXCLUIR)
+    // Botões de EDITAR e EXCLUIR embaixo do card (sempre que for o dono)
     if (isOwner) {
       const box = document.createElement('div');
-      box.className = 'grupo-acoes-wrapper'; 
+      box.className = 'grupo-acoes-wrapper';
+      box.style.cssText = "display:flex; gap:10px; margin-top:10px;";
       
       const edit = document.createElement('button');
-      edit.textContent = 'Editar ✎';
-      edit.className = 'edit-btn'; 
+      edit.innerHTML = '✏️ Editar';
+      edit.className = 'edit-btn';
       edit.onclick = () => abrirEdicao(g);
 
+      const vipAction = document.createElement('button');
+      vipAction.innerHTML = '⭐ Virar VIP';
+      vipAction.style.background = '#ffd700';
+      vipAction.style.color = '#000';
+      vipAction.onclick = () => { abrirEdicao(g); document.getElementById('setor-vip-input').style.display='block'; };
+
       const del = document.createElement('button');
-      del.textContent = 'Excluir X';
-      del.className = 'delete-btn'; 
+      del.innerHTML = '🗑️ Excluir';
+      del.className = 'delete-btn';
       del.onclick = () => excluirGrupo(g);
       
       box.appendChild(edit);
+      box.appendChild(vipAction);
       box.appendChild(del);
       wrapper.appendChild(box);
+    }
+
+    if (!modoMeusGrupos) {
+        if (index === 1) renderAnuncioTikTok(container);
+        if (index === 4) renderAnuncioPopular(container);
     }
   });
 }
 
 
+function ordenarGrupos(lista) {
+    const agora = Date.now();
+    return lista.sort((a, b) => {
+        if (a.vip && !b.vip) return -1;
+        if (!a.vip && b.vip) return 1;
+        const impulsoA = (agora - (a.ultimoImpulso || 0)) < 3600000;
+        const impulsoB = (agora - (b.ultimoImpulso || 0)) < 3600000;
+        if (impulsoA && !impulsoB) return -1;
+        if (!impulsoA && impulsoB) return 1;
+        return (b.cliques || 0) - (a.cliques || 0);
+    });
+}
+
+window.impulsionarGrupo = function(key) {
+    const gRef = ref(db, 'grupos/' + key + '/ultimoImpulso');
+    set(gRef, Date.now()).then(() => {
+        window.showAlert("🚀 Grupo Impulsionado! Ele ficará no topo por 1 hora.");
+        const usuario = localStorage.getItem('usuarioID');
+        const meus = todosGrupos.filter(g => g.dono === usuario);
+        renderizarGrupos(meus, true);
+    });
+};
+
+function renderAnuncioTikTok(container) {
+    const ad1 = document.createElement('div');
+    ad1.style.cssText = "width:100%; max-width:380px; margin-bottom: 20px;";
+    ad1.innerHTML = `<div style="cursor: pointer; border-radius: 15px; overflow: hidden; border: 2px solid #b78cff;" onclick="copiarECaminhar()"><img src="https://i.postimg.cc/dQjhrMsK/1769968251192-(1).jpg" style="width: 100%; display: block;"></div>`;
+    container.appendChild(ad1);
+}
+
+function renderAnuncioPopular(container) {
+    const ad2 = document.createElement('div');
+    ad2.style.cssText = "width:100%; max-width:380px; margin-bottom: 20px;";
+    ad2.innerHTML = `<a href="https://soupopular.net/ref/bagau" target="_blank" style="display: block; border-radius: 15px; overflow: hidden;"><img src="https://files.catbox.moe/k4dtyg.jpg" style="width: 100%; display: block;"></a>`;
+    container.appendChild(ad2);
+}
+
+// FUNÇÃO PARA IMPULSIONAR
+window.impulsionarGrupo = function(key) {
+    const gRef = ref(db, 'grupos/' + key + '/ultimoImpulso');
+    set(gRef, Date.now()).then(() => {
+        showAlert("🚀 Grupo Impulsionado! Ele ficará no topo por 1 hora.");
+        // Recarrega a aba "Meus Grupos"
+        const usuario = localStorage.getItem('usuarioID');
+        const meus = todosGrupos.filter(g => g.dono === usuario);
+        renderizarGrupos(meus, true);
+    });
+};
+
+// AJUSTE NO BOTÃO "MEUS GRUPOS" DO MENU
+meusBtn.onclick = (e) => {
+  e.preventDefault();
+  const usuario = localStorage.getItem('usuarioID');
+  const meus = todosGrupos.filter(g => g.dono === usuario);
+  if (meus.length === 0) {
+      showAlert('Você ainda não enviou nenhum grupo.');
+  } else {
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+    renderizarGrupos(meus, true); // O 'true' ativa o modo Impulsionar
+    menu.classList.remove('open');
+  }
+};
 
 
 
@@ -1208,24 +1261,15 @@ enviarBtn.onclick = (e) => {
 };
 
 
-// MEUS GRUPOS (MANTIDO)
 meusBtn.onclick = (e) => {
   e.preventDefault();
   const usuario = localStorage.getItem('usuarioID');
-  if (!usuario) {
-      showAlert('Você ainda não enviou nenhum grupo.');
-      return;
-  }
-
   const meus = todosGrupos.filter(g => g.dono === usuario);
-
   if (meus.length === 0) {
-      showAlert('Você ainda não enviou nenhum grupo.');
+      window.showAlert('Você ainda não enviou nenhum grupo.');
   } else {
-    // Remove a classe 'active' de todos os botões de categoria
     document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-    
-    renderizarGrupos(meus);
+    renderizarGrupos(meus, true); 
     menu.classList.remove('open');
   }
 };
