@@ -75,7 +75,7 @@ body{
     position: absolute;
     top: 10px;
     right: 10px;
-    background: #e74c3c; /* Cor vermelha para o botão do site */
+    background: #e74c3c; /* Cor vermelha para o botão */
     color: white;
     border: 2px solid white;
     border-radius: 50%;
@@ -107,16 +107,15 @@ header{
     text-align:center;
     z-index:1000; 
     box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
-    transition: transform 0.3s ease-out;
-    transform: translateY(-100%); /* Começa escondido para o JS controlar */
+    transition: transform 0.3s ease-in-out;
+    /* Ele começa escondido para cima */
+    transform: translateY(-100%); 
 }
 
-/* ---------------------------------------------------- */
-/* NOVO: Classe para exibir o Header */
+/* Classe que o JavaScript vai colocar para fazer ele aparecer */
 header.header-visible {
-    transform: translateY(0);
+    transform: translateY(0) !important;
 }
-/* ---------------------------------------------------- */
 
 /* ALTERADO: Cor do título para azul escuro */
 header h1{
@@ -157,7 +156,7 @@ header p{margin-top:4px;text-shadow:none;}
 
 
 /* --- Lista de Grupos --- */
-#lista-grupos{width:100%;max-width:420px;padding:120px 20px 0;
+#lista-grupos{width:100%;max-width:420px;padding:30px 20px 0;
     display:flex;flex-direction:column;align-items:center;gap:22px}
 
 /* ESTILO DO ANÚNCIO */
@@ -492,7 +491,7 @@ footer a{color:#b78cff;text-decoration:none}
         </a>
     </div>
 </div>
-<header class="header-visible">
+<header>
   <h1>Grupos WhatsApp</h1>
   <p></p>
   <div id="categorias">
@@ -988,8 +987,7 @@ function renderizarGrupos(lista) {
     if (g.vip) classNames.push('vip');
     
     btn.className = classNames.join(' ');
-    btn.href = g.link;
-    btn.target = '_blank';
+    btn.style.cursor = "pointer";
 
     btn.innerHTML = `
       <div class="card-topo">
@@ -1002,98 +1000,76 @@ function renderizarGrupos(lista) {
             <span class="nome">${g.nome}</span>
             <span class="cliques" style="font-size: 11px; color: #b78cff; font-weight: bold; white-space: nowrap; margin-left: 5px;">🔥 ${g.cliques || 0} ACESSO</span>
         </div>
-        <p class="descricao">${g.descricao || "Clique para entrar no grupo e interagir com a galera!"}</p>
+        <p class="descricao">${g.descricao || "Clique para entrar!"}</p>
         <div class="btn-falso-entrar">Entrar no Grupo</div>
       </div>
     `;
 
-    const cliqueRef = ref(db, 'grupos/' + g.key + '/cliques'); 
-    onValue(cliqueRef, snap => {
-      const cliquesSpanUpdate = btn.querySelector('.cliques');
-      if (cliquesSpanUpdate) {
-        cliquesSpanUpdate.textContent = `🔥 ${snap.val() || 0} ACESSO`;
-      }
-    });
-
-    btn.addEventListener('click', e => {
+    // --- LÓGICA DE CLIQUE DIFERENCIADA (VIP vs NORMAL) ---
+    btn.onclick = (e) => {
       e.preventDefault();
-      runTransaction(cliqueRef, (currentData) => {
-        return (currentData || 0) + 1;
-      }).then(() => {
-        window.open(g.link, '_blank');
-      }).catch(error => {
-          window.open(g.link, '_blank'); 
-      });
-    });
+      
+      const cliqueRef = ref(db, 'grupos/' + g.key + '/cliques');
+
+      // SE FOR VIP: VAI DIRETO SEM ANÚNCIO
+      if (g.vip) {
+        runTransaction(cliqueRef, (c) => (c || 0) + 1);
+        window.location.href = g.link;
+        return;
+      }
+
+      // SE FOR NORMAL: ABRE ANÚNCIO + TIMER DE 7 SEGUNDOS
+      window.open('https://www.effectivegatecpm.com/afavj9a2y?key=5875f3c51a281666d53e659422973930', '_blank');
+
+      const labelBotao = btn.querySelector('.btn-falso-entrar');
+      let contagem = 7; // ATUALIZADO PARA 7 SEGUNDOS
+      btn.style.pointerEvents = "none"; 
+
+      const intervalo = setInterval(() => {
+        labelBotao.textContent = `AGUARDE... ${contagem}s`;
+        contagem--;
+
+        if (contagem < 0) {
+          clearInterval(intervalo);
+          labelBotao.textContent = "CLIQUE PARA ENTRAR";
+          btn.style.pointerEvents = "auto"; 
+
+          btn.onclick = () => {
+            runTransaction(cliqueRef, (c) => (c || 0) + 1);
+            window.location.href = g.link;
+          };
+        }
+      }, 1000);
+    };
 
     wrapper.appendChild(btn);
     container.appendChild(wrapper);
 
-    // --- AQUI A MÁGICA DE ESPALHAR OS ANÚNCIOS ---
-    
-    // Anúncio do TIKTOK após o 2º grupo
+    // Anúncios entre os cards
     if (index === 1) { 
-        const adDiv = document.createElement('div');
-        adDiv.style.width = '100%';
-        adDiv.style.maxWidth = '380px';
-        adDiv.innerHTML = `
-            <div id="anuncio-tiktok" style="margin: 10px 0 25px; cursor: pointer; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border: 2px solid #b78cff;" onclick="copiarECaminhar()">
-                <img src="https://i.postimg.cc/dQjhrMsK/1769968251192-(1).jpg" style="width: 100%; display: block;">
-                <div style="text-align:center; font-size:12px; color:#fff; font-weight:bold; padding: 8px; background: #b78cff;">
-                   CÓDIGO: DLN60488006165 (CLIQUE PARA COPIAR)
-                </div>
-            </div>`;
-        container.appendChild(adDiv);
+        const ad1 = document.createElement('div');
+        ad1.style.width = '100%'; ad1.style.maxWidth = '380px';
+        ad1.innerHTML = `<div id="anuncio-tiktok" style="margin: 10px 0 25px; cursor: pointer; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border: 2px solid #b78cff;" onclick="copiarECaminhar()">
+            <img src="https://i.postimg.cc/dQjhrMsK/1769968251192-(1).jpg" style="width: 100%; display: block;">
+            <div style="text-align:center; font-size:12px; color:#fff; font-weight:bold; padding: 8px; background: #b78cff;">CÓDIGO: DLN60488006165 (CLIQUE PARA COPIAR)</div>
+        </div>`;
+        container.appendChild(ad1);
     }
-
-    // Anúncio do SOU POPULAR após o 5º grupo
-    if (index === 4) { 
-        const adDiv2 = document.createElement('div');
-        adDiv2.style.width = '100%';
-        adDiv2.style.maxWidth = '380px';
-        adDiv2.innerHTML = `
-            <a href="https://soupopular.net/ref/bagau" target="_blank" style="display: block; margin: 10px 0 25px; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);">
-                <img src="https://files.catbox.moe/k4dtyg.jpg" style="width: 100%; display: block;">
-            </a>`;
-        container.appendChild(adDiv2);
+    if (index === 4) {
+        const ad2 = document.createElement('div');
+        ad2.style.width = '100%'; ad2.style.maxWidth = '380px';
+        ad2.innerHTML = `<a href="https://soupopular.net/ref/bagau" target="_blank" style="display: block; margin: 10px 0 25px; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);">
+            <img src="https://files.catbox.moe/k4dtyg.jpg" style="width: 100%; display: block;">
+        </a>`;
+        container.appendChild(ad2);
     }
 
     if (isOwner) {
-      const box = document.createElement('div');
-      box.className = 'grupo-acoes-wrapper'; 
-      // ... (resto dos botões de editar/excluir que você já tem)
-      const edit = document.createElement('button');
-      edit.textContent = 'Editar ✎';
-      edit.className = 'edit-btn'; 
-      edit.onclick = () => abrirEdicao(g);
-
-      const turbinar = document.createElement('button');
-      if (g.vip) {
-          turbinar.textContent = 'VIP ATIVO ✅';
-          turbinar.style.background = '#2ecc71';
-          turbinar.disabled = true;
-      } else {
-          turbinar.textContent = 'TURBINAR 🚀';
-          turbinar.style.background = '#f1c40f';
-          turbinar.style.color = '#000';
-          turbinar.onclick = () => {
-              abrirEdicao(g);
-              document.getElementById('setor-vip-input').style.display='block';
-          };
-      }
-
-      const del = document.createElement('button');
-      del.textContent = 'Excluir X';
-      del.className = 'delete-btn'; 
-      del.onclick = () => excluirGrupo(g);
-      
-      box.appendChild(edit);
-      box.appendChild(turbinar);
-      box.appendChild(del);
-      wrapper.appendChild(box);
+       adicionarBotoesDono(wrapper, g); 
     }
   });
 }
+
 
 
 
@@ -1271,41 +1247,31 @@ document.getElementById('privacidadeLink').onclick = (e) => {
 
 closeModalTermos.onclick = () => modalTermos.style.display = "none";
 
-// ========================================================= //
-// === CÓDIGO PARA MOSTRAR/ESCONDER O HEADER NO SCROLL === //
-// ========================================================= //
-
+// === LÓGICA DO HEADER (MOSTRAR/ESCONDER) ===
 let lastScrollTop = 0;
-const scrollThreshold = 20; // Rolagem mínima necessária para disparar a mudança
+const meuHeader = document.querySelector('header');
 
-window.addEventListener("scroll", () => {
-    const currentScroll = window.scrollY || document.documentElement.scrollTop;
-
-    // Apenas se o scroll for maior que o topo (para evitar esconder no carregamento)
-    if (currentScroll > 0) {
-        
-        // Rolando para BAIXO
-        if (currentScroll > lastScrollTop + scrollThreshold) {
-            header.classList.remove('header-visible');
-        } 
-        
-        // Rolando para CIMA
-        else if (currentScroll < lastScrollTop - scrollThreshold) {
-            header.classList.add('header-visible');
-        }
-    } else {
-        // Se estiver no topo da página, sempre mostre o header
-        header.classList.add('header-visible');
-    }
-
-    lastScrollTop = currentScroll <= 0 ? 0 : currentScroll; // Para mobile/scroll bounce
+window.addEventListener("scroll", function() {
+   let st = window.pageYOffset || document.documentElement.scrollTop;
+   
+   // Se estiver no topo da página
+   if (st <= 10) {
+       meuHeader.classList.add('header-visible');
+   } 
+   // Se rolar para baixo, esconde
+   else if (st > lastScrollTop) {
+       meuHeader.classList.remove('header-visible');
+   } 
+   // Se rolar para cima, mostra
+   else {
+       meuHeader.classList.add('header-visible');
+   }
+   lastScrollTop = st <= 0 ? 0 : st;
 }, false);
 
-// Garante que o header esteja visível na carga inicial
+// Forçar aparecer ao carregar
 document.addEventListener('DOMContentLoaded', () => {
-    if (window.scrollY === 0) {
-        header.classList.add('header-visible');
-    }
+    meuHeader.classList.add('header-visible');
 });
 
 
