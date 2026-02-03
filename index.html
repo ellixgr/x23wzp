@@ -757,7 +757,8 @@ window.salvarNovoGrupo = async function() {
   }
   
   let isVip = false;
-  // Removido o erro da variável 'tipoEnvio'
+  let dataExpiracaoVip = null;
+
   if (vipCodigo && vipCodigo !== "") {
     document.getElementById('msg-acordando').style.display = 'block';
     try {
@@ -769,6 +770,8 @@ window.salvarNovoGrupo = async function() {
       const data = await response.json();
       if (data.valido) {
         isVip = true;
+        const horasVip = parseInt(data.duracaoHoras) || 24; 
+        dataExpiracaoVip = Date.now() + (horasVip * 60 * 60 * 1000);
       } else {
         showAlert("❌ Código VIP inválido.");
         document.getElementById('msg-acordando').style.display = 'none';
@@ -791,8 +794,10 @@ window.salvarNovoGrupo = async function() {
     categoria: categoria, 
     dono: usuario, 
     vip: isVip, 
+    vipAte: dataExpiracaoVip,
     cliques: 0 
-  }; 
+  };
+
 
   try {
     const gruposRef = ref(db, 'grupos');
@@ -967,11 +972,14 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
 
   listaOrdenada.forEach((g, index) => {
     const isOwner = g.dono === usuario;
+    const agora = Date.now();
+    const vipAtivo = g.vip && (!g.vipAte || agora < g.vipAte);
+
     const wrapper = document.createElement('div');
     wrapper.style.cssText = "display:flex; flex-direction:column; align-items:center; width:100%;";
 
     const btn = document.createElement('a');
-    btn.className = g.vip ? 'grupo vip' : 'grupo';
+    btn.className = vipAtivo ? 'grupo vip' : 'grupo';
     btn.style.cursor = "pointer";
 
     // LÓGICA DO BOTÃO CENTRAL (ENTRAR OU IMPULSIONAR)
@@ -979,7 +987,6 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
     
     if (modoMeusGrupos && isOwner) {
         // Se estiver na aba MEUS GRUPOS, mostra o botão de Impulsionar
-        const agora = Date.now();
         const espera = 3600000; // 1 hora em milisegundos
         const tempoPassado = agora - (g.ultimoImpulso || 0);
         
@@ -998,7 +1005,7 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
       <div class="card-topo">
         <img class="foto" src="${g.foto}" alt="foto">
         <span class="badge-categoria">${g.categoria || 'Geral'}</span>
-        ${g.vip ? '<span class="estrela-vip">⭐</span>' : ''}
+        ${vipAtivo ? '<span class="estrela-vip">⭐</span>' : ''}
       </div>
       <div class="card-corpo">
         <div style="display: flex; justify-content: space-between; align-items: flex-start;">
