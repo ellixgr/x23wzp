@@ -41,11 +41,11 @@ body{
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.7); /* Fundo escuro transparente */
-    display: none; /* Inicia oculto e o JS o mostrará no carregamento */
+    background: rgba(0, 0, 0, 0.85);
+    display: none; 
     justify-content: center;
     align-items: center;
-    z-index: 9999; /* Garante que fique acima de tudo */
+    z-index: 9999999 !important; /* AGORA NADA PASSA NA FRENTE */
     transition: opacity 0.3s ease;
 }
 
@@ -131,7 +131,7 @@ header p{margin-top:4px;text-shadow:none;}
 .cat-btn.active{background:#b78cff;border-color:#b78cff;color:#fff;} 
 
 /* --- Menu Lateral (Ícone Hambúrguer) --- */
-.menu-icon{position:fixed;top:20px;right:20px;font-size:28px;z-index:1100;background:rgba(255,255,255,0.8);color:#000;padding:6px 12px;border-radius:10px;cursor:pointer; line-height: 1; box-shadow: 0 2px 5px rgba(0,0,0,0.2);}
+.menu-icon{position:fixed;top:20px;right:20px;font-size:28px;z-index:99998;background:rgba(255,255,255,0.8);color:#000;padding:6px 12px;border-radius:10px;cursor:pointer; line-height: 1; box-shadow: 0 2px 5px rgba(0,0,0,0.2);}
 .menu{position:fixed;top:0;right:-300px;width:250px;height:100%;background:rgba(255,255,255,0.95);padding:30px 20px;transition:right .3s;z-index:1200; box-shadow: -2px 0 10px rgba(0,0,0,0.1);}
 .menu.open{right:0}
 .menu .close-btn{position:absolute;top:15px;right:20px;background:none;border:none;color:#000;font-size:26px;cursor:pointer}
@@ -286,11 +286,20 @@ header p{margin-top:4px;text-shadow:none;}
 
 .estrela-vip {
     position: absolute;
-    top: -35px;      /* Subiu mais para ficar bem na ponta */
-    right: -25px;    /* Saiu mais para a lateral */
-    color: #ffd700;  /* Amarelo Ouro */
-    font-size: 65px; /* Estrela ainda maior para destaque */
-    z-index: 9999;   /* Força total para ficar na frente */
+    top: -35px;
+    right: -25px;
+    color: #ffd700;
+    font-size: 65px;
+    z-index: 1; /* Valor baixo para não furar anúncios e menus */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.9));
+    text-shadow: 3px 3px 0px #b8860b, 5px 5px 12px rgba(0,0,0,0.5);
+    transform: rotate(20deg);
+    pointer-events: none;
+    animation: estrelaBrilhando 1.5s infinite alternate ease-in-out;
+}
     display: flex;
     justify-content: center;
     align-items: center;
@@ -1055,7 +1064,6 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
   }
 
   const usuario = localStorage.getItem('usuarioID');
-  // Ordena: VIPs primeiro, depois Impulsionados (última hora), depois o resto
   const listaOrdenada = ordenarGrupos([...lista]);
 
   listaOrdenada.forEach((g, index) => {
@@ -1066,69 +1074,80 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
     const wrapper = document.createElement('div');
     wrapper.style.cssText = "display:flex; flex-direction:column; align-items:center; width:100%;";
 
-    const btn = document.createElement('a');
-    btn.className = vipAtivo ? 'grupo vip' : 'grupo';
-    btn.style.cursor = "pointer";
-
-    // LÓGICA DO BOTÃO CENTRAL (ENTRAR OU IMPULSIONAR)
-    let botaoCentroHTML = '';
+    // Criando o Card com a estrutura visual correta do seu CSS
+    const card = document.createElement('div');
+    card.className = vipAtivo ? 'grupo vip' : 'grupo';
     
+    card.innerHTML = `
+      <div class="card-topo">
+        ${vipAtivo ? '<div class="estrela-vip">★</div>' : ''}
+        <img src="${g.foto}" class="foto" alt="Foto do Grupo">
+        <span class="badge-categoria">${g.categoria || 'Geral'}</span>
+      </div>
+      <div class="card-corpo">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <span class="nome" style="margin-bottom: 0; flex: 1; font-size: 18px; font-weight: bold; color: #000;">
+                ${g.nome}
+            </span>
+            <span style="font-size: 11px; font-weight: bold; color: #b78cff; background: #f0e6ff; padding: 4px 8px; border-radius: 6px; white-space: nowrap; margin-left: 10px; display: flex; align-items: center; gap: 4px;">
+               🚀 ${g.cliques || 0} ACESSOS
+            </span>
+        </div>
+        <p class="descricao" style="font-size: 13px; color: #666; margin-bottom: 15px; line-height: 1.4;">
+            ${g.descricao || "Clique para entrar no grupo!"}
+        </p>
+        <div class="btn-container-dinamico"></div>
+      </div>
+    `;
+
+
+    const btnContainer = card.querySelector('.btn-container-dinamico');
+
     if (modoMeusGrupos && isOwner) {
-        // Se estiver na aba MEUS GRUPOS, mostra o botão de Impulsionar
-        const espera = 3600000; // 1 hora em milisegundos
+        const espera = 3600000; 
         const tempoPassado = agora - (g.ultimoImpulso || 0);
         
         if (tempoPassado < espera) {
             const restante = Math.ceil((espera - tempoPassado) / 60000);
-            botaoCentroHTML = `<div class="btn-impulsionar" style="background: #95a5a6; color: white; text-align: center; padding: 12px; border-radius: 5px; font-weight: bold; cursor: not-allowed;">AGUARDE ${restante} MIN</div>`;
+            btnContainer.innerHTML = `<div class="btn-falso-entrar" style="background:#95a5a6; cursor:not-allowed;">AGUARDE ${restante} MIN</div>`;
         } else {
-            botaoCentroHTML = `<div class="btn-impulsionar" onclick="impulsionarGrupo('${g.key}')" style="background: #f1c40f; color: #000; text-align: center; padding: 12px; border-radius: 5px; font-weight: bold;">🚀 IMPULSIONAR AGORA</div>`;
+            const btnImp = document.createElement('div');
+            btnImp.className = "btn-falso-entrar";
+            btnImp.style.background = "#f1c40f";
+            btnImp.style.color = "#000";
+            btnImp.innerHTML = "🚀 IMPULSIONAR AGORA";
+            btnImp.onclick = () => impulsionarGrupo(g.key);
+            btnContainer.appendChild(btnImp);
         }
     } else {
-        // Aba normal, mostra o botão de Entrar
-        botaoCentroHTML = `<div class="btn-falso-entrar" style="background: #25d366; color: white; text-align: center; padding: 12px; border-radius: 5px; font-weight: bold;">ENTRAR NO GRUPO</div>`;
-    }
-
-    btn.innerHTML = `
-      <div style="position: relative; border: ${vipAtivo ? '3px solid #ffd700' : '1px solid #eee'}; border-radius: 12px; overflow: visible; background: #fff;">
-        ${vipAtivo ? '<div class="estrela-vip">★</div>' : ''}
-        <div style="width: 100%; height: 180px; background: #eee; border-radius: 12px 12px 0 0; overflow: hidden;">
-            <img src="${g.foto}" style="width: 100%; height: 100%; object-fit: cover;">
-        </div>
-        <div style="padding: 15px;">
-            <span style="background: #333; color: #fff; padding: 3px 6px; font-size: 10px; font-weight: bold; border-radius: 2px; text-transform: uppercase;">${g.categoria || 'Geral'}</span>
-            <h2 style="margin: 10px 0; font-size: 20px; color: #000;">${g.nome}</h2>
-            <p style="color: #666; font-size: 14px; height: 40px; overflow: hidden;">${g.descricao || "Clique para entrar!"}</p>
-            <div style="margin-top: 15px;">${botaoCentroHTML}</div>
-        </div>
-      </div>
-    `;
-
-    // Lógica de clique (Só funciona se NÃO for modo impulsionar)
-    if (!(modoMeusGrupos && isOwner)) {
-        btn.onclick = (e) => {
+        const btnEntrar = document.createElement('div');
+        btnEntrar.className = "btn-falso-entrar";
+        btnEntrar.innerHTML = "ENTRAR NO GRUPO";
+        
+        btnEntrar.onclick = (e) => {
             e.preventDefault();
             const cliqueRef = ref(db, 'grupos/' + g.key + '/cliques');
-            if (g.vip) {
+            
+            if (vipAtivo) {
                 runTransaction(cliqueRef, (c) => (c || 0) + 1);
                 window.location.href = g.link;
                 return;
             }
+
             window.open('https://www.effectivegatecpm.com/afavj9a2y?key=5875f3c51a281666d53e659422973930', '_blank');
-            const label = btn.querySelector('.btn-falso-entrar');
             let cont = 5;
-            btn.style.pointerEvents = "none";
-            label.style.background = "#e74c3c";
+            btnEntrar.style.pointerEvents = "none";
+            btnEntrar.style.background = "#e74c3c";
             const timer = setInterval(() => {
                 if (!document.hidden) {
                     cont--;
-                    label.textContent = `AGUARDE... ${cont}s`;
+                    btnEntrar.textContent = `AGUARDE... ${cont}s`;
                     if (cont <= 0) {
                         clearInterval(timer);
-                        label.textContent = "✅ LIBERADO";
-                        label.style.background = "#2ecc71";
-                        btn.style.pointerEvents = "auto";
-                        btn.onclick = () => {
+                        btnEntrar.textContent = "✅ LIBERADO";
+                        btnEntrar.style.background = "#2ecc71";
+                        btnEntrar.style.pointerEvents = "auto";
+                        btnEntrar.onclick = () => {
                             runTransaction(cliqueRef, (c) => (c || 0) + 1);
                             window.location.href = g.link;
                         };
@@ -1136,33 +1155,27 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
                 }
             }, 1000);
         };
+        btnContainer.appendChild(btnEntrar);
     }
 
-    wrapper.appendChild(btn);
-    container.appendChild(wrapper);
+    wrapper.appendChild(card);
 
-    // Botões de EDITAR e EXCLUIR embaixo do card (Só na aba Meus Grupos)
     if (isOwner && modoMeusGrupos) {
       const box = document.createElement('div');
       box.className = 'grupo-acoes-wrapper';
-      box.style.cssText = "display:flex; gap:10px; margin-top:10px;";
       
       const edit = document.createElement('button');
-      edit.innerHTML = '✏️Editar';
+      edit.innerHTML = '✏️ Editar';
       edit.className = 'edit-btn';
       edit.onclick = () => abrirEdicao(g);
+
       const vipAction = document.createElement('button');
       vipAction.innerHTML = '🔥 Ser VIP';
-      vipAction.style.background = '#daa520'; // Dourado mais intenso (Goldenrod)
-      vipAction.style.color = '#fff';        // Texto Branco
-      vipAction.style.fontWeight = 'bold';   // Deixa o texto em negrito para destacar
-      vipAction.onclick = () => { 
-        abrirEdicao(g); 
-        document.getElementById('setor-vip-input').style.display = 'block'; 
-      };
+      vipAction.style.background = '#daa520';
+      vipAction.onclick = () => abrirEdicao(g);
 
       const del = document.createElement('button');
-      del.innerHTML = '🗑️Excluir';
+      del.innerHTML = '🗑️ Excluir';
       del.className = 'delete-btn';
       del.onclick = () => excluirGrupo(g);
       
@@ -1172,21 +1185,18 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
       wrapper.appendChild(box);
     }
 
+    container.appendChild(wrapper);
+
     if (!modoMeusGrupos) {
         if (index === 1) renderAnuncioTikTok(container);
         if (index === 4) renderAnuncioPopular(container);
     }
   });
 
-  // --- ADICIONE ESTA PARTE ABAIXO PARA O AVISO APARECER ---
   if (modoMeusGrupos) {
       const aviso = document.createElement('div');
       aviso.className = 'aviso-meus-grupos';
-      aviso.innerHTML = `
-        💾 <b>Seus grupos ficam salvos neste dispositivo</b> para sua segurança e privacidade. 
-        Acesse sempre do mesmo navegador para acessá-los facilmente.<br><br>
-        💡 <b>Dica:</b> Se limpar os dados do navegador, basta reenviar seus grupos novamente.
-      `;
+      aviso.innerHTML = `💾 <b>Seus grupos ficam salvos neste dispositivo.</b>`;
       container.appendChild(aviso);
   }
 }
@@ -1298,8 +1308,17 @@ comprarVipBtn.addEventListener("click", (e) => {
 });
 
 // Outros Eventos 
-document.getElementById('menuBtn').addEventListener('click',()=>menu.classList.add('open'));
-document.getElementById('closeBtn').addEventListener('click',()=>menu.classList.remove('open'));
+document.getElementById('menuBtn').addEventListener('click', () => {
+    menu.classList.add('open');
+    document.getElementById('menuBtn').style.opacity = '0'; // Esconde o botão
+    document.getElementById('menuBtn').style.pointerEvents = 'none'; // Desativa o clique enquanto aberto
+});
+
+document.getElementById('closeBtn').addEventListener('click', () => {
+    menu.classList.remove('open');
+    document.getElementById('menuBtn').style.opacity = '1'; // Mostra o botão de volta
+    document.getElementById('menuBtn').style.pointerEvents = 'auto'; // Reativa o clique
+});
 
 document.querySelectorAll('.cat-btn').forEach(btn => {
   btn.addEventListener('click', () => {
