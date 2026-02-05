@@ -1210,10 +1210,18 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
   if (modoMeusGrupos) {
       const aviso = document.createElement('div');
       aviso.className = 'aviso-meus-grupos';
-      aviso.innerHTML = `💾 <b>Seus grupos ficam salvos neste dispositivo.</b>`;
+      aviso.style.lineHeight = "1.6"; // Dá um espaçinho melhor entre as linhas
+      aviso.innerHTML = `
+        <div style="margin-bottom: 8px;">
+            💾 <b>Seus grupos ficam salvos neste dispositivo para sua segurança e privacidade. Acesse sempre do mesmo navegador para acessá-los.</b>
+        </div>
+        <div style="font-size: 12px; color: #555;">
+            💡 <b>Dica:</b> Se limpar os dados do navegador, basta reenviar seus grupos novamente.
+        </div>
+      `;
       container.appendChild(aviso);
   }
-}
+
 
 function ordenarGrupos(lista) {
     const agora = Date.now();
