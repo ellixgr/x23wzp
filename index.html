@@ -510,9 +510,6 @@ footer a{color:#b78cff;text-decoration:none}
 </head>
 <body>
 
-<script src="https://pl28642215.effectivegatecpm.com/b9/7f/04/b97f0402af5fa803ef8d137e4050caf4.js"></script>
-
-
 <div id="popup-anuncio">
     <div id="popup-content">
         <span id="close-popup-btn">X</span>
@@ -1131,7 +1128,6 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
       edit.innerHTML = '✏️Editar';
       edit.className = 'edit-btn';
       edit.onclick = () => abrirEdicao(g);
-
       const vipAction = document.createElement('button');
       vipAction.innerHTML = '🔥 Ser VIP';
       vipAction.style.background = '#daa520'; // Dourado mais intenso (Goldenrod)
@@ -1141,7 +1137,6 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
         abrirEdicao(g); 
         document.getElementById('setor-vip-input').style.display = 'block'; 
       };
-
 
       const del = document.createElement('button');
       del.innerHTML = '🗑️Excluir';
@@ -1172,8 +1167,6 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
       container.appendChild(aviso);
   }
 }
-
-
 
 function ordenarGrupos(lista) {
     const agora = Date.now();
@@ -1226,8 +1219,6 @@ meusBtn.onclick = (e) => {
   }
 };
 
-
-
 window.copiarPixManual = async function(codigo, botao) {
     try {
         await navigator.clipboard.writeText(codigo);
@@ -1243,8 +1234,7 @@ window.copiarPixManual = async function(codigo, botao) {
     }
 };
 
-
-// ================== LÓGICA DE ANÚNCIO ALEATÓRIO (50% CHANCE) ================== //
+// ===== LÓGICA DE ANÚNCIO ALEATÓRIO (50% CHANCE) ===== //
 const popupAnuncio = document.getElementById('popup-anuncio');
 const closePopupBtn = document.getElementById('close-popup-btn');
 const popupLink = document.getElementById('popup-link-dinamico');
@@ -1305,7 +1295,6 @@ document.querySelectorAll('.cat-btn').forEach(btn => {
 fecharVipIcon.onclick = () => { vipModal.style.display = 'none'; };
 fecharVipBtn.onclick = () => { vipModal.style.display = 'none'; };
 
-
 // ABRIR MODAL ENVIAR GRUPO (RESTAURA O SALVAR POR PADRÃO)
 enviarBtn.onclick = (e) => {
   e.preventDefault(); 
@@ -1320,7 +1309,6 @@ enviarBtn.onclick = (e) => {
   
   // --- ADICIONE ESTA LINHA ABAIXO ---
   document.getElementById('grupoDescricao').value = ''; 
-  // ---------------------------------
 
   document.getElementById('grupoCategoria').value = '';
   document.getElementById('grupoVipCodigo').value = '';
@@ -1332,11 +1320,23 @@ enviarBtn.onclick = (e) => {
   document.getElementById('mensagemEnvio').style.display = 'none'; 
 };
 
+// Função para carregar o Adsterra apenas sob demanda
+function carregarAdsterra() {
+  if (!document.getElementById('adsterra-script')) {
+    const adScript = document.createElement('script');
+    adScript.id = 'adsterra-script';
+    adScript.src = "https://pl28642215.effectivegatecpm.com/b9/7f/04/b97f0402af5fa803ef8d137e4050caf4.js";
+    document.body.appendChild(adScript);
+  }
+}
+
 // TERMOS DE USO
 document.getElementById('termosLink').onclick = (e) => {
   e.preventDefault();
   
-  // O script do Adsterra (Social Bar) vai detectar este clique e abrir o banner com o "X"
+  // Chama o anúncio do Adsterra apenas ao clicar aqui
+  carregarAdsterra();
+
   modalTitulo.textContent = "Termos de Uso";
   modalTexto.innerHTML = `
     <p>Bem-vindo ao nosso site de grupos WhatsApp. Ao utilizar este site, você concorda com os seguintes termos:</p>
@@ -1353,22 +1353,10 @@ document.getElementById('termosLink').onclick = (e) => {
 // POLÍTICA DE PRIVACIDADE
 document.getElementById('privacidadeLink').onclick = (e) => {
   e.preventDefault();
+
+  // Chama o anúncio do Adsterra apenas ao clicar aqui
+  carregarAdsterra();
   
-  modalTitulo.textContent = "Política de Privacidade";
-  modalTexto.innerHTML = `
-    <p>Esta Política explica como usamos os dados:</p>
-    <ul>
-      <li>Armazenamos seu usuarioID localmente para salvar seus grupos.</li>
-      <li>Usamos cookies de parceiros para exibir anúncios e manter o site grátis.</li>
-      <li>Você pode limpar os dados do navegador para resetar seu ID.</li>
-    </ul>
-  `;
-  modalTermos.style.display = "flex";
-};
-
-
-document.getElementById('privacidadeLink').onclick = (e) => {
-  e.preventDefault();
   modalTitulo.textContent = "Política de Privacidade";
   modalTexto.innerHTML = `
     <p>Esta Política de Privacidade explica como coletamos e usamos os dados dos usuários em nosso site.</p>
@@ -1383,6 +1371,7 @@ document.getElementById('privacidadeLink').onclick = (e) => {
   `;
   modalTermos.style.display = "flex";
 };
+
 
 closeModalTermos.onclick = () => modalTermos.style.display = "none";
 
