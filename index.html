@@ -518,16 +518,34 @@ footer a{color:#b78cff;text-decoration:none}
         </a>
     </div>
 </div>
-<header>
-  <h1>Grupos WhatsApp</h1>
-  <p></p>
-  <div id="categorias">
-    <button class="cat-btn active" data-cat="Todos">Todos</button>
-    <button class="cat-btn" data-cat="amizade">Amizade</button>
-    <button class="cat-btn" data-cat="zoeira">Zoeira</button>
-    <button class="cat-btn" data-cat="namoro">Namoro</button>
-  </div>
+<header style="display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background: #fff; border-bottom: 1px solid #ddd; position: fixed; top: 0; left: 0; width: 100%; z-index: 1000;">
+    <div class="logo">
+        <img src="https://i.postimg.cc/L5NNyLVv/1769082090576-(1).jpg" style="height: 35px; border-radius: 50%;">
+    </div>
+    <div style="display: flex; gap: 5px;">
+        <button onclick="document.getElementById('enviarGrupo').click()" style="background: #fff; border: 1.5px solid #000; padding: 6px 10px; font-weight: bold; font-size: 11px; cursor: pointer;">ENVIAR GRUPO</button>
+        <button onclick="document.getElementById('meusGrupos').click()" style="background: #232f3e; color: #fff; border: none; padding: 6px 10px; font-weight: bold; font-size: 11px; cursor: pointer;">MEUS GRUPOS</button>
+    </div>
+    <div onclick="document.getElementById('menuBtn').click()" style="cursor: pointer; font-size: 24px;">☰</div>
 </header>
+
+<div style="margin-top: 70px; padding: 15px; width: 100%; max-width: 420px; margin-left: auto; margin-right: auto;">
+    <div style="display: flex; border: 1px solid #333; border-radius: 4px; overflow: hidden; margin-bottom: 20px;">
+        <input type="text" placeholder="Buscar um grupo..." style="flex: 1; border: none; padding: 12px; outline: none; font-size: 16px;">
+        <button style="background: #232f3e; color: #fff; border: none; padding: 0 15px; font-weight: bold;">Buscar</button>
+    </div>
+
+    <div id="categorias" style="display: flex; gap: 15px; overflow-x: auto; padding-bottom: 10px; text-align: center; margin-bottom: 20px;">
+        <div class="cat-btn active" data-cat="Todos" style="min-width: 60px; cursor: pointer;"><span>🏠</span><p style="font-size: 10px; font-weight: bold;">Todos</p></div>
+        <div class="cat-btn" data-cat="Amizade" style="min-width: 60px; cursor: pointer;"><span>👥</span><p style="font-size: 10px; font-weight: bold;">Amizade</p></div>
+        <div class="cat-btn" data-cat="Namoro" style="min-width: 60px; cursor: pointer;"><span>❤️</span><p style="font-size: 10px; font-weight: bold;">Namoro</p></div>
+        <div class="cat-btn" data-cat="Zoeira" style="min-width: 60px; cursor: pointer;"><span>🚗</span><p style="font-size: 10px; font-weight: bold;">Zoeira</p></div>
+    </div>
+
+    <h1 style="text-align: center; font-size: 26px; margin-bottom: 20px; color: #333;">Grupos de WhatsApp</h1>
+
+    <div id="lista-grupos" style="width: 100%; display: flex; flex-direction: column; gap: 20px;"></div>
+</div>
 <div class="menu-icon" id="menuBtn">☰</div> 
 <div class="menu" id="sideMenu">
   <button class="close-btn" id="closeBtn">❌</button>
@@ -664,8 +682,8 @@ footer a{color:#b78cff;text-decoration:none}
     <select id="grupoCategoria" required>
       <option value=""> Selecione a Categoria</option>
       <option value="Amizade">Amizade</option>
-      <option value="Zoeira">Zoeira</option>
       <option value="Namoro">Namoro</option>
+      <option value="Zoeira">Zoeira</option>
     </select>
     
     <div id="setor-vip-input" style="background: #fff8e1; padding: 10px; border-radius: 10px; border: 1px dashed #ffd700; margin-top: 10px;">
@@ -1071,18 +1089,17 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
     }
 
     btn.innerHTML = `
-      <div class="card-topo">
-        <img class="foto" src="${g.foto}" alt="foto">
-        <span class="badge-categoria">${g.categoria || 'Geral'}</span>
-        ${vipAtivo ? '<span class="estrela-vip">⭐</span>' : ''}
-      </div>
-      <div class="card-corpo">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-            <span class="nome">${g.nome}</span>
-            <span class="cliques" style="font-size: 11px; color: #b78cff; font-weight: bold;">🔥 ${g.cliques || 0} ACESSO</span>
+      <div style="position: relative; border: ${vipAtivo ? '2px solid #ffc107' : '1px solid #eee'}; border-radius: 12px; overflow: hidden; background: #fff;">
+        ${vipAtivo ? '<div style="position: absolute; top: 10px; right: 10px; background: #000; color: #ffc107; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; z-index: 10;">★</div>' : ''}
+        <div style="width: 100%; height: 180px; background: #eee;">
+            <img src="${g.foto}" style="width: 100%; height: 100%; object-fit: cover;">
         </div>
-        <p class="descricao">${g.descricao || "Clique para entrar!"}</p>
-        ${botaoCentroHTML}
+        <div style="padding: 15px;">
+            <span style="background: #333; color: #fff; padding: 3px 6px; font-size: 10px; font-weight: bold; border-radius: 2px; text-transform: uppercase;">${g.categoria || 'Geral'}</span>
+            <h2 style="margin: 10px 0; font-size: 20px; color: #000;">${g.nome}</h2>
+            <p style="color: #666; font-size: 14px; height: 40px; overflow: hidden;">${g.descricao || "Clique para entrar!"}</p>
+            <div style="margin-top: 15px;">${botaoCentroHTML}</div>
+        </div>
       </div>
     `;
 
