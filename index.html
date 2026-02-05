@@ -847,7 +847,12 @@ window.salvarNovoGrupo = async function() {
     const { push, ref: dbRef } = await import("https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js");
     await push(dbRef(db, 'grupos'), novoGrupo);
     document.getElementById('mensagemEnvio').style.display = 'block';
-    setTimeout(() => { location.reload(); }, 1200);
+    setTimeout(() => { 
+        modal.style.display = 'none'; // Fecha o modal
+        const meus = todosGrupos.filter(g => g.dono === usuario);
+        renderizarGrupos(meus, true); // Carrega a aba Meus Grupos
+        window.scrollTo(0,0); // Sobe pro topo para ver o grupo
+    }, 1200);
   } catch (error) {
     showAlert('Erro ao salvar no banco.');
   }
@@ -1118,8 +1123,8 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
     wrapper.appendChild(btn);
     container.appendChild(wrapper);
 
-    // Botões de EDITAR e EXCLUIR embaixo do card (sempre que for o dono)
-    if (isOwner) {
+    // Botões de EDITAR e EXCLUIR embaixo do card (Só na aba Meus Grupos)
+    if (isOwner && modoMeusGrupos) {
       const box = document.createElement('div');
       box.className = 'grupo-acoes-wrapper';
       box.style.cssText = "display:flex; gap:10px; margin-top:10px;";
@@ -1372,7 +1377,6 @@ document.getElementById('privacidadeLink').onclick = (e) => {
   modalTermos.style.display = "flex";
 };
 
-
 closeModalTermos.onclick = () => modalTermos.style.display = "none";
 
 // === LÓGICA DO HEADER (MOSTRAR/ESCONDER) ===
@@ -1424,7 +1428,6 @@ if(carrosselVip && indicadorVip) {
         indicadorVip.style.left = deslocamento + 'px';
     });
 }
-
 
 carregarGrupos();
 </script>
