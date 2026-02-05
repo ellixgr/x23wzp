@@ -721,7 +721,7 @@ footer a{color:#b78cff;text-decoration:none}
 <script type="module">
 // Versões mais recentes e modulares do Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getDatabase, ref, onValue, runTransaction, set, remove, push } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+import { getDatabase, ref, onValue, runTransaction, set, remove, push, get } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
 // Credenciais do Firebase (MANTIDAS)
 const firebaseConfig = {
@@ -1126,37 +1126,51 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
         
         btnEntrar.onclick = (e) => {
             e.preventDefault();
+            const usuarioIdAtual = localStorage.getItem('usuarioID');
             const cliqueRef = ref(db, 'grupos/' + g.key + '/cliques');
-            
-            if (vipAtivo) {
-                runTransaction(cliqueRef, (c) => (c || 0) + 1);
-                window.location.href = g.link;
-                return;
-            }
+            const visitRef = ref(db, `grupos/${g.key}/visitantes/${usuarioIdAtual}`);
 
-            window.open('https://www.effectivegatecpm.com/afavj9a2y?key=5875f3c51a281666d53e659422973930', '_blank');
-            let cont = 5;
-            btnEntrar.style.pointerEvents = "none";
-            btnEntrar.style.background = "#e74c3c";
-            const timer = setInterval(() => {
-                if (!document.hidden) {
-                    cont--;
-                    btnEntrar.textContent = `AGUARDE... ${cont}s`;
-                    if (cont <= 0) {
-                        clearInterval(timer);
-                        btnEntrar.textContent = "✅ LIBERADO";
-                        btnEntrar.style.background = "#2ecc71";
-                        btnEntrar.style.pointerEvents = "auto";
-                        btnEntrar.onclick = () => {
-                            runTransaction(cliqueRef, (c) => (c || 0) + 1);
-                            window.location.href = g.link;
-                        };
+            // Consulta o Firebase antes de qualquer coisa
+            get(visitRef).then((snap) => {
+                const jaContou = snap.exists();
+
+                const irParaOGrupo = () => {
+                    if (!jaContou) {
+                        // Só soma +1 se o usuário não estiver na lista de visitantes
+                        runTransaction(cliqueRef, (c) => (c || 0) + 1);
+                        set(visitRef, true); // Registra o ID dele no Firebase
                     }
+                    window.location.href = g.link;
+                };
+
+                if (vipAtivo) {
+                    irParaOGrupo();
+                    return;
                 }
-            }, 1000);
+
+                // Lógica de anúncio para grupos normais
+                window.open('https://www.effectivegatecpm.com/afavj9a2y?key=5875f3c51a281666d53e659422973930', '_blank');
+                let cont = 5;
+                btnEntrar.style.pointerEvents = "none";
+                btnEntrar.style.background = "#e74c3c";
+                const timer = setInterval(() => {
+                    if (!document.hidden) {
+                        cont--;
+                        btnEntrar.textContent = `AGUARDE... ${cont}s`;
+                        if (cont <= 0) {
+                            clearInterval(timer);
+                            btnEntrar.textContent = "✅ LIBERADO";
+                            btnEntrar.style.background = "#2ecc71";
+                            btnEntrar.style.pointerEvents = "auto";
+                            btnEntrar.onclick = () => irParaOGrupo();
+                        }
+                    }
+                }, 1000);
+            });
         };
         btnContainer.appendChild(btnEntrar);
     }
+
 
     wrapper.appendChild(card);
 
