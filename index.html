@@ -156,8 +156,7 @@ header p{margin-top:4px;text-shadow:none;}
 
 
 /* --- Lista de Grupos --- */
-#lista-grupos{width:100%;max-width:420px;padding:30px 20px 0;
-    display:flex;flex-direction:column;align-items:center;gap:22px}
+#lista-grupos{width:100%;max-width:420px;padding:70px 20px 0;display:flex;flex-direction:column;align-items:center;gap:35px;overflow:visible}
 
 /* ESTILO DO ANÚNCIO */
 #anuncio-afiliado {
@@ -209,14 +208,15 @@ header p{margin-top:4px;text-shadow:none;}
     max-width: 380px;
     background: #fff;
     border-radius: 10px;
-    overflow: hidden;
+    overflow: visible;
     display: flex;
-    flex-direction: column; /* Faz ficar um embaixo do outro */
+    flex-direction: column;
     text-decoration: none;
     color: #333;
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    margin-bottom: 20px;
+    margin-bottom: 25px;
     border: 1px solid #eee;
+    position: relative;
 }
 
 .card-topo {
@@ -286,17 +286,26 @@ header p{margin-top:4px;text-shadow:none;}
 
 .estrela-vip {
     position: absolute;
-    top: 10px;
-    right: 10px;
-    font-size: 20px;
-    background: rgba(255,255,255,0.9);
-    border-radius: 50%;
-    width: 35px;
-    height: 35px;
+    top: -35px;      /* Subiu mais para ficar bem na ponta */
+    right: -25px;    /* Saiu mais para a lateral */
+    color: #ffd700;  /* Amarelo Ouro */
+    font-size: 65px; /* Estrela ainda maior para destaque */
+    z-index: 9999;   /* Força total para ficar na frente */
     display: flex;
     justify-content: center;
     align-items: center;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.9));
+    text-shadow: 
+        3px 3px 0px #b8860b, 
+        5px 5px 12px rgba(0,0,0,0.5);
+    transform: rotate(20deg); /* Inclinação mais agressiva na ponta */
+    pointer-events: none;
+    animation: estrelaBrilhando 1.5s infinite alternate ease-in-out;
+}
+
+@keyframes estrelaBrilhando {
+    from { transform: rotate(20deg) scale(1); }
+    to { transform: rotate(20deg) scale(1.1); }
 }
 
 .grupo.vip::before{
@@ -1081,9 +1090,9 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
     }
 
     btn.innerHTML = `
-      <div style="position: relative; border: ${vipAtivo ? '2px solid #ffc107' : '1px solid #eee'}; border-radius: 12px; overflow: hidden; background: #fff;">
-        ${vipAtivo ? '<div style="position: absolute; top: 10px; right: 10px; background: #000; color: #ffc107; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; z-index: 10;">★</div>' : ''}
-        <div style="width: 100%; height: 180px; background: #eee;">
+      <div style="position: relative; border: ${vipAtivo ? '3px solid #ffd700' : '1px solid #eee'}; border-radius: 12px; overflow: visible; background: #fff;">
+        ${vipAtivo ? '<div class="estrela-vip">★</div>' : ''}
+        <div style="width: 100%; height: 180px; background: #eee; border-radius: 12px 12px 0 0; overflow: hidden;">
             <img src="${g.foto}" style="width: 100%; height: 100%; object-fit: cover;">
         </div>
         <div style="padding: 15px;">
