@@ -1036,8 +1036,19 @@ async function carregarGrupos() {
         listaFirebase.push(grupo);
     });
     
-    // Sobrescreve a lista global (apaga qualquer dado antigo)
+    // Sobrescreve a lista global
     todosGrupos = listaFirebase;
+
+    // VERIFICAÇÃO DE VIP EXPIRADO (Adicionado)
+    const agoraVerifica = Date.now();
+    todosGrupos.forEach(g => {
+        if (g.vip && g.vipAte && agoraVerifica > g.vipAte) {
+            const { ref: r, update: u } =极import("https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js");
+            import("https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js").then(m => {
+                m.update(m.ref(db, 'grupos/' + g.key), { vip: false, vipAte: null });
+            });
+        }
+    });
     
     // Mantém a categoria selecionada correta
     const catAtiva = document.querySelector('.cat-btn.active').dataset.cat.toLowerCase();
@@ -1069,9 +1080,11 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
   listaOrdenada.forEach((g, index) => {
     const isOwner = g.dono === usuario;
     const agora = Date.now();
-    const vipAtivo = g.vip && (!g.vipAte || agora < g.vipAte);
+    // Checa se é VIP e se o prazo (vipAte) é maior que o horário de agora
+    const vipAtivo = g.vip && (g.vipAte ? agora < g.vipAte : true);
 
     const wrapper = document.createElement('div');
+
     wrapper.style.cssText = "display:flex; flex-direction:column; align-items:center; width:100%;";
 
     // Criando o Card com a estrutura visual correta do seu CSS
