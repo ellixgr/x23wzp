@@ -945,9 +945,12 @@ async function salvarEdicao(grupoOriginal){
     return;
   }
 
-  // 3️⃣ VALIDAÇÃO VIP
-  let vipNovo = grupoOriginal.vip;
-  if (codDigitado !== "" && codDigitado !== grupoOriginal.vipCodigo) {
+  // Começamos assumindo que NÃO é VIP.
+  let vipNovo = false; 
+  let dataExpiracaoVip = null;
+
+  // Só tentamos ativar o VIP se o campo NÃO estiver vazio
+  if (codDigitado !== "") {
       try {
           const resVip = await fetch("https://x23wzp.onrender.com/validar-vip", {
               method: 'POST',
@@ -955,10 +958,25 @@ async function salvarEdicao(grupoOriginal){
               body: JSON.stringify({ codigo: codDigitado })
           });
           const dataVip = await resVip.json();
-          if (dataVip.valido) vipNovo = true;
-          else { showAlert("Código VIP inválido!"); return; }
-      } catch (e) { console.log("Erro servidor"); }
+          
+          if (dataVip.valido) {
+              vipNovo = true;
+              // Define o tempo de expiração com base no que o servidor retornar
+              dataExpiracaoVip = Date.now() + ((dataVip.duracaoHoras || 24) * 60 * 60 * 1000);
+          } else { 
+              showAlert("Código VIP inválido!"); 
+              return; 
+          }
+      } catch (e) { 
+          console.log("Erro servidor"); 
+          // Opcional: manter o VIP se houver erro no servidor, mas o ideal é bloquear
+      }
+  } else {
+      // Se codDigitado for vazio, vipNovo continua false e dataExpiracaoVip fica null
+      vipNovo = false;
+      dataExpiracaoVip = null;
   }
+
 
   // 4️⃣ MONTAGEM DO OBJETO PARA SALVAR
   const grupoEditado = {
