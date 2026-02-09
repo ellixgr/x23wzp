@@ -1157,54 +1157,42 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
         
 btnEntrar.onclick = (e) => {
     e.preventDefault();
-    const usuarioIdAtual = localStorage.getItem('usuarioID');
     
-    // Referência do contador de cliques e do registro deste usuário específico
+    // Referência direta ao contador de cliques
     const cliqueRef = ref(db, 'grupos/' + g.key + '/cliques');
-    const visitRef = ref(db, `grupos/${g.key}/visitantes/${usuarioIdAtual}`);
 
-    // 1. Verifica se ESSE usuário já clicou antes
-    get(visitRef).then((snap) => {
-        const jaClicou = snap.exists();
+    const finalizarAcao = () => {
+        // SOMA SEMPRE que clicar
+        runTransaction(cliqueRef, (c) => (c || 0) + 1);
+        window.location.href = g.link;
+    };
 
-        const finalizarAcao = () => {
-            if (!jaClicou) {
-                // SÓ SOMA SE FOR A PRIMEIRA VEZ
-                runTransaction(cliqueRef, (c) => (c || 0) + 1);
-                // Registra que esse ID já "gastou" o clique dele aqui
-                set(visitRef, true);
-            }
-            window.location.href = g.link;
-        };
-
-        if (vipAtivo) {
-            finalizarAcao();
-            return;
-        }
-
-        // Lógica de anúncio para não-VIP
-        window.open('https://www.effectivegatecpm.com/afavj9a2y?key=5875f3c51a281666d53e659422973930', '_blank');
-        let cont = 5;
-        btnEntrar.style.pointerEvents = "none";
-        btnEntrar.style.background = "#e74c3c";
-        const timer = setInterval(() => {
-            if (!document.hidden) {
-                cont--;
-                btnEntrar.textContent = `AGUARDE... ${cont}s`;
-                if (cont <= 0) {
-                    clearInterval(timer);
-                    btnEntrar.textContent = "✅ LIBERADO";
-                    btnEntrar.style.background = "#2ecc71";
-                    btnEntrar.style.pointerEvents = "auto";
-                    btnEntrar.onclick = () => finalizarAcao();
-                }
-            }
-        }, 1000);
-    });
-};
-
-        btnContainer.appendChild(btnEntrar);
+    if (vipAtivo) {
+        finalizarAcao();
+        return;
     }
+
+    // Lógica de anúncio para não-VIP continua igual
+    window.open('https://www.effectivegatecpm.com/afavj9a2y?key=5875f3c51a281666d53e659422973930', '_blank');
+    let cont = 5;
+    btnEntrar.style.pointerEvents = "none";
+    btnEntrar.style.background = "#e74c3c";
+    const timer = setInterval(() => {
+        if (!document.hidden) {
+            cont--;
+            btnEntrar.textContent = `AGUARDE... ${cont}s`;
+            if (cont <= 0) {
+                clearInterval(timer);
+                btnEntrar.textContent = "✅ LIBERADO";
+                btnEntrar.style.background = "#2ecc71";
+                btnEntrar.style.pointerEvents = "auto";
+                btnEntrar.onclick = () => finalizarAcao();
+            }
+        }
+    }, 1000);
+};
+btnContainer.appendChild(btnEntrar);
+}
 
 
     wrapper.appendChild(card);
