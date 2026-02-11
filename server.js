@@ -28,7 +28,7 @@ const SENHA_MESTRE = "cavalo777_";
  * Verifica grupos com VIP vencido e os transforma em grupos normais.
  */
 async function limparVipsVencidos() {
-    console.log("🔍 Iniciando faxina de VIPs vencidos...");
+    console.log("🔍 Faxina pesada iniciada...");
     const agora = Date.now();
     try {
         const gruposRef = db.ref('grupos');
@@ -37,13 +37,16 @@ async function limparVipsVencidos() {
         if (snapshot.exists()) {
             snapshot.forEach((child) => {
                 const grupo = child.val();
-                // Verifica se é VIP e se a data 'vipAte' já passou
-                if (grupo.vip === true && grupo.vipAte && agora > grupo.vipAte) {
-                    db.ref(`grupos/${child.key}`).update({
-                        vip: false,
-                        vipAte: null
-                    });
-                    console.log(`🚫 VIP removido do grupo: ${grupo.nome}`);
+                
+                if (grupo.vip === true) {
+                    // SE NÃO TIVER DATA (vipAte) OU SE A DATA JÁ PASSOU
+                    if (!grupo.vipAte || agora > Number(grupo.vipAte)) {
+                        db.ref(`grupos/${child.key}`).update({
+                            vip: false,
+                            vipAte: null
+                        });
+                        console.log(`🚫 VIP removido (Vencido ou sem data): ${grupo.nome}`);
+                    }
                 }
             });
         }
@@ -51,6 +54,7 @@ async function limparVipsVencidos() {
         console.error("❌ Erro na faxina:", error.message);
     }
 }
+
 
 // Executa a limpeza a cada 15 minutos (900.000 milissegundos)
 setInterval(limparVipsVencidos, 15 * 60 * 1000);
