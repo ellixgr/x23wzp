@@ -28,7 +28,7 @@ const SENHA_MESTRE = "cavalo777_";
  * Verifica grupos com VIP vencido e os transforma em grupos normais.
  */
 async function limparVipsVencidos() {
-    console.log("🔍 Faxina pesada iniciada...");
+    console.log("🔍 Verificando validade dos VIPs...");
     const agora = Date.now();
     try {
         const gruposRef = db.ref('grupos');
@@ -38,22 +38,26 @@ async function limparVipsVencidos() {
             snapshot.forEach((child) => {
                 const grupo = child.val();
                 
-                // SÓ ENTRA SE FOR VIP **E** TIVER A DATA GRAVADA
-                if (grupo.vip === true && grupo.vipAte) {
+                if (grupo.vip === true) {
                     const dataVencimento = Number(grupo.vipAte);
 
-                    // SÓ REMOVE SE A DATA REALMENTE PASSOU
+                    // LOG DE DEBUG - OLHE ISSO NO CONSOLE DO RENDER
+                    console.log(`Grupo: ${grupo.nome} | Agora: ${agora} | Vence em: ${dataVencimento}`);
+
+                    if (!dataVencimento || dataVencimento === 0) {
+                        console.log(`⚠️ Erro: Grupo ${grupo.nome} está VIP mas a data 'vipAte' é inválida (${grupo.vipAte}).`);
+                        return; // Pula esse grupo, não remove nada por segurança
+                    }
+
                     if (agora > dataVencimento) {
                         db.ref(`grupos/${child.key}`).update({
                             vip: false,
                             vipAte: null
                         });
-                        console.log(`🚫 VIP expirado: ${grupo.nome}`);
+                        console.log(`🚫 VIP removido por vencimento: ${grupo.nome}`);
+                    } else {
+                        console.log(`✅ VIP ainda válido: ${grupo.nome}`);
                     }
-                } 
-                // Se for VIP mas não tem data, a gente ignora pra não remover por erro
-                else if (grupo.vip === true && !grupo.vipAte) {
-                    console.log(`⚠️ Grupo ${grupo.nome} é VIP mas está sem data. Ignorado para segurança.`);
                 }
             });
         }
