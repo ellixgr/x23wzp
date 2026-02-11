@@ -38,15 +38,22 @@ async function limparVipsVencidos() {
             snapshot.forEach((child) => {
                 const grupo = child.val();
                 
-                if (grupo.vip === true) {
-                    // SE NÃO TIVER DATA (vipAte) OU SE A DATA JÁ PASSOU
-                    if (!grupo.vipAte || agora > Number(grupo.vipAte)) {
+                // SÓ ENTRA SE FOR VIP **E** TIVER A DATA GRAVADA
+                if (grupo.vip === true && grupo.vipAte) {
+                    const dataVencimento = Number(grupo.vipAte);
+
+                    // SÓ REMOVE SE A DATA REALMENTE PASSOU
+                    if (agora > dataVencimento) {
                         db.ref(`grupos/${child.key}`).update({
                             vip: false,
                             vipAte: null
                         });
-                        console.log(`🚫 VIP removido (Vencido ou sem data): ${grupo.nome}`);
+                        console.log(`🚫 VIP expirado: ${grupo.nome}`);
                     }
+                } 
+                // Se for VIP mas não tem data, a gente ignora pra não remover por erro
+                else if (grupo.vip === true && !grupo.vipAte) {
+                    console.log(`⚠️ Grupo ${grupo.nome} é VIP mas está sem data. Ignorado para segurança.`);
                 }
             });
         }
