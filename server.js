@@ -114,9 +114,8 @@ app.post('/login-admin', (req, res) => {
     res.status(401).json({ autorizado: false });
 });
 
-const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => {
-    console.log(`🚀 Servidor rodando na porta ${PORT}`);
-    // Executa uma limpeza assim que o servidor ligar
-    limparVipsVencidos();
+const PORT = process.env.PORT || 10000; // O Render usa a porta 10000 por padrão
+
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Servidor rodando na porta ${PORT}`);
 });
