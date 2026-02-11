@@ -1056,18 +1056,6 @@ async function carregarGrupos() {
     
     // Sobrescreve a lista global
     todosGrupos = listaFirebase;
-
-    // VERIFICAÇÃO DE VIP EXPIRADO (Adicionado)
-    const agoraVerifica = Date.now();
-    todosGrupos.forEach(g => {
-        if (g.vip && g.vipAte && agoraVerifica > g.vipAte) {
-            const { ref: r, update: u } =极import("https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js");
-            import("https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js").then(m => {
-                m.update(m.ref(db, 'grupos/' + g.key), { vip: false, vipAte: null });
-            });
-        }
-    });
-    
     // Mantém a categoria selecionada correta
     const catAtiva = document.querySelector('.cat-btn.active').dataset.cat.toLowerCase();
     
