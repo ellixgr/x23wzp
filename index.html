@@ -977,20 +977,21 @@ async function salvarEdicao(grupoOriginal){
       dataExpiracaoVip = null;
   }
 
-
   // 4️⃣ MONTAGEM DO OBJETO PARA SALVAR
   const grupoEditado = {
       nome: nomeNovo, 
-      link: linkNovo, // Salva o link validado
+      link: linkNovo,
       descricao: descricaoNova,
       foto: fotoNova,
       categoria: categoriaNova,
       vip: vipNovo,
+      vipAte: dataExpiracaoVip,
       vipCodigo: codDigitado,
       dono: grupoOriginal.dono, 
       cliques: grupoOriginal.cliques || 0,
       ultimoImpulso: grupoOriginal.ultimoImpulso || 0
   };
+
   
   try {
     const { ref: dbRef, set: dbSet } = await import("https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js");
