@@ -6,43 +6,36 @@
     <title>Ganhar VIP - Missões</title>
     <style>
         :root { --primary: #b78cff; --success: #2ecc71; --error: #ff4757; --warning: #ffa502; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #ebebeb; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .card { background: #fff; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 350px; text-align: center; }
-        .moedas-display { font-size: 50px; font-weight: bold; color: #ff9800; margin: 10px 0; }
-        .btn-missao { display: block; background: #ff4500; color: white; padding: 16px; border-radius: 12px; font-weight: bold; margin-top: 20px; cursor: pointer; border: none; width: 100%; transition: 0.2s; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #ebebeb; display: flex; flex-direction: column; align-items: center; padding: 20px; overflow-x: hidden; }
+        .card { background: #fff; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 350px; text-align: center; position: relative; }
+        h2 { color: var(--primary); margin-bottom: 5px; }
+        .moedas-display { font-size: 50px; font-weight: bold; color: #ff9800; margin: 10px 0; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); }
+        .btn-missao { display: block; background: #ff4500; color: white; text-decoration: none; padding: 16px; border-radius: 12px; font-weight: bold; margin-top: 20px; cursor: pointer; border: none; width: 100%; transition: 0.2s; font-size: 14px; }
         .btn-resgatar { background: var(--primary); margin-top: 12px; }
-        .disabled { background: #ccc !important; cursor: not-allowed; opacity: 0.7; }
-        #toast-container { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 15px 25px; border-radius: 50px; transition: 0.5s; z-index: 9999; }
+        .disabled { background: #ccc !important; cursor: not-allowed; pointer-events: none; }
+        #toast-container { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 15px 25px; border-radius: 50px; display: flex; align-items: center; gap: 10px; font-weight: 500; box-shadow: 0 5px 15px rgba(0,0,0,0.3); transition: top 0.5s; z-index: 9999; }
         #toast-container.show { top: 25px; }
-        .debug-id { margin-top: 20px; font-size: 10px; color: #999; word-break: break-all; background: #fdfdfd; padding: 8px; border-radius: 8px; border: 1px solid #eee; }
+        #timer { font-size: 14px; color: #666; margin-top: 15px; background: #f8f8f8; padding: 8px; border-radius: 8px; display: inline-block; width: 100%; box-sizing: border-box; }
         .status { font-size: 13px; margin-top: 8px; color: var(--success); font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div id="toast-container"><span id="toast-message"></span></div>
+    <div id="toast-container"><span id="toast-icon"></span><span id="toast-message"></span></div>
 
     <div class="card">
         <h2>Minhas Moedas</h2>
         <div class="moedas-display" id="moedasTxt">...</div>
-        <p style="font-size: 14px; color: #666;">Junte <b>30 moedas</b> para VIP 24h</p>
-        
+        <p style="color: #666; font-size: 14px;">Ganhe moedas para resgatar <b>24h de VIP</b></p>
         <div id="statusDia" class="status">Sincronizando...</div>
-
         <button id="btnVideo" class="btn-missao disabled">🎬 ASSISTIR VÍDEO AGORA</button>
-        <div id="timer" style="display:none; margin-top:10px;">⏳ Validando em <span id="segundos">15</span>s...</div>
-        
+        <div id="timer" style="display:none;">⏳ Validando em <span id="segundos">15</span>s...</div>
         <button id="btnResgatar" class="btn-missao btn-resgatar">⭐ GERAR VIP 24H (30 Moedas)</button>
-        
-        <div class="debug-id">
-            SEU ID PARA O ADMIN: <br>
-            <b id="exibir-meu-id" style="color:#3498db"></b>
-        </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue, update, get } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+        import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDsrYjO2yVTemKqwmJRzNjh5sfaMalPqhE",
@@ -53,108 +46,94 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // --- CONFIGURAÇÕES ---
-        const LIMITE_DIARIO = 100;
-        const PRECO_VIP = 30;
+        // CONFIGURAÇÕES
+        const CUSTO_VIP = 30;
+        const LIMITE_DIA = 100;
 
-        // --- CONTROLE DE USUÁRIO ---
         let meuId = localStorage.getItem('usuario_uid');
         if (!meuId) {
             meuId = "user_" + Math.random().toString(36).substr(2, 9);
             localStorage.setItem('usuario_uid', meuId);
         }
-        document.getElementById('exibir-meu-id').innerText = meuId;
 
         const moedasTxt = document.getElementById('moedasTxt');
         const btnVideo = document.getElementById('btnVideo');
         const statusDia = document.getElementById('statusDia');
         
         let moedasBD = 0;
-        let limiteDiarioLocal = parseInt(localStorage.getItem('limiteDiario')) || 0;
+        let limiteDiario = parseInt(localStorage.getItem('limiteDiario')) || 0;
         const hoje = new Date().toLocaleDateString();
 
         if (localStorage.getItem('ultimaDataMissao') !== hoje) {
-            limiteDiarioLocal = 0;
+            limiteDiario = 0;
             localStorage.setItem('limiteDiario', 0);
             localStorage.setItem('ultimaDataMissao', hoje);
         }
 
-        // --- ESCUTAR BANCO ---
+        function notify(msg, type = 'success') {
+            const toast = document.getElementById('toast-container');
+            document.getElementById('toast-message').innerText = msg;
+            document.getElementById('toast-icon').innerText = type === 'success' ? '✅' : '❌';
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // LER MOEDAS DO FIREBASE
         onValue(ref(db, 'usuarios/' + meuId), (snap) => {
-            const data = snap.val();
-            moedasBD = (data && data.moedas) ? data.moedas : 0;
+            moedasBD = (snap.val() && snap.val().moedas) ? snap.val().moedas : 0;
             moedasTxt.innerText = moedasBD;
-            atualizarUI();
+            atualizarTela();
         });
 
         let meusVideos = [];
         onValue(ref(db, 'videos_shopee'), (snap) => {
             meusVideos = [];
             snap.forEach(c => { if(c.val().link) meusVideos.push(c.val().link); });
-            atualizarUI();
+            atualizarTela();
         });
 
-        function atualizarUI() {
-            if (limiteDiarioLocal >= LIMITE_DIARIO) {
+        function atualizarTela() {
+            if (limiteDiario >= LIMITE_DIA) {
                 btnVideo.classList.add('disabled');
                 btnVideo.innerText = "LIMITE DIÁRIO ATINGIDO";
                 statusDia.innerText = "Volte amanhã!";
             } else if (meusVideos.length > 0) {
                 btnVideo.classList.remove('disabled');
                 btnVideo.innerText = "🎬 ASSISTIR VÍDEO AGORA";
-                statusDia.innerText = `Missões: ${limiteDiarioLocal}/${LIMITE_DIARIO} hoje`;
-            } else {
-                statusDia.innerText = "Carregando vídeos...";
+                statusDia.innerText = `Missões: ${limiteDiario}/${LIMITE_DIA} hoje`;
             }
         }
 
-        // --- GANHAR MOEDA ---
         btnVideo.onclick = () => {
-            if (limiteDiarioLocal >= LIMITE_DIARIO || meusVideos.length === 0) return;
-
+            if (limiteDiario >= LIMITE_DIA || meusVideos.length === 0) return;
             window.open(meusVideos[Math.floor(Math.random() * meusVideos.length)], '_blank');
+            let tempo = 15;
             btnVideo.classList.add('disabled');
             document.getElementById('timer').style.display = 'block';
-
-            let tempo = 15;
             let count = setInterval(async () => {
                 tempo--;
                 document.getElementById('segundos').innerText = tempo;
                 if (tempo <= 0) {
                     clearInterval(count);
-                    
-                    // Atualiza no Firebase
                     await update(ref(db, 'usuarios/' + meuId), { moedas: moedasBD + 1 });
-                    
-                    limiteDiarioLocal++;
-                    localStorage.setItem('limiteDiario', limiteDiarioLocal);
+                    limiteDiario++;
+                    localStorage.setItem('limiteDiario', limiteDiario);
                     document.getElementById('timer').style.display = 'none';
-                    notify("Você ganhou 1 moeda!");
+                    notify("Moeda ganha!");
                 }
             }, 1000);
         };
 
-        // --- RESGATAR VIP ---
         document.getElementById('btnResgatar').onclick = async () => {
-            if (moedasBD < PRECO_VIP) return notify("Você precisa de " + PRECO_VIP + " moedas!", "error");
-
-            const cod = "VIP-" + Math.random().toString(36).substr(2, 6).toUpperCase();
-            
+            if (moedasBD < CUSTO_VIP) return notify("Precisa de " + CUSTO_VIP + " moedas!", "error");
+            const novoCodigo = "VIP-" + Math.random().toString(36).substr(2, 6).toUpperCase();
             try {
-                await set(ref(db, 'codigos_vips/' + cod), { duracaoHoras: 24, usado: false });
-                await update(ref(db, 'usuarios/' + meuId), { moedas: moedasBD - PRECO_VIP });
-                alert("SUCESSO! SEU CÓDIGO VIP: " + cod);
-            } catch (e) {
-                notify("Erro ao gerar VIP", "error");
-            }
+                await set(ref(db, 'codigos_vips/' + novoCodigo), { duracaoHoras: 24, usado: false });
+                await update(ref(db, 'usuarios/' + meuId), { moedas: moedasBD - CUSTO_VIP });
+                notify("VIP GERADO!", "success");
+                alert("CÓDIGO VIP: " + novoCodigo);
+            } catch (e) { notify("Erro no banco!", "error"); }
         };
-
-        function notify(msg) {
-            const t = document.getElementById('toast-container');
-            document.getElementById('toast-message').innerText = msg;
-            t.classList.add('show');
-            setTimeout(() => t.classList.remove('show'), 3000);
-        }
     </script>
 </body>
 </html>
