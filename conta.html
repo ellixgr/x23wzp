@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ganhar VIP - Missões</title>
+    <style>
+        body { font-family: sans-serif; background: #ebebeb; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .card { background: #fff; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 350px; text-align: center; }
+        h2 { color: #b78cff; }
+        .moedas-display { font-size: 40px; font-weight: bold; color: #ff9800; margin: 10px 0; }
+        .btn-missao { display: block; background: #ff4500; color: white; text-decoration: none; padding: 15px; border-radius: 10px; font-weight: bold; margin-top: 20px; cursor: pointer; border: none; width: 100%; }
+        .btn-resgatar { background: #b78cff; margin-top: 10px; }
+        .disabled { background: #ccc !important; cursor: not-allowed; }
+        #timer { font-size: 14px; color: #666; margin-top: 10px; }
+        .status { font-size: 12px; margin-top: 5px; color: #2ecc71; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>Minhas Moedas</h2>
+        <div class="moedas-display" id="moedasTxt">0</div>
+        <p>Ganhe 20 moedas para resgatar 2h de VIP</p>
+        
+        <div id="statusDia" class="status"></div>
+
+        <button id="btnVideo" class="btn-missao">🎬 ASSISTIR VÍDEO E CURTIR</button>
+        <p id="timer" style="display:none;">Aguarde <span id="segundos">15</span>s para validar...</p>
+        
+        <button id="btnResgatar" class="btn-missao btn-resgatar">⭐ GERAR CÓDIGO VIP (20 Moedas)</button>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDsrYjO2yVTemKqwmJRzNjh5sfaMalPqhE",
+            databaseURL: "https://cliques-4a2c1-default-rtdb.firebaseio.com",
+            projectId: "cliques-4a2c1",
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // --- SISTEMA DE VÍDEOS DINÂMICOS ---
+        let meusVideos = [];
+        
+        // Puxa os vídeos que você cadastrou no Admin
+        onValue(ref(db, 'videos_shopee'), (snap) => {
+            meusVideos = [];
+            snap.forEach(c => {
+                meusVideos.push(c.val().link);
+            });
+        });
+
+        let moedas = parseInt(localStorage.getItem('moedasVip')) || 0;
+        let limiteDiario = parseInt(localStorage.getItem('limiteDiario')) || 0;
+        let ultimaData = localStorage.getItem('ultimaDataMissao');
+
+        const hoje = new Date().toLocaleDateString();
+        if (ultimaData !== hoje) {
+            limiteDiario = 0;
+            localStorage.setItem('limiteDiario', 0);
+            localStorage.setItem('ultimaDataMissao', hoje);
+        }
+
+        const moedasTxt = document.getElementById('moedasTxt');
+        const btnVideo = document.getElementById('btnVideo');
+        const statusDia = document.getElementById('statusDia');
+
+        function atualizarTela() {
+            moedasTxt.innerText = moedas;
+            if (limiteDiario >= 20) {
+                btnVideo.classList.add('disabled');
+                btnVideo.innerText = "LIMITE DIÁRIO ATINGIDO";
+                statusDia.innerText = "Volte amanhã para ganhar mais!";
+            } else {
+                statusDia.innerText = `Você já fez ${limiteDiario}/20 missões hoje.`;
+            }
+        }
+
+        btnVideo.onclick = () => {
+            if (limiteDiario >= 20) return;
+            if (meusVideos.length === 0) return alert("Nenhum vídeo disponível no momento!");
+
+            // 1. Sorteia um vídeo da sua lista do Firebase
+            const linkSorteado = meusVideos[Math.floor(Math.random() * meusVideos.length)];
+            
+            // 2. Abre o vídeo no app da Shopee
+            window.open(linkSorteado, '_blank');
+
+            // 3. Inicia o Timer
+            let tempo = 15;
+            btnVideo.classList.add('disabled');
+            document.getElementById('timer').style.display = 'block';
+
+            let count = setInterval(() => {
+                tempo--;
+                document.getElementById('segundos').innerText = tempo;
+                if (tempo <= 0) {
+                    clearInterval(count);
+                    moedas++;
+                    limiteDiario++;
+                    localStorage.setItem('moedasVip', moedas);
+                    localStorage.setItem('limiteDiario', limiteDiario);
+                    
+                    document.getElementById('timer').style.display = 'none';
+                    btnVideo.classList.remove('disabled');
+                    alert("Moeda ganha! Obrigado por curtir.");
+                    atualizarTela();
+                }
+            }, 1000);
+        };
+
+        document.getElementById('btnResgatar').onclick = async () => {
+            if (moedas < 20) {
+                alert("Você precisa de 20 moedas!");
+                return;
+            }
+
+            const novoCodigo = "VIP-" + Math.random().toString(36).substr(2, 6).toUpperCase();
+            
+            try {
+                // Aqui salva na pasta 'codigos_vips' que o seu admin já lê
+                await set(ref(db, 'codigos_vips/' + novoCodigo), {
+                    valido: true,
+                    duracaoHoras: 2, // Ajustado para 2h como você pediu
+                    usado: false
+                });
+
+                moedas -= 20;
+                localStorage.setItem('moedasVip', moedas);
+                atualizarTela();
+                alert("SUCESSO!\nCódigo: " + novoCodigo + "\n\nO código foi enviado para o sistema. Copie e use em um grupo!");
+            } catch (e) {
+                alert("Erro ao gerar código.");
+            }
+        };
+
+        atualizarTela();
+    </script>
+</body>
+</html>
