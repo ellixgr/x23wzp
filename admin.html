@@ -20,20 +20,17 @@
         button:hover { opacity: 0.9; }
 
         #btn-copiar { background: #f0ebff; color: #7d5fff; border: 2px dashed var(--primary); margin-top: 15px; display: none; font-size: 18px; }
-
         #area-admin { display: none; width: 100%; max-width: 500px; }
         
         .lista-codigos { background: #fdfdfd; border: 1px solid #eee; border-radius: 10px; margin-top: 10px; max-height: 150px; overflow-y: auto; }
         .codigo-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #f5f5f5; font-size: 13px; }
         
-        /* Estilos do Cartão do Grupo */
         .item-grupo { background: white; padding: 15px; margin-top: 12px; border-radius: 12px; border-left: 5px solid #ccc; position: relative; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .item-grupo.is-vip { border-left-color: var(--vip); background: #fffdf0; }
-        .item-grupo.is-boosted { border-left-color: var(--boost); }
         
-        .info-dono { font-size: 11px; color: #777; margin-top: 5px; line-height: 1.4; }
-        .info-dono b { color: #333; }
-        .badge-vip-time { color: #d35400; font-weight: bold; font-size: 10px; background: #fff3e0; padding: 2px 5px; border-radius: 4px; }
+        .info-resumo { font-size: 11px; color: #555; margin-top: 8px; padding: 8px; background: #f8f9fa; border-radius: 8px; border: 1px solid #eee; }
+        .info-resumo b { color: #000; }
+        .badge-vip { color: #d35400; font-weight: bold; font-size: 10px; background: #fff3e0; padding: 2px 5px; border-radius: 4px; display: inline-block; margin-top: 5px; }
 
         .btns-acao-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 10px; }
         .btns-acao-grid button { padding: 8px 0; font-size: 10px; margin-top: 0; }
@@ -61,12 +58,12 @@
         <div class="stats-container">
             <div class="stat-card"><h4>Grupos</h4><p id="count-total">0</p></div>
             <div class="stat-card"><h4>VIPs</h4><p id="count-vip">0</p></div>
-            <div class="stat-card"><h4>Boost</h4><p id="count-boost">0</p></div>
+            <div class="stat-card"><h4>Visitas</h4><p id="count-visitas">0</p></div>
         </div>
 
         <div class="card" style="border-top: 4px solid var(--success);">
             <h3 style="margin:0; color: var(--success);"><i class="fa fa-coins"></i> Dar Moedas por ID</h3>
-            <input type="text" id="moeda-user-id" placeholder="ID do Usuário">
+            <input type="text" id="moeda-user-id" placeholder="Cole o ID do Usuário aqui">
             <input type="number" id="moeda-qtd" placeholder="Quantidade de Moedas">
             <button onclick="adicionarMoedasManual()" style="background:var(--success)">ADICIONAR MOEDAS</button>
         </div>
@@ -103,7 +100,7 @@
             <label>NOME</label><input type="text" id="edit-nome">
             <label>LINK WHATSAPP</label><input type="text" id="edit-link">
             <label>LINK FOTO</label><input type="text" id="edit-foto">
-            <label>CÓDIGO VIP (ATIVO)</label><input type="text" id="edit-cod-vip" placeholder="Cole novo ou deixe em branco">
+            <label>CÓDIGO VIP (ATIVO)</label><input type="text" id="edit-cod-vip">
 
             <div style="display: flex; gap: 10px; margin-top: 20px;">
                 <button onclick="salvarEdicao()" style="background:var(--success)">SALVAR</button>
@@ -115,7 +112,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getDatabase, ref, onValue, remove, update, get, push, set } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+    import { getDatabase, ref, onValue, remove, update, get, push } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDsrYjO2yVTemKqwmJRzNjh5sfaMalPqhE",
@@ -152,7 +149,6 @@
         carregarDados();
     }
 
-    // FUNÇÃO PARA ADICIONAR MOEDAS MANUALMENTE PELO ID
     window.adicionarMoedasManual = async function() {
         const userId = document.getElementById('moeda-user-id').value.trim();
         const qtd = parseInt(document.getElementById('moeda-qtd').value);
@@ -164,68 +160,67 @@
         if(snap.exists()) moedasAtuais = snap.val().moedas || 0;
         
         await update(userRef, { moedas: moedasAtuais + qtd });
-        alert(`Sucesso! Adicionado ${qtd} moedas ao ID: ${userId}`);
+        alert("Moedas adicionadas com sucesso!");
         document.getElementById('moeda-user-id').value = "";
         document.getElementById('moeda-qtd').value = "";
     }
 
     function formatarTempo(ms) {
-        if (ms <= 0) return "";
+        if (ms <= 0) return "Expirado";
         const horas = Math.floor(ms / 3600000);
         const mins = Math.floor((ms % 3600000) / 60000);
         return `${horas}h ${mins}m restantes`;
     }
 
     function carregarDados() {
-        onValue(ref(db, 'grupos'), async (snap) => {
+        onValue(ref(db, '/'), (snapshot) => {
+            const data = snapshot.val();
+            if(!data) return;
+
             const lista = document.getElementById('lista-grupos');
             lista.innerHTML = "";
-            gruposCache = snap.val() || {};
-            let t = 0, v = 0, b = 0;
+            gruposCache = data.grupos || {};
+            const usuarios = data.usuarios || {};
+            
+            document.getElementById('count-visitas').innerText = data.visitas || 0;
+            let t = 0, v = 0;
             const agora = Date.now();
 
             for (const key in gruposCache) {
                 const g = gruposCache[key]; t++;
+                const donoId = g.dono; // 'dono' conforme seu print
+                const moedas = (usuarios[donoId] && usuarios[donoId].moedas !== undefined) ? usuarios[donoId].moedas : 0;
                 
-                // Pegar moedas do dono em tempo real
-                const donoSnap = await get(ref(db, 'usuarios/' + g.donoId));
-                const moedasDono = donoSnap.exists() ? donoSnap.val().moedas : 0;
-
-                let vipStatusHtml = "";
+                let vipBadge = "";
                 if(g.vip && g.vipAte > agora) {
                     v++;
-                    vipStatusHtml = `<span class="badge-vip-time">${formatarTempo(g.vipAte - agora)}</span>`;
+                    vipBadge = `<span class="badge-vip"><i class="fa fa-clock"></i> ${formatarTempo(g.vipAte - agora)}</span>`;
                 }
 
-                const tempoImpulso = agora - (g.ultimoImpulso || 0);
-                const isBoosted = tempoImpulso < 3600000;
-                if(isBoosted) b++;
-
                 const div = document.createElement('div');
-                div.className = `item-grupo ${g.vip && g.vipAte > agora ? 'is-vip' : ''} ${isBoosted ? 'is-boosted' : ''}`;
+                div.className = `item-grupo ${g.vip && g.vipAte > agora ? 'is-vip' : ''}`;
                 div.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; align-items:center">
-                        <b>${g.nome}</b> 
-                        ${vipStatusHtml}
+                    <div style="display:flex; justify-content:space-between; align-items:start">
+                        <b>${g.nome}</b>
+                        ${vipBadge}
                     </div>
-                    <div class="info-dono">
-                        ID Dono: <b>${g.donoId || '---'}</b><br>
-                        Saldo Moedas: <b style="color:#ff9800">${moedasDono} moedas</b>
+                    <div class="info-resumo">
+                        ID DONO: <code style="color:var(--blue); font-weight:bold">${donoId || 'Sem ID'}</code><br>
+                        MOEDAS: <b style="color:#27ae60">${moedas}</b>
                     </div>
                     <div class="btns-acao-grid">
                         <button style="background:var(--blue)" onclick="abrirModal('${key}')">EDITAR</button>
                         <button style="background:#555" onclick="window.open('${g.link}')">VER</button>
-                        <button style="background:var(--boost); color:#000" onclick="removerBoost('${key}')">B. LIMPAR</button>
+                        <button style="background:var(--boost); color:#000" onclick="removerBoost('${key}')">LIMPAR B.</button>
                         <button style="background:var(--danger)" onclick="excluirGrp('${key}')">DEL</button>
                     </div>`;
                 lista.appendChild(div);
             }
             document.getElementById('count-total').innerText = t;
             document.getElementById('count-vip').innerText = v;
-            document.getElementById('count-boost').innerText = b;
         });
 
-        // Códigos e Vídeos permanecem iguais
+        // Códigos e Vídeos
         onValue(ref(db, 'codigos_vips'), (snap) => {
             const cont = document.getElementById('lista-codigos-ativos');
             cont.innerHTML = "";
@@ -256,7 +251,7 @@
         document.getElementById('novo-video-link').value = "";
     }
 
-    window.apagarVideo = (id) => confirm("Apagar?") && remove(ref(db, 'videos_shopee/' + id));
+    window.apagarVideo = (id) => confirm("Apagar vídeo?") && remove(ref(db, 'videos_shopee/' + id));
     window.removerBoost = (id) => update(ref(db, 'grupos/' + id), { ultimoImpulso: 0 });
     window.gerarCodigo = async function() {
         const h = document.getElementById('tempo-vip').value;
@@ -280,21 +275,11 @@
         document.getElementById('modalEdicao').style.display = 'flex';
     }
     window.salvarEdicao = async () => {
-        const inputCod = document.getElementById('edit-cod-vip').value.trim();
         const updateData = {
             nome: document.getElementById('edit-nome').value,
             link: document.getElementById('edit-link').value,
             foto: document.getElementById('edit-foto').value
         };
-        if (inputCod !== "" && inputCod !== gruposCache[idSendoEditado].codigoVip) {
-            const codSnap = await get(ref(db, 'codigos_vips/' + inputCod));
-            if(codSnap.exists()) {
-                updateData.vip = true;
-                updateData.codigoVip = inputCod;
-                updateData.vipAte = Date.now() + (codSnap.val().duracaoHoras * 3600000);
-                await remove(ref(db, 'codigos_vips/' + inputCod));
-            }
-        }
         await update(ref(db, 'grupos/' + idSendoEditado), updateData);
         fecharModal();
     }
