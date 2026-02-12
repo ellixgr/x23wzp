@@ -8,19 +8,26 @@
         :root { --primary: #b78cff; --success: #2ecc71; --error: #ff4757; --warning: #ffa502; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #ebebeb; display: flex; flex-direction: column; align-items: center; padding: 20px; overflow-x: hidden; }
         
-        /* Card Principal */
         .card { background: #fff; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 350px; text-align: center; position: relative; }
         h2 { color: var(--primary); margin-bottom: 5px; }
         .moedas-display { font-size: 50px; font-weight: bold; color: #ff9800; margin: 10px 0; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); }
         
-        /* Botões Personalizados */
-        .btn-missao { display: block; background: #ff4500; color: white; text-decoration: none; padding: 16px; border-radius: 12px; font-weight: bold; margin-top: 20px; cursor: pointer; border: none; width: 100%; transition: transform 0.2s, background 0.2s; font-size: 14px; }
+        .btn-missao { display: block; background: #ff4500; color: white; text-decoration: none; padding: 16px; border-radius: 12px; font-weight: bold; margin-top: 20px; cursor: pointer; border: none; width: 100%; transition: transform 0.2s; font-size: 14px; }
         .btn-missao:active { transform: scale(0.98); }
         .btn-resgatar { background: var(--primary); margin-top: 12px; }
         .disabled { background: #ccc !important; cursor: not-allowed; pointer-events: none; }
 
-        /* Notificação Toast Personalizada */
-        #toast-container { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 15px 25px; border-radius: 50px; display: flex; align-items: center; gap: 10px; font-weight: 500; box-shadow: 0 5px 15px rgba(0,0,0,0.3); transition: top 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55); z-index: 9999; white-space: nowrap; }
+        /* Modal do Código VIP */
+        #modal-vip { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 10000; padding: 20px; box-sizing: border-box; }
+        .modal-content { background: white; padding: 30px; border-radius: 20px; width: 100%; max-width: 320px; text-align: center; animation: surge 0.3s ease-out; }
+        @keyframes surge { from { transform: scale(0.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        
+        .codigo-gerado { background: #f0f0f0; border: 2px dashed var(--primary); padding: 15px; font-size: 24px; font-weight: bold; letter-spacing: 2px; color: #333; margin: 20px 0; border-radius: 10px; cursor: pointer; }
+        .instrucao { font-size: 13px; color: #666; line-height: 1.5; margin-bottom: 20px; }
+        .btn-fechar { background: #333; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+
+        /* Toast */
+        #toast-container { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 15px 25px; border-radius: 50px; display: flex; align-items: center; gap: 10px; font-weight: 500; box-shadow: 0 5px 15px rgba(0,0,0,0.3); transition: top 0.5s; z-index: 11000; }
         #toast-container.show { top: 25px; }
 
         #timer { font-size: 14px; color: #666; margin-top: 15px; background: #f8f8f8; padding: 8px; border-radius: 8px; display: inline-block; width: 100%; box-sizing: border-box; }
@@ -29,21 +36,28 @@
 </head>
 <body>
 
-    <div id="toast-container">
-        <span id="toast-icon"></span>
-        <span id="toast-message"></span>
+    <div id="toast-container"><span id="toast-icon"></span><span id="toast-message"></span></div>
+
+    <div id="modal-vip">
+        <div class="modal-content">
+            <h3 style="color:var(--primary); margin:0;">CÓDIGO GERADO! 🎊</h3>
+            <div class="codigo-gerado" id="codigoDisplay" onclick="copiarCodigo()">CARREGANDO...</div>
+            <p class="instrucao">
+                <b>Como usar:</b><br>
+                Copie o código acima e envie no grupo do WhatsApp para ativar suas 24 horas de acesso VIP!
+            </p>
+            <button class="btn-missao" onclick="copiarCodigo()">📋 COPIAR CÓDIGO</button>
+            <button class="btn-fechar" style="margin-top:10px;" onclick="document.getElementById('modal-vip').style.display='none'">Fechar</button>
+        </div>
     </div>
 
     <div class="card">
         <h2>Minhas Moedas</h2>
         <div class="moedas-display" id="moedasTxt">0</div>
-        <p style="color: #666; font-size: 14px;">Ganhe 20 moedas para resgatar <b>24h de VIP</b></p>
-        
-        <div id="statusDia" class="status">Carregando vídeos...</div>
-
+        <p style="color: #666; font-size: 14px;">Junte 20 moedas para <b>24h de VIP</b></p>
+        <div id="statusDia" class="status">Carregando links...</div>
         <button id="btnVideo" class="btn-missao disabled">🎬 ASSISTIR VÍDEO AGORA</button>
         <div id="timer" style="display:none;">⏳ Validando em <span id="segundos">15</span>s...</div>
-        
         <button id="btnResgatar" class="btn-missao btn-resgatar">⭐ GERAR CÓDIGO VIP (20 Moedas)</button>
     </div>
 
@@ -60,22 +74,20 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // --- SISTEMA DE NOTIFICAÇÃO ---
         function notify(msg, type = 'success') {
             const toast = document.getElementById('toast-container');
-            const message = document.getElementById('toast-message');
-            const icon = document.getElementById('toast-icon');
-            
-            const icons = { success: '✅', error: '❌', warning: '⏳' };
-            const colors = { success: '#2ecc71', error: '#ff4757', warning: '#ffa502' };
-
-            message.innerText = msg;
-            icon.innerText = icons[type];
-            toast.style.borderBottom = `3px solid ${colors[type]}`;
-            
+            document.getElementById('toast-message').innerText = msg;
+            document.getElementById('toast-icon').innerText = {success:'✅', error:'❌', warning:'⏳'}[type];
+            toast.style.borderBottom = `3px solid ${{success:'#2ecc71', error:'#ff4757', warning:'#ffa502'}[type]}`;
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
+
+        window.copiarCodigo = () => {
+            const cod = document.getElementById('codigoDisplay').innerText;
+            navigator.clipboard.writeText(cod);
+            notify("Código copiado!", "success");
+        };
 
         let meusVideos = [];
         onValue(ref(db, 'videos_shopee'), (snap) => {
@@ -84,7 +96,6 @@
             if(meusVideos.length > 0 && limiteDiario < 20) {
                 btnVideo.classList.remove('disabled');
                 btnVideo.innerText = "🎬 ASSISTIR VÍDEO AGORA";
-                statusDia.innerText = `Missões: ${limiteDiario}/20 hoje`;
             }
         });
 
@@ -104,70 +115,45 @@
 
         function atualizarTela() {
             moedasTxt.innerText = moedas;
-            if (limiteDiario >= 20) {
-                btnVideo.classList.add('disabled');
-                btnVideo.innerText = "LIMITE DIÁRIO ATINGIDO";
-                statusDia.innerText = "Volte amanhã!";
-            } else {
-                statusDia.innerText = `Missões: ${limiteDiario}/20 hoje`;
-            }
+            statusDia.innerText = limiteDiario >= 20 ? "Volte amanhã!" : `Missões: ${limiteDiario}/20 hoje`;
+            if (limiteDiario >= 20) btnVideo.classList.add('disabled');
         }
 
         btnVideo.onclick = () => {
-            if (limiteDiario >= 20) return;
-            if (meusVideos.length === 0) return notify("Aguarde o carregamento...", "warning");
-
-            const linkSorteado = meusVideos[Math.floor(Math.random() * meusVideos.length)];
-            window.open(linkSorteado, '_blank');
-
+            if (limiteDiario >= 20 || meusVideos.length === 0) return;
+            window.open(meusVideos[Math.floor(Math.random() * meusVideos.length)], '_blank');
             let tempo = 15;
             btnVideo.classList.add('disabled');
             document.getElementById('timer').style.display = 'block';
-
             let count = setInterval(() => {
                 tempo--;
                 document.getElementById('segundos').innerText = tempo;
                 if (tempo <= 0) {
                     clearInterval(count);
-                    moedas++;
-                    limiteDiario++;
+                    moedas++; limiteDiario++;
                     localStorage.setItem('moedasVip', moedas);
                     localStorage.setItem('limiteDiario', limiteDiario);
-                    
                     document.getElementById('timer').style.display = 'none';
                     if(limiteDiario < 20) btnVideo.classList.remove('disabled');
-                    notify("Moeda ganha com sucesso!", "success");
+                    notify("+1 Moeda ganha!", "success");
                     atualizarTela();
                 }
             }, 1000);
         };
 
         document.getElementById('btnResgatar').onclick = async () => {
-            if (moedas < 20) return notify("Você precisa de 20 moedas!", "error");
-
+            if (moedas < 20) return notify("Faltam moedas!", "error");
             const novoCodigo = "VIP-" + Math.random().toString(36).substr(2, 6).toUpperCase();
-            
             try {
-                await set(ref(db, 'codigos_vips/' + novoCodigo), {
-                    valido: true,
-                    duracaoHoras: 24, // CORRIGIDO PARA 24H
-                    usado: false
-                });
-
+                await set(ref(db, 'codigos_vips/' + novoCodigo), { valido: true, duracaoHoras: 24, usado: false });
                 moedas -= 20;
                 localStorage.setItem('moedasVip', moedas);
                 atualizarTela();
-                notify("VIP 24H GERADO!", "success");
                 
-                // Mostra o código no lugar das moedas por um momento ou no log
-                console.log("Código VIP: " + novoCodigo);
-                setTimeout(() => {
-                   notify("CÓDIGO: " + novoCodigo, "success");
-                }, 3100);
-
-            } catch (e) {
-                notify("Erro ao conectar no banco!", "error");
-            }
+                // MOSTRA O MODAL
+                document.getElementById('codigoDisplay').innerText = novoCodigo;
+                document.getElementById('modal-vip').style.display = 'flex';
+            } catch (e) { notify("Erro no banco!", "error"); }
         };
 
         atualizarTela();
