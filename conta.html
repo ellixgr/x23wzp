@@ -4,28 +4,53 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ganhar VIP - Missões</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --primary: #b78cff; --success: #2ecc71; --error: #ff4757; --warning: #ffa502; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #ebebeb; display: flex; flex-direction: column; align-items: center; padding: 20px; overflow-x: hidden; min-height: 100vh; }
-        .card { background: #fff; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 350px; text-align: center; position: relative; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #ebebeb; display: flex; flex-direction: column; align-items: center; padding: 20px; overflow-x: hidden; min-height: 100vh; margin: 0; }
+        
+        .card { background: #fff; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 350px; text-align: center; position: relative; z-index: 1; }
         h2 { color: var(--primary); margin-bottom: 5px; }
         .moedas-display { font-size: 50px; font-weight: bold; color: #ff9800; margin: 10px 0; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); }
+        
         .btn-missao { display: block; background: #ff4500; color: white; text-decoration: none; padding: 16px; border-radius: 12px; font-weight: bold; margin-top: 20px; cursor: pointer; border: none; width: 100%; transition: 0.2s; font-size: 14px; }
         .btn-resgatar { background: var(--primary); margin-top: 12px; }
         .disabled { background: #ccc !important; cursor: not-allowed; pointer-events: none; }
+
+        /* Toast de Notificação */
         #toast-container { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 15px 25px; border-radius: 50px; display: flex; align-items: center; gap: 10px; font-weight: 500; box-shadow: 0 5px 15px rgba(0,0,0,0.3); transition: top 0.5s; z-index: 9999; }
         #toast-container.show { top: 25px; }
+
         #timer { font-size: 14px; color: #666; margin-top: 15px; background: #f8f8f8; padding: 8px; border-radius: 8px; display: inline-block; width: 100%; box-sizing: border-box; }
         .status { font-size: 13px; margin-top: 8px; color: var(--success); font-weight: bold; }
         
-        /* Rodapé com ID */
-        .footer-id { margin-top: auto; padding: 20px; text-align: center; width: 100%; color: #aaa; font-size: 11px; }
-        .id-badge { background: #ddd; padding: 2px 6px; border-radius: 4px; font-family: monospace; color: #666; }
+        /* Modal VIP Bonito */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 10000; backdrop-filter: blur(4px); }
+        .modal-vip { background: white; padding: 30px; border-radius: 25px; text-align: center; width: 85%; max-width: 320px; animation: popUp 0.3s ease-out; }
+        @keyframes popUp { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .codigo-gerado { background: #f0f0f0; border: 2px dashed var(--primary); padding: 15px; font-size: 22px; font-weight: bold; color: #333; border-radius: 12px; margin: 15px 0; letter-spacing: 2px; }
+        .btn-fechar { background: var(--primary); color: white; border: none; padding: 12px 25px; border-radius: 10px; font-weight: bold; cursor: pointer; width: 100%; }
+
+        /* Rodapé ID */
+        .footer-id { margin-top: auto; padding: 25px 20px; text-align: center; width: 100%; color: #888; font-size: 12px; }
+        .id-container { display: inline-flex; align-items: center; gap: 8px; background: #e0e0e0; padding: 5px 12px; border-radius: 8px; margin-top: 5px; cursor: pointer; transition: 0.2s; }
+        .id-container:active { background: #d0d0d0; }
+        .id-badge { font-family: monospace; font-weight: bold; color: #444; }
     </style>
 </head>
 <body>
 
     <div id="toast-container"><span id="toast-icon"></span><span id="toast-message"></span></div>
+
+    <div class="modal-overlay" id="modalVip">
+        <div class="modal-vip">
+            <div style="font-size: 40px;">⭐</div>
+            <h3 style="margin: 10px 0; color: var(--primary);">VIP GERADO!</h3>
+            <p style="font-size: 14px; color: #666; margin: 0;">Copie o código abaixo:</p>
+            <div class="codigo-gerado" id="displayCodigo">VIP-XXXXXX</div>
+            <button class="btn-fechar" onclick="fecharModalVip()">COPIAR E FECHAR</button>
+        </div>
+    </div>
 
     <div class="card">
         <h2>Minhas Moedas</h2>
@@ -38,7 +63,11 @@
     </div>
 
     <div class="footer-id">
-        SEU ID DE USUÁRIO: <span id="exibirId" class="id-badge">...</span>
+        SEU ID DE USUÁRIO:<br>
+        <div class="id-container" onclick="copiarMeuId()">
+            <span id="exibirId" class="id-badge">...</span>
+            <i class="fa-regular fa-copy" style="font-size: 14px;"></i>
+        </div>
     </div>
 
     <script type="module">
@@ -63,7 +92,6 @@
             localStorage.setItem('usuario_uid', meuId);
         }
 
-        // MOSTRAR ID NO FINAL DO SITE
         document.getElementById('exibirId').innerText = meuId;
 
         const moedasTxt = document.getElementById('moedasTxt');
@@ -86,6 +114,18 @@
             document.getElementById('toast-icon').innerText = type === 'success' ? '✅' : '❌';
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        window.copiarMeuId = () => {
+            navigator.clipboard.writeText(meuId);
+            notify("ID copiado com sucesso!", "success");
+        }
+
+        window.fecharModalVip = () => {
+            const cod = document.getElementById('displayCodigo').innerText;
+            navigator.clipboard.writeText(cod);
+            document.getElementById('modalVip').style.display = 'none';
+            notify("Código copiado!", "success");
         }
 
         onValue(ref(db, 'usuarios/' + meuId), (snap) => {
@@ -128,20 +168,23 @@
                     limiteDiario++;
                     localStorage.setItem('limiteDiario', limiteDiario);
                     document.getElementById('timer').style.display = 'none';
-                    notify("Moeda ganha!");
+                    notify("Moeda ganha!", "success");
+                    atualizarTela();
                 }
             }, 1000);
         };
 
         document.getElementById('btnResgatar').onclick = async () => {
-            if (moedasBD < CUSTO_VIP) return notify("Precisa de " + CUSTO_VIP + " moedas!", "error");
+            if (moedasBD < CUSTO_VIP) return notify("Você precisa de " + CUSTO_VIP + " moedas!", "error");
             const novoCodigo = "VIP-" + Math.random().toString(36).substr(2, 6).toUpperCase();
             try {
                 await set(ref(db, 'codigos_vips/' + novoCodigo), { duracaoHoras: 24, usado: false, valido: true });
                 await update(ref(db, 'usuarios/' + meuId), { moedas: moedasBD - CUSTO_VIP });
-                notify("VIP GERADO!", "success");
-                alert("CÓDIGO VIP: " + novoCodigo);
-            } catch (e) { notify("Erro no banco!", "error"); }
+                
+                document.getElementById('displayCodigo').innerText = novoCodigo;
+                document.getElementById('modalVip').style.display = 'flex';
+                
+            } catch (e) { notify("Erro ao conectar no banco!", "error"); }
         };
     </script>
 </body>
