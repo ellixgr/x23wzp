@@ -218,10 +218,11 @@
     // NOVAS FUNÇÕES DOS VÍDEOS
     window.adicionarVideo = async function() {
         const link = document.getElementById('novo-video-link').value.trim();
-        if(!link.includes('shopee.com')) return alert("Link deve ser da Shopee!");
+        if(!link) return alert("Coloca o link primeiro!"); // Só avisa se estiver vazio
         await push(ref(db, 'videos_shopee'), { link: link });
         document.getElementById('novo-video-link').value = "";
     }
+
     window.apagarVideo = (id) => confirm("Apagar vídeo?") && remove(ref(db, 'videos_shopee/' + id));
 
     // RESTANTE DAS SUAS FUNÇÕES ORIGINAIS
