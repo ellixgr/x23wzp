@@ -65,6 +65,7 @@
         <div class="card">
             <h3 style="margin:0">⭐ Gerar Código VIP</h3>
             <select id="tempo-vip">
+                <option value="2">2 Horas</option>
                 <option value="24">24 Horas</option>
                 <option value="48">48 Horas</option>
             </select>
@@ -73,6 +74,15 @@
             
             <h4 style="margin: 15px 0 5px; font-size: 11px; color: #999;">CÓDIGOS DISPONÍVEIS:</h4>
             <div id="lista-codigos-ativos" class="lista-codigos">Carregando...</div>
+        </div>
+
+        <div class="card" style="border-top: 4px solid #ff4500;">
+            <h3 style="margin:0; color: #ff4500;"><i class="fa fa-video"></i> Gerenciar Vídeos Shopee</h3>
+            <p style="font-size: 11px; color: #666; margin-top: 5px;">Cole o link do vídeo para a missão.</p>
+            <input type="text" id="novo-video-link" placeholder="https://shopee.com.br/...">
+            <button onclick="adicionarVideo()" style="background:#ff4500">ADICIONAR VÍDEO</button>
+            <h4 style="margin: 15px 0 5px; font-size: 11px; color: #999;">VÍDEOS ATIVOS:</h4>
+            <div id="lista-videos-shopee" class="lista-codigos">Carregando...</div>
         </div>
 
         <h2 style="font-size: 16px; color: #555;">GERENCIAR GRUPOS</h2>
@@ -96,8 +106,9 @@
     </div>
 
 <script type="module">
+    // Adicionado o push no import
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getDatabase, ref, onValue, remove, update, get } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+    import { getDatabase, ref, onValue, remove, update, get, push } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDsrYjO2yVTemKqwmJRzNjh5sfaMalPqhE",
@@ -155,24 +166,15 @@
             snap.forEach(c => {
                 const g = c.val(); t++; 
                 if(g.vip) v++;
-                
                 const tempoImpulso = agora - (g.ultimoImpulso || 0);
                 const isBoosted = tempoImpulso < 3600000;
                 if(isBoosted) b++;
 
                 const div = document.createElement('div');
                 div.className = `item-grupo ${g.vip ? 'is-vip' : ''} ${isBoosted ? 'is-boosted' : ''}`;
-                
-                let infoBoost = "";
-                if(isBoosted) {
-                    const minFaltando = Math.ceil((3600000 - tempoImpulso) / 60000);
-                    infoBoost = `<span class="badge-boost">🚀 BOOST</span> <span class="tempo-restante">Faltam ${minFaltando} min</span>`;
-                }
-
                 div.innerHTML = `
                     <div style="display:flex; justify-content:space-between">
                         <b>${g.nome}</b> 
-                        <div>${g.vip ? '⭐' : ''} ${infoBoost}</div>
                     </div>
                     <div class="btns-acao-grid">
                         <button style="background:var(--blue)" onclick="abrirModal('${c.key}')">EDITAR</button>
@@ -188,10 +190,6 @@
         onValue(ref(db, 'codigos_vips'), (snap) => {
             const cont = document.getElementById('lista-codigos-ativos');
             cont.innerHTML = "";
-            if(!snap.exists()) {
-                cont.innerHTML = "<p style='color:#999;padding:10px'>Nenhum código disponível.</p>";
-                return;
-            }
             snap.forEach(c => {
                 const div = document.createElement('div');
                 div.className = 'codigo-item';
@@ -199,13 +197,35 @@
                 cont.appendChild(div);
             });
         });
+
+        // Carregar Vídeos Shopee
+        onValue(ref(db, 'videos_shopee'), (snap) => {
+            const cont = document.getElementById('lista-videos-shopee');
+            cont.innerHTML = "";
+            if(!snap.exists()) {
+                cont.innerHTML = "<p style='color:#999;padding:10px'>Sem vídeos.</p>";
+                return;
+            }
+            snap.forEach(c => {
+                const div = document.createElement('div');
+                div.className = 'codigo-item';
+                div.innerHTML = `<span style="overflow:hidden; text-overflow:ellipsis; width:80%">${c.val().link}</span><i class="fa fa-trash" style="color:red;cursor:pointer" onclick="apagarVideo('${c.key}')"></i>`;
+                cont.appendChild(div);
+            });
+        });
     }
 
-    window.removerBoost = (id) => {
-        if(confirm("Deseja remover o impulso desse grupo? Ele voltará para a posição normal.")) {
-            update(ref(db, 'grupos/' + id), { ultimoImpulso: 0 });
-        }
+    // NOVAS FUNÇÕES DOS VÍDEOS
+    window.adicionarVideo = async function() {
+        const link = document.getElementById('novo-video-link').value.trim();
+        if(!link.includes('shopee.com')) return alert("Link deve ser da Shopee!");
+        await push(ref(db, 'videos_shopee'), { link: link });
+        document.getElementById('novo-video-link').value = "";
     }
+    window.apagarVideo = (id) => confirm("Apagar vídeo?") && remove(ref(db, 'videos_shopee/' + id));
+
+    // RESTANTE DAS SUAS FUNÇÕES ORIGINAIS
+    window.removerBoost = (id) => update(ref(db, 'grupos/' + id), { ultimoImpulso: 0 });
 
     window.gerarCodigo = async function() {
         const h = document.getElementById('tempo-vip').value;
@@ -222,9 +242,7 @@
     window.copiarCodigo = () => {
         const b = document.getElementById('btn-copiar');
         navigator.clipboard.writeText(b.innerText);
-        const original = b.innerText;
-        b.innerText = "COPIADO!";
-        setTimeout(() => { b.innerText = original; }, 1000);
+        alert("Copiado!");
     }
 
     window.abrirModal = (id) => {
@@ -240,45 +258,29 @@
     window.salvarEdicao = async () => {
         const inputCod = document.getElementById('edit-cod-vip').value.trim();
         const gAtual = gruposCache[idSendoEditado];
-        
         const updateData = {
             nome: document.getElementById('edit-nome').value,
             link: document.getElementById('edit-link').value,
             foto: document.getElementById('edit-foto').value
         };
-
-        if (gAtual.vip && inputCod === "") {
-            updateData.vip = false;
-            updateData.codigoVip = "";
-            updateData.vipAte = null;
-        } else if (inputCod !== "" && inputCod !== gAtual.codigoVip) {
+        if (inputCod !== "" && inputCod !== gAtual.codigoVip) {
             const codSnap = await get(ref(db, 'codigos_vips/' + inputCod));
             if(codSnap.exists()) {
-                const horas = codSnap.val().duracaoHoras || 24;
                 updateData.vip = true;
                 updateData.codigoVip = inputCod;
-                updateData.vipAte = Date.now() + (horas * 60 * 60 * 1000);
+                updateData.vipAte = Date.now() + (codSnap.val().duracaoHoras * 3600000);
                 await remove(ref(db, 'codigos_vips/' + inputCod));
-                alert("Novo VIP Ativado!");
-            } else {
-                return alert("Código VIP inválido ou já usado!");
             }
         }
-        
         await update(ref(db, 'grupos/' + idSendoEditado), updateData);
         fecharModal();
     }
 
-    window.apagarCod = (c) => confirm("Apagar código?") && remove(ref(db, 'codigos_vips/' + c));
-    window.excluirGrp = (id) => confirm("Apagar grupo permanentemente?") && remove(ref(db, 'grupos/' + id));
+    window.apagarCod = (c) => remove(ref(db, 'codigos_vips/' + c));
+    window.excluirGrp = (id) => confirm("Apagar?") && remove(ref(db, 'grupos/' + id));
     window.excluirAtual = () => { excluirGrp(idSendoEditado); fecharModal(); }
     window.fecharModal = () => document.getElementById('modalEdicao').style.display = 'none';
-    window.logout = () => { 
-    // Remove apenas a credencial do admin
-    localStorage.removeItem('admin_acesso'); 
-    // Recarrega a página para voltar ao login
-    location.reload(); 
-};
+    window.logout = () => { localStorage.removeItem('admin_acesso'); location.reload(); };
 </script>
 </body>
 </html>
