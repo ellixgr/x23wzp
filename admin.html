@@ -28,9 +28,9 @@
         .item-grupo { background: white; padding: 15px; margin-top: 12px; border-radius: 12px; border-left: 5px solid #ccc; position: relative; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .item-grupo.is-vip { border-left-color: var(--vip); background: #fffdf0; }
         
-        .info-resumo { font-size: 11px; color: #555; margin-top: 8px; padding: 8px; background: #f8f9fa; border-radius: 8px; border: 1px solid #eee; }
-        .info-resumo b { color: #000; }
-        .badge-vip { color: #d35400; font-weight: bold; font-size: 10px; background: #fff3e0; padding: 2px 5px; border-radius: 4px; display: inline-block; margin-top: 5px; }
+        .info-resumo { font-size: 11px; color: #555; margin-top: 8px; padding: 10px; background: #f1f4f9; border-radius: 8px; border: 1px solid #e0e6ed; }
+        .id-box { display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 5px 8px; border-radius: 6px; border: 1px solid #ddd; margin-top: 4px; }
+        .id-text { color: var(--blue); font-family: monospace; font-weight: bold; font-size: 13px; overflow: hidden; text-overflow: ellipsis; }
 
         .btns-acao-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 10px; }
         .btns-acao-grid button { padding: 8px 0; font-size: 10px; margin-top: 0; }
@@ -43,7 +43,7 @@
 <body>
 
     <div id="login-box" class="card">
-        <h2 style="text-align:center; color:var(--primary)">Login</h2>
+        <h2 style="text-align:center; color:var(--primary)">Login Admin</h2>
         <input type="text" id="user-input" placeholder="Usuário">
         <input type="password" id="pass-input" placeholder="Senha Mestra">
         <button onclick="logar()">ENTRAR</button>
@@ -51,7 +51,7 @@
 
     <div id="area-admin">
         <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 10px;">
-            <span style="font-size: 12px; color: #888;">User: <b>https67</b></span>
+            <span style="font-size: 12px; color: #888;">Logado: <b>https67</b></span>
             <a href="#" onclick="logout()" style="color:red; font-size: 12px; text-decoration: none; font-weight: bold;">SAIR</a>
         </div>
 
@@ -69,44 +69,38 @@
         </div>
 
         <div class="card">
-            <h3 style="margin:0">⭐ Gerar Código VIP</h3>
+            <h3 style="margin:0">⭐ Códigos VIP</h3>
             <select id="tempo-vip">
                 <option value="2">2 Horas</option>
                 <option value="24">24 Horas</option>
                 <option value="48">48 Horas</option>
             </select>
-            <button onclick="gerarCodigo()">GERAR AGORA</button>
+            <button onclick="gerarCodigo()">GERAR NOVO CÓDIGO</button>
             <button id="btn-copiar" onclick="copiarCodigo()"></button>
-            
-            <h4 style="margin: 15px 0 5px; font-size: 11px; color: #999;">CÓDIGOS DISPONÍVEIS:</h4>
-            <div id="lista-codigos-ativos" class="lista-codigos">Carregando...</div>
+            <div id="lista-codigos-ativos" class="lista-codigos">...</div>
         </div>
 
         <div class="card" style="border-top: 4px solid #ff4500;">
-            <h3 style="margin:0; color: #ff4500;"><i class="fa fa-video"></i> Gerenciar Vídeos Shopee</h3>
-            <input type="text" id="novo-video-link" placeholder="https://shopee.com.br/...">
+            <h3 style="margin:0; color: #ff4500;"><i class="fa fa-video"></i> Vídeos Shopee</h3>
+            <input type="text" id="novo-video-link" placeholder="Link do produto Shopee">
             <button onclick="adicionarVideo()" style="background:#ff4500">ADICIONAR VÍDEO</button>
-            <h4 style="margin: 15px 0 5px; font-size: 11px; color: #999;">VÍDEOS ATIVOS:</h4>
-            <div id="lista-videos-shopee" class="lista-codigos">Carregando...</div>
+            <div id="lista-videos-shopee" class="lista-codigos">...</div>
         </div>
 
-        <h2 style="font-size: 16px; color: #555;">GERENCIAR GRUPOS</h2>
-        <div id="lista-grupos"></div>
+        <h2 style="font-size: 16px; color: #555; width: 100%; text-align: left;">LISTA DE GRUPOS</h2>
+        <div id="lista-grupos" style="width: 100%;"></div>
     </div>
 
     <div id="modalEdicao" class="modal">
         <div class="modal-content">
-            <h3 style="margin-top:0">Editar Grupo</h3>
+            <h3>Editar Grupo</h3>
             <label>NOME</label><input type="text" id="edit-nome">
             <label>LINK WHATSAPP</label><input type="text" id="edit-link">
             <label>LINK FOTO</label><input type="text" id="edit-foto">
-            <label>CÓDIGO VIP (ATIVO)</label><input type="text" id="edit-cod-vip">
-
             <div style="display: flex; gap: 10px; margin-top: 20px;">
                 <button onclick="salvarEdicao()" style="background:var(--success)">SALVAR</button>
                 <button onclick="fecharModal()" style="background:#888">CANCELAR</button>
             </div>
-            <button onclick="excluirAtual()" style="background:var(--danger); margin-top:10px">EXCLUIR GRUPO</button>
         </div>
     </div>
 
@@ -123,8 +117,8 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     let SENHA_MASTER = localStorage.getItem('admin_acesso') || "";
-    let idSendoEditado = null;
     let gruposCache = {};
+    let idSendoEditado = null;
 
     if(SENHA_MASTER) mostrarPainel();
 
@@ -132,10 +126,12 @@
         const u = document.getElementById('user-input').value;
         const s = document.getElementById('pass-input').value;
         if(u !== "https67") return alert("Usuário Errado!");
+        
         const res = await fetch("https://x23wzp.onrender.com/login-admin", {
             method: "POST", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ senha: s })
         });
+        
         if(res.ok) {
             SENHA_MASTER = s;
             localStorage.setItem('admin_acesso', s);
@@ -149,27 +145,12 @@
         carregarDados();
     }
 
-    window.adicionarMoedasManual = async function() {
-        const userId = document.getElementById('moeda-user-id').value.trim();
-        const qtd = parseInt(document.getElementById('moeda-qtd').value);
-        if(!userId || isNaN(qtd)) return alert("Preencha o ID e a quantidade!");
-        
-        const userRef = ref(db, 'usuarios/' + userId);
-        const snap = await get(userRef);
-        let moedasAtuais = 0;
-        if(snap.exists()) moedasAtuais = snap.val().moedas || 0;
-        
-        await update(userRef, { moedas: moedasAtuais + qtd });
-        alert("Moedas adicionadas com sucesso!");
-        document.getElementById('moeda-user-id').value = "";
-        document.getElementById('moeda-qtd').value = "";
-    }
-
-    function formatarTempo(ms) {
-        if (ms <= 0) return "Expirado";
-        const horas = Math.floor(ms / 3600000);
-        const mins = Math.floor((ms % 3600000) / 60000);
-        return `${horas}h ${mins}m restantes`;
+    // FUNÇÃO COPIAR ID
+    window.copiarID = (id) => {
+        navigator.clipboard.writeText(id);
+        alert("ID Copiado: " + id);
+        document.getElementById('moeda-user-id').value = id;
+        window.scrollTo({top: 0, behavior: 'smooth'});
     }
 
     function carregarDados() {
@@ -181,112 +162,93 @@
             lista.innerHTML = "";
             gruposCache = data.grupos || {};
             const usuarios = data.usuarios || {};
-            
-            document.getElementById('count-visitas').innerText = data.visitas || 0;
-            let t = 0, v = 0;
             const agora = Date.now();
+            let t = 0, v = 0;
 
             for (const key in gruposCache) {
                 const g = gruposCache[key]; t++;
-                const donoId = g.dono; // 'dono' conforme seu print
+                const donoId = g.dono || "Nao_Definido";
                 const moedas = (usuarios[donoId] && usuarios[donoId].moedas !== undefined) ? usuarios[donoId].moedas : 0;
                 
-                let vipBadge = "";
-                if(g.vip && g.vipAte > agora) {
-                    v++;
-                    vipBadge = `<span class="badge-vip"><i class="fa fa-clock"></i> ${formatarTempo(g.vipAte - agora)}</span>`;
-                }
+                const isVip = g.vip && g.vipAte > agora;
+                if(isVip) v++;
 
                 const div = document.createElement('div');
-                div.className = `item-grupo ${g.vip && g.vipAte > agora ? 'is-vip' : ''}`;
+                div.className = `item-grupo ${isVip ? 'is-vip' : ''}`;
                 div.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; align-items:start">
+                    <div style="display:flex; justify-content:space-between;">
                         <b>${g.nome}</b>
-                        ${vipBadge}
+                        ${isVip ? '<span class="badge-vip">VIP ATIVO</span>' : ''}
                     </div>
                     <div class="info-resumo">
-                        ID DONO: <code style="color:var(--blue); font-weight:bold">${donoId || 'Sem ID'}</code><br>
-                        MOEDAS: <b style="color:#27ae60">${moedas}</b>
+                        <span>ID DO DONO:</span>
+                        <div class="id-box">
+                            <span class="id-text">${donoId}</span>
+                            <button onclick="copiarID('${donoId}')" style="width:auto; margin:0; padding:4px 8px; font-size:10px; background:var(--blue)">COPIAR ID</button>
+                        </div>
+                        <div style="margin-top:8px">Saldo: <b style="color:var(--success)">${moedas} moedas</b></div>
                     </div>
                     <div class="btns-acao-grid">
                         <button style="background:var(--blue)" onclick="abrirModal('${key}')">EDITAR</button>
                         <button style="background:#555" onclick="window.open('${g.link}')">VER</button>
-                        <button style="background:var(--boost); color:#000" onclick="removerBoost('${key}')">LIMPAR B.</button>
+                        <button style="background:var(--boost); color:#000" onclick="removerBoost('${key}')">LIMPAR</button>
                         <button style="background:var(--danger)" onclick="excluirGrp('${key}')">DEL</button>
                     </div>`;
                 lista.appendChild(div);
             }
             document.getElementById('count-total').innerText = t;
             document.getElementById('count-vip').innerText = v;
+            document.getElementById('count-visitas').innerText = data.visitas || 0;
         });
 
-        // Códigos e Vídeos
-        onValue(ref(db, 'codigos_vips'), (snap) => {
-            const cont = document.getElementById('lista-codigos-ativos');
-            cont.innerHTML = "";
-            snap.forEach(c => {
-                const div = document.createElement('div');
-                div.className = 'codigo-item';
-                div.innerHTML = `<span><b>${c.key}</b> (${c.val().duracaoHoras}h)</span><i class="fa fa-trash" style="color:var(--danger);cursor:pointer" onclick="apagarCod('${c.key}')"></i>`;
-                cont.appendChild(div);
+        // Listas de apoio
+        onValue(ref(db, 'codigos_vips'), snap => {
+            const c = document.getElementById('lista-codigos-ativos');
+            c.innerHTML = "";
+            snap.forEach(i => {
+                c.innerHTML += `<div class="codigo-item"><span>${i.key}</span><i class="fa fa-trash" onclick="apagarCod('${i.key}')"></i></div>`;
             });
         });
 
-        onValue(ref(db, 'videos_shopee'), (snap) => {
-            const cont = document.getElementById('lista-videos-shopee');
-            cont.innerHTML = "";
-            snap.forEach(c => {
-                const div = document.createElement('div');
-                div.className = 'codigo-item';
-                div.innerHTML = `<span style="overflow:hidden; text-overflow:ellipsis; width:80%">${c.val().link}</span><i class="fa fa-trash" style="color:red;cursor:pointer" onclick="apagarVideo('${c.key}')"></i>`;
-                cont.appendChild(div);
+        onValue(ref(db, 'videos_shopee'), snap => {
+            const v = document.getElementById('lista-videos-shopee');
+            v.innerHTML = "";
+            snap.forEach(i => {
+                v.innerHTML += `<div class="codigo-item"><span style="font-size:10px">${i.val().link.substring(0,30)}...</span><i class="fa fa-trash" onclick="apagarVideo('${i.key}')"></i></div>`;
             });
         });
     }
 
-    window.adicionarVideo = async function() {
-        const link = document.getElementById('novo-video-link').value.trim();
-        if(!link) return;
-        await push(ref(db, 'videos_shopee'), { link: link });
-        document.getElementById('novo-video-link').value = "";
+    window.adicionarMoedasManual = async function() {
+        const id = document.getElementById('moeda-user-id').value.trim();
+        const qtd = parseInt(document.getElementById('moeda-qtd').value);
+        if(!id || isNaN(qtd)) return alert("Dados incompletos!");
+        const uRef = ref(db, 'usuarios/' + id);
+        const s = await get(uRef);
+        let m = s.exists() ? (s.val().moedas || 0) : 0;
+        await update(uRef, { moedas: m + qtd });
+        alert("Moedas entregues!");
     }
 
-    window.apagarVideo = (id) => confirm("Apagar vídeo?") && remove(ref(db, 'videos_shopee/' + id));
-    window.removerBoost = (id) => update(ref(db, 'grupos/' + id), { ultimoImpulso: 0 });
-    window.gerarCodigo = async function() {
+    window.gerarCodigo = async () => {
         const h = document.getElementById('tempo-vip').value;
         const res = await fetch("https://x23wzp.onrender.com/gerar-vip", {
             method: "POST", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ senha: SENHA_MASTER, duracaoHoras: parseInt(h) })
         });
-        const data = await res.json();
-        const b = document.getElementById('btn-copiar');
-        b.innerText = data.codigo;
-        b.style.display = "block";
+        const d = await res.json();
+        document.getElementById('btn-copiar').innerText = d.codigo;
+        document.getElementById('btn-copiar').style.display = "block";
     }
-    window.copiarCodigo = () => { navigator.clipboard.writeText(document.getElementById('btn-copiar').innerText); alert("Copiado!"); }
-    window.abrirModal = (id) => {
-        idSendoEditado = id;
-        const g = gruposCache[id];
-        document.getElementById('edit-nome').value = g.nome;
-        document.getElementById('edit-link').value = g.link;
-        document.getElementById('edit-foto').value = g.foto || "";
-        document.getElementById('edit-cod-vip').value = g.codigoVip || "";
-        document.getElementById('modalEdicao').style.display = 'flex';
-    }
-    window.salvarEdicao = async () => {
-        const updateData = {
-            nome: document.getElementById('edit-nome').value,
-            link: document.getElementById('edit-link').value,
-            foto: document.getElementById('edit-foto').value
-        };
-        await update(ref(db, 'grupos/' + idSendoEditado), updateData);
-        fecharModal();
-    }
-    window.apagarCod = (c) => remove(ref(db, 'codigos_vips/' + c));
-    window.excluirGrp = (id) => confirm("Apagar?") && remove(ref(db, 'grupos/' + id));
-    window.excluirAtual = () => { excluirGrp(idSendoEditado); fecharModal(); }
-    window.fecharModal = () => document.getElementById('modalEdicao').style.display = 'none';
+
+    window.copiarCodigo = () => { navigator.clipboard.writeText(document.getElementById('btn-copiar').innerText); alert("VIP Copiado!"); }
+    window.abrirModal = (id) => { idSendoEditado = id; const g = gruposCache[id]; document.getElementById('edit-nome').value = g.nome; document.getElementById('edit-link').value = g.link; document.getElementById('edit-foto').value = g.foto||""; document.getElementById('modalEdicao').style.display='flex'; }
+    window.salvarEdicao = async () => { await update(ref(db, 'grupos/'+idSendoEditado), { nome: document.getElementById('edit-nome').value, link: document.getElementById('edit-link').value, foto: document.getElementById('edit-foto').value }); fecharModal(); }
+    window.fecharModal = () => document.getElementById('modalEdicao').style.display='none';
+    window.excluirGrp = (id) => confirm("Apagar?") && remove(ref(db, 'grupos/'+id));
+    window.apagarVideo = (id) => remove(ref(db, 'videos_shopee/'+id));
+    window.apagarCod = (id) => remove(ref(db, 'codigos_vips/'+id));
+    window.adicionarVideo = () => push(ref(db, 'videos_shopee'), { link: document.getElementById('novo-video-link').value });
     window.logout = () => { localStorage.removeItem('admin_acesso'); location.reload(); };
 </script>
 </body>
