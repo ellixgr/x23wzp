@@ -38,6 +38,9 @@
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 1000; }
         .modal-content { background: white; padding: 20px; border-radius: 15px; width: 90%; max-width: 400px; }
         label { font-size: 11px; font-weight: bold; color: #888; display: block; margin-top: 10px; }
+        
+        .timer-vip { color: #d35400; font-weight: bold; font-size: 12px; margin-top: 5px; display: block; }
+        .badge-vip { background: var(--vip); color: #000; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -145,13 +148,34 @@
         carregarDados();
     }
 
-    // FUNÇÃO COPIAR ID
     window.copiarID = (id) => {
         navigator.clipboard.writeText(id);
         alert("ID Copiado: " + id);
         document.getElementById('moeda-user-id').value = id;
         window.scrollTo({top: 0, behavior: 'smooth'});
     }
+
+    // FUNÇÃO PARA CALCULAR O TEMPO RESTANTE
+    function calcularTempoRestante(vencimento) {
+        const agora = Date.now();
+        const diff = vencimento - agora;
+        if (diff <= 0) return "Expirado";
+
+        const horas = Math.floor(diff / (1000 * 60 * 60));
+        const minutos = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const segundos = Math.floor((diff % (1000 * 60)) / 1000);
+
+        return `${horas}h ${minutos}m ${segundos}s`;
+    }
+
+    // CRONÔMETRO GLOBAL PARA ATUALIZAR A TELA A CADA SEGUNDO
+    setInterval(() => {
+        const elementos = document.querySelectorAll('.timer-restante');
+        elementos.forEach(el => {
+            const fim = parseInt(el.getAttribute('data-fim'));
+            el.innerText = calcularTempoRestante(fim);
+        });
+    }, 1000);
 
     function carregarDados() {
         onValue(ref(db, '/'), (snapshot) => {
@@ -170,16 +194,17 @@
                 const donoId = g.dono || "Nao_Definido";
                 const moedas = (usuarios[donoId] && usuarios[donoId].moedas !== undefined) ? usuarios[donoId].moedas : 0;
                 
-                const isVip = g.vip && g.vipAte > agora;
+                const isVip = g.vip === true && g.vipAte > agora;
                 if(isVip) v++;
 
                 const div = document.createElement('div');
                 div.className = `item-grupo ${isVip ? 'is-vip' : ''}`;
                 div.innerHTML = `
-                    <div style="display:flex; justify-content:space-between;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
                         <b>${g.nome}</b>
                         ${isVip ? '<span class="badge-vip">VIP ATIVO</span>' : ''}
                     </div>
+                    ${isVip ? `<span class="timer-vip">⏳ Tempo Restante: <span class="timer-restante" data-fim="${g.vipAte}">${calcularTempoRestante(g.vipAte)}</span></span>` : ''}
                     <div class="info-resumo">
                         <span>ID DO DONO:</span>
                         <div class="id-box">
@@ -201,7 +226,6 @@
             document.getElementById('count-visitas').innerText = data.visitas || 0;
         });
 
-        // Listas de apoio
         onValue(ref(db, 'codigos_vips'), snap => {
             const c = document.getElementById('lista-codigos-ativos');
             c.innerHTML = "";
@@ -249,6 +273,14 @@
     window.apagarVideo = (id) => remove(ref(db, 'videos_shopee/'+id));
     window.apagarCod = (id) => remove(ref(db, 'codigos_vips/'+id));
     window.adicionarVideo = () => push(ref(db, 'videos_shopee'), { link: document.getElementById('novo-video-link').value });
+    
+    // Função para limpar o VIP manualmente se necessário
+    window.removerBoost = (id) => {
+        if(confirm("Deseja remover o status VIP deste grupo agora?")) {
+            update(ref(db, 'grupos/'+id), { vip: false, vipAte: null });
+        }
+    };
+
     window.logout = () => { localStorage.removeItem('admin_acesso'); location.reload(); };
 </script>
 </body>
