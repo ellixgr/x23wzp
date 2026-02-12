@@ -7,21 +7,88 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --primary: #b78cff; --success: #2ecc71; --error: #ff4757; --warning: #ffa502; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #ebebeb; display: flex; flex-direction: column; align-items: center; padding: 20px; overflow-x: hidden; min-height: 100vh; margin: 0; }
         
-        .card { background: #fff; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 350px; text-align: center; position: relative; z-index: 1; }
-        h2 { color: var(--primary); margin-bottom: 5px; }
-        .moedas-display { font-size: 50px; font-weight: bold; color: #ff9800; margin: 10px 0; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); }
+        /* Fundo Gradiente Suave */
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #f5f0ff 0%, #ffffff 100%); 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            padding: 20px; 
+            overflow-x: hidden; 
+            min-height: 100vh; 
+            margin: 0; 
+        }
         
-        .btn-missao { display: block; background: #ff4500; color: white; text-decoration: none; padding: 16px; border-radius: 12px; font-weight: bold; margin-top: 20px; cursor: pointer; border: none; width: 100%; transition: 0.2s; font-size: 14px; }
-        .btn-resgatar { background: var(--primary); margin-top: 12px; }
-        .disabled { background: #ccc !important; cursor: not-allowed; pointer-events: none; }
+        /* Botão Voltar Topo */
+        .btn-voltar-home {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: white;
+            color: var(--primary);
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.3s;
+            z-index: 100;
+        }
+        .btn-voltar-home:hover { transform: scale(1.05); }
+
+        .card { background: #fff; padding: 25px; border-radius: 25px; box-shadow: 0 15px 35px rgba(183, 140, 255, 0.15); width: 100%; max-width: 350px; text-align: center; position: relative; z-index: 1; margin-top: 50px; }
+        
+        h2 { color: #555; font-size: 18px; margin-bottom: 5px; }
+
+        /* Container Moeda */
+        .moedas-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin: 15px 0;
+        }
+        
+        .moedas-display { font-size: 55px; font-weight: 900; color: #ff9800; text-shadow: 2px 2px 4px rgba(0,0,0,0.05); }
+        
+        /* MOEDA DOURADA COM $ DENTRO */
+        .moeda-gold {
+            width: 50px;
+            height: 50px;
+            background: #FFD700;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            font-weight: bold;
+            color: #b8860b;
+            border: 4px solid #daa520;
+            box-shadow: 0 4px 0 #b8860b, inset 0 0 10px rgba(255,255,255,0.5);
+            animation: girar3D 3s infinite linear;
+            transform-style: preserve-3d;
+        }
+
+        @keyframes girar3D {
+            0% { transform: rotateY(0deg); }
+            100% { transform: rotateY(360deg); }
+        }
+        
+        .btn-missao { display: block; background: #ff4500; color: white; text-decoration: none; padding: 18px; border-radius: 15px; font-weight: bold; margin-top: 20px; cursor: pointer; border: none; width: 100%; transition: 0.2s; font-size: 15px; box-shadow: 0 5px 15px rgba(255, 69, 0, 0.3); }
+        .btn-resgatar { background: var(--primary); margin-top: 12px; box-shadow: 0 5px 15px rgba(183, 140, 255, 0.4); }
+        .disabled { background: #ccc !important; cursor: not-allowed; pointer-events: none; box-shadow: none; }
 
         #toast-container { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 15px 25px; border-radius: 50px; display: flex; align-items: center; gap: 10px; font-weight: 500; box-shadow: 0 5px 15px rgba(0,0,0,0.3); transition: top 0.5s; z-index: 9999; }
         #toast-container.show { top: 25px; }
 
-        #timer { font-size: 14px; color: #666; margin-top: 15px; background: #f8f8f8; padding: 8px; border-radius: 8px; display: inline-block; width: 100%; box-sizing: border-box; }
-        .status { font-size: 13px; margin-top: 8px; color: var(--success); font-weight: bold; }
+        #timer { font-size: 14px; color: #666; margin-top: 15px; background: #f8f8f8; padding: 10px; border-radius: 10px; display: inline-block; width: 100%; box-sizing: border-box; border: 1px solid #eee; }
+        .status { font-size: 13px; margin-top: 12px; color: var(--success); font-weight: bold; }
         
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 10000; backdrop-filter: blur(4px); }
         .modal-vip { background: white; padding: 30px; border-radius: 25px; text-align: center; width: 85%; max-width: 320px; animation: popUp 0.3s ease-out; }
@@ -30,17 +97,21 @@
         .btn-fechar { background: var(--primary); color: white; border: none; padding: 12px 25px; border-radius: 10px; font-weight: bold; cursor: pointer; width: 100%; }
 
         .footer-id { margin-top: auto; padding: 25px 20px; text-align: center; width: 100%; color: #888; font-size: 12px; }
-        .id-container { display: inline-flex; align-items: center; gap: 8px; background: #e0e0e0; padding: 5px 12px; border-radius: 8px; margin-top: 5px; cursor: pointer; transition: 0.2s; }
+        .id-container { display: inline-flex; align-items: center; gap: 8px; background: #fff; padding: 6px 15px; border-radius: 10px; margin-top: 5px; cursor: pointer; transition: 0.2s; border: 1px solid #ddd; }
         .id-badge { font-family: monospace; font-weight: bold; color: #444; }
     </style>
 </head>
 <body>
 
+    <a href="https://ellixgr.github.io/x23wzp/" class="btn-voltar-home">
+        <i class="fa fa-home"></i> Início
+    </a>
+
     <div id="toast-container"><span id="toast-icon"></span><span id="toast-message"></span></div>
 
     <div class="modal-overlay" id="modalVip">
         <div class="modal-vip">
-            <div style="font-size: 40px;">⭐</div>
+            <div style="font-size: 45px;">⭐</div>
             <h3 style="margin: 10px 0; color: var(--primary);">VIP GERADO!</h3>
             <p style="font-size: 14px; color: #666; margin: 0;">Copie o código abaixo:</p>
             <div class="codigo-gerado" id="displayCodigo">VIP-XXXXXX</div>
@@ -50,19 +121,22 @@
 
     <div class="card">
         <h2>Minhas Moedas</h2>
-        <div class="moedas-display" id="moedasTxt">...</div>
-        <p style="color: #666; font-size: 14px;">Ganhe moedas para resgatar <b>24h de VIP</b></p>
+        <div class="moedas-container">
+            <div class="moeda-gold">$</div>
+            <div class="moedas-display" id="moedasTxt">...</div>
+        </div>
+        <p style="color: #888; font-size: 14px;">Ganhe moedas para resgatar <b>24h de VIP</b></p>
         <div id="statusDia" class="status">Sincronizando...</div>
         <button id="btnVideo" class="btn-missao disabled">🎬 ASSISTIR VÍDEO AGORA</button>
-        <div id="timer" style="display:none;">⏳ Validando em <span id="segundos">15</span>s...</div>
+        <div id="timer" style="display:none;">⏳ Validando recompensa em <span id="segundos">15</span>s...</div>
         <button id="btnResgatar" class="btn-missao btn-resgatar">⭐ GERAR VIP 24H (30 Moedas)</button>
     </div>
 
     <div class="footer-id">
-        SEU ID DE USUÁRIO:<br>
+        id:<br>
         <div class="id-container" onclick="copiarMeuId()">
             <span id="exibirId" class="id-badge">...</span>
-            <i class="fa-regular fa-copy" style="font-size: 14px;"></i>
+            <i class="fa-regular fa-copy" style="font-size: 14px; color: var(--primary);"></i>
         </div>
     </div>
 
@@ -175,10 +249,9 @@
             const novoCodigo = "VIP-" + Math.random().toString(36).substr(2, 6).toUpperCase();
             
             try {
-                // AQUI ESTAVA O ERRO: AJUSTADO PARA O QUE O SERVER.JS EXIGE
                 await set(ref(db, 'codigos_vips/' + novoCodigo), { 
-                    status: "disponivel",    // O servidor busca por esse campo exato
-                    validadeHoras: 24,       // O servidor busca por esse nome exato
+                    status: "disponivel",
+                    validadeHoras: 24,
                     criadoEm: new Date().toISOString()
                 });
                 
