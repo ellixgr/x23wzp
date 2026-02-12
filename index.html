@@ -232,6 +232,21 @@ header p{margin-top:4px;text-shadow:none;}
     border-radius: 0;
 }
 
+/* Foto Fixa no Topo Esquerdo - Não some nunca */
+.img-topo-esquerda {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    border: 2px solid #b78cff;
+    object-fit: cover;
+    cursor: pointer;
+    position: fixed; /* MUDOU PARA FIXED */
+    top: 20px;       /* Alinhado com o meio do cabeçalho */
+    left: 15px;
+    z-index: 10001;  /* Fica acima de TUDO */
+}
+
+
 .badge-categoria {
     position: absolute;
     bottom: 10px;
@@ -537,6 +552,8 @@ footer a{color:#b78cff;text-decoration:none}
     </div>
 </div>
 <header style="display: flex; justify-content: center; align-items: center; padding: 0 15px; background: #fff; border-bottom: 1px solid #ddd; position: fixed; top: 0; left: 0; width: 100%; z-index: 1000; height: 85px;">
+    <img src="https://i.postimg.cc/1tMNbvyP/image.png" class="img-topo-esquerda" onclick="window.location.href='https://ellixgr.github.io/x23wzp/'">
+
     <div style="display: flex; gap: 10px; justify-content: center; align-items: center;">
         <button onclick="document.getElementById('enviarGrupo').click()" style="background: #25d366; color: #fff; border: none; padding: 12px 18px; font-weight: 800; font-size: 11px; border-radius: 8px; cursor: pointer; text-transform: uppercase; line-height: 1.2; min-width: 110px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">ENVIAR<br>GRUPO</button>
         <button onclick="document.getElementById('meusGrupos').click()" style="background: #232f3e; color: #fff; border: none; padding: 12px 18px; font-weight: 800; font-size: 11px; border-radius: 8px; cursor: pointer; text-transform: uppercase; line-height: 1.2; min-width: 110px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">MEUS<br>GRUPOS</button>
