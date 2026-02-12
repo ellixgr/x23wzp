@@ -5,28 +5,44 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ganhar VIP - Missões</title>
     <style>
-        body { font-family: sans-serif; background: #ebebeb; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .card { background: #fff; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 350px; text-align: center; }
-        h2 { color: #b78cff; }
-        .moedas-display { font-size: 40px; font-weight: bold; color: #ff9800; margin: 10px 0; }
-        .btn-missao { display: block; background: #ff4500; color: white; text-decoration: none; padding: 15px; border-radius: 10px; font-weight: bold; margin-top: 20px; cursor: pointer; border: none; width: 100%; }
-        .btn-resgatar { background: #b78cff; margin-top: 10px; }
-        .disabled { background: #ccc !important; cursor: not-allowed; }
-        #timer { font-size: 14px; color: #666; margin-top: 10px; }
-        .status { font-size: 12px; margin-top: 5px; color: #2ecc71; font-weight: bold; }
+        :root { --primary: #b78cff; --success: #2ecc71; --error: #ff4757; --warning: #ffa502; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #ebebeb; display: flex; flex-direction: column; align-items: center; padding: 20px; overflow-x: hidden; }
+        
+        /* Card Principal */
+        .card { background: #fff; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 350px; text-align: center; position: relative; }
+        h2 { color: var(--primary); margin-bottom: 5px; }
+        .moedas-display { font-size: 50px; font-weight: bold; color: #ff9800; margin: 10px 0; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); }
+        
+        /* Botões Personalizados */
+        .btn-missao { display: block; background: #ff4500; color: white; text-decoration: none; padding: 16px; border-radius: 12px; font-weight: bold; margin-top: 20px; cursor: pointer; border: none; width: 100%; transition: transform 0.2s, background 0.2s; font-size: 14px; }
+        .btn-missao:active { transform: scale(0.98); }
+        .btn-resgatar { background: var(--primary); margin-top: 12px; }
+        .disabled { background: #ccc !important; cursor: not-allowed; pointer-events: none; }
+
+        /* Notificação Toast Personalizada */
+        #toast-container { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 15px 25px; border-radius: 50px; display: flex; align-items: center; gap: 10px; font-weight: 500; box-shadow: 0 5px 15px rgba(0,0,0,0.3); transition: top 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55); z-index: 9999; white-space: nowrap; }
+        #toast-container.show { top: 25px; }
+
+        #timer { font-size: 14px; color: #666; margin-top: 15px; background: #f8f8f8; padding: 8px; border-radius: 8px; display: inline-block; width: 100%; box-sizing: border-box; }
+        .status { font-size: 13px; margin-top: 8px; color: var(--success); font-weight: bold; }
     </style>
 </head>
 <body>
 
+    <div id="toast-container">
+        <span id="toast-icon"></span>
+        <span id="toast-message"></span>
+    </div>
+
     <div class="card">
         <h2>Minhas Moedas</h2>
         <div class="moedas-display" id="moedasTxt">0</div>
-        <p>Ganhe 20 moedas para resgatar 2h de VIP</p>
+        <p style="color: #666; font-size: 14px;">Ganhe 20 moedas para resgatar <b>24h de VIP</b></p>
         
-        <div id="statusDia" class="status"></div>
+        <div id="statusDia" class="status">Carregando vídeos...</div>
 
-        <button id="btnVideo" class="btn-missao">🎬 ASSISTIR VÍDEO E CURTIR</button>
-        <p id="timer" style="display:none;">Aguarde <span id="segundos">15</span>s para validar...</p>
+        <button id="btnVideo" class="btn-missao disabled">🎬 ASSISTIR VÍDEO AGORA</button>
+        <div id="timer" style="display:none;">⏳ Validando em <span id="segundos">15</span>s...</div>
         
         <button id="btnResgatar" class="btn-missao btn-resgatar">⭐ GERAR CÓDIGO VIP (20 Moedas)</button>
     </div>
@@ -44,23 +60,39 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // --- SISTEMA DE VÍDEOS DINÂMICOS ---
+        // --- SISTEMA DE NOTIFICAÇÃO ---
+        function notify(msg, type = 'success') {
+            const toast = document.getElementById('toast-container');
+            const message = document.getElementById('toast-message');
+            const icon = document.getElementById('toast-icon');
+            
+            const icons = { success: '✅', error: '❌', warning: '⏳' };
+            const colors = { success: '#2ecc71', error: '#ff4757', warning: '#ffa502' };
+
+            message.innerText = msg;
+            icon.innerText = icons[type];
+            toast.style.borderBottom = `3px solid ${colors[type]}`;
+            
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
         let meusVideos = [];
-        
-        // Puxa os vídeos que você cadastrou no Admin
         onValue(ref(db, 'videos_shopee'), (snap) => {
             meusVideos = [];
-            snap.forEach(c => {
-                meusVideos.push(c.val().link);
-            });
+            snap.forEach(c => { if(c.val().link) meusVideos.push(c.val().link); });
+            if(meusVideos.length > 0 && limiteDiario < 20) {
+                btnVideo.classList.remove('disabled');
+                btnVideo.innerText = "🎬 ASSISTIR VÍDEO AGORA";
+                statusDia.innerText = `Missões: ${limiteDiario}/20 hoje`;
+            }
         });
 
         let moedas = parseInt(localStorage.getItem('moedasVip')) || 0;
         let limiteDiario = parseInt(localStorage.getItem('limiteDiario')) || 0;
-        let ultimaData = localStorage.getItem('ultimaDataMissao');
-
         const hoje = new Date().toLocaleDateString();
-        if (ultimaData !== hoje) {
+
+        if (localStorage.getItem('ultimaDataMissao') !== hoje) {
             limiteDiario = 0;
             localStorage.setItem('limiteDiario', 0);
             localStorage.setItem('ultimaDataMissao', hoje);
@@ -75,23 +107,19 @@
             if (limiteDiario >= 20) {
                 btnVideo.classList.add('disabled');
                 btnVideo.innerText = "LIMITE DIÁRIO ATINGIDO";
-                statusDia.innerText = "Volte amanhã para ganhar mais!";
+                statusDia.innerText = "Volte amanhã!";
             } else {
-                statusDia.innerText = `Você já fez ${limiteDiario}/20 missões hoje.`;
+                statusDia.innerText = `Missões: ${limiteDiario}/20 hoje`;
             }
         }
 
         btnVideo.onclick = () => {
             if (limiteDiario >= 20) return;
-            if (meusVideos.length === 0) return alert("Nenhum vídeo disponível no momento!");
+            if (meusVideos.length === 0) return notify("Aguarde o carregamento...", "warning");
 
-            // 1. Sorteia um vídeo da sua lista do Firebase
             const linkSorteado = meusVideos[Math.floor(Math.random() * meusVideos.length)];
-            
-            // 2. Abre o vídeo no app da Shopee
             window.open(linkSorteado, '_blank');
 
-            // 3. Inicia o Timer
             let tempo = 15;
             btnVideo.classList.add('disabled');
             document.getElementById('timer').style.display = 'block';
@@ -107,35 +135,38 @@
                     localStorage.setItem('limiteDiario', limiteDiario);
                     
                     document.getElementById('timer').style.display = 'none';
-                    btnVideo.classList.remove('disabled');
-                    alert("Moeda ganha! Obrigado por curtir.");
+                    if(limiteDiario < 20) btnVideo.classList.remove('disabled');
+                    notify("Moeda ganha com sucesso!", "success");
                     atualizarTela();
                 }
             }, 1000);
         };
 
         document.getElementById('btnResgatar').onclick = async () => {
-            if (moedas < 20) {
-                alert("Você precisa de 20 moedas!");
-                return;
-            }
+            if (moedas < 20) return notify("Você precisa de 20 moedas!", "error");
 
             const novoCodigo = "VIP-" + Math.random().toString(36).substr(2, 6).toUpperCase();
             
             try {
-                // Aqui salva na pasta 'codigos_vips' que o seu admin já lê
                 await set(ref(db, 'codigos_vips/' + novoCodigo), {
                     valido: true,
-                    duracaoHoras: 2, // Ajustado para 2h como você pediu
+                    duracaoHoras: 24, // CORRIGIDO PARA 24H
                     usado: false
                 });
 
                 moedas -= 20;
                 localStorage.setItem('moedasVip', moedas);
                 atualizarTela();
-                alert("SUCESSO!\nCódigo: " + novoCodigo + "\n\nO código foi enviado para o sistema. Copie e use em um grupo!");
+                notify("VIP 24H GERADO!", "success");
+                
+                // Mostra o código no lugar das moedas por um momento ou no log
+                console.log("Código VIP: " + novoCodigo);
+                setTimeout(() => {
+                   notify("CÓDIGO: " + novoCodigo, "success");
+                }, 3100);
+
             } catch (e) {
-                alert("Erro ao gerar código.");
+                notify("Erro ao conectar no banco!", "error");
             }
         };
 
