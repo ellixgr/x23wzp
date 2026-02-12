@@ -8,30 +8,21 @@
     <style>
         :root { --primary: #b78cff; --success: #2ecc71; --error: #ff4757; --warning: #ffa502; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #ebebeb; display: flex; flex-direction: column; align-items: center; padding: 20px; overflow-x: hidden; min-height: 100vh; margin: 0; }
-        
         .card { background: #fff; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 350px; text-align: center; position: relative; z-index: 1; }
         h2 { color: var(--primary); margin-bottom: 5px; }
         .moedas-display { font-size: 50px; font-weight: bold; color: #ff9800; margin: 10px 0; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); }
-        
         .btn-missao { display: block; background: #ff4500; color: white; text-decoration: none; padding: 16px; border-radius: 12px; font-weight: bold; margin-top: 20px; cursor: pointer; border: none; width: 100%; transition: 0.2s; font-size: 14px; }
         .btn-resgatar { background: var(--primary); margin-top: 12px; }
         .disabled { background: #ccc !important; cursor: not-allowed; pointer-events: none; }
-
-        /* Notificação Toast */
         #toast-container { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 15px 25px; border-radius: 50px; display: flex; align-items: center; gap: 10px; font-weight: 500; box-shadow: 0 5px 15px rgba(0,0,0,0.3); transition: top 0.5s; z-index: 9999; }
         #toast-container.show { top: 25px; }
-
         #timer { font-size: 14px; color: #666; margin-top: 15px; background: #f8f8f8; padding: 8px; border-radius: 8px; display: inline-block; width: 100%; box-sizing: border-box; }
         .status { font-size: 13px; margin-top: 8px; color: var(--success); font-weight: bold; }
-        
-        /* Modal VIP */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 10000; backdrop-filter: blur(4px); }
         .modal-vip { background: white; padding: 30px; border-radius: 25px; text-align: center; width: 85%; max-width: 320px; animation: popUp 0.3s ease-out; }
         @keyframes popUp { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         .codigo-gerado { background: #f0f0f0; border: 2px dashed var(--primary); padding: 15px; font-size: 22px; font-weight: bold; color: #333; border-radius: 12px; margin: 15px 0; letter-spacing: 2px; }
         .btn-fechar { background: var(--primary); color: white; border: none; padding: 12px 25px; border-radius: 10px; font-weight: bold; cursor: pointer; width: 100%; }
-
-        /* Rodapé ID */
         .footer-id { margin-top: auto; padding: 25px 20px; text-align: center; width: 100%; color: #888; font-size: 12px; }
         .id-container { display: inline-flex; align-items: center; gap: 8px; background: #e0e0e0; padding: 5px 12px; border-radius: 8px; margin-top: 5px; cursor: pointer; transition: 0.2s; }
         .id-badge { font-family: monospace; font-weight: bold; color: #444; }
@@ -71,7 +62,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDsrYjO2yVTemKqwmJRzNjh5sfaMalPqhE",
@@ -83,7 +74,7 @@
         const db = getDatabase(app);
 
         const CUSTO_VIP = 20;
-        const LIMITE_DIA = 20;
+        const LIMITE_DIA = 100; // Ajustado conforme seu print
 
         let meuId = localStorage.getItem('usuario_uid');
         if (!meuId) {
@@ -168,16 +159,15 @@
         document.getElementById('btnResgatar').onclick = async () => {
             if (moedas < CUSTO_VIP) return notify("Precisa de 20 moedas!", "error");
             
-            // Gera o código no padrão do SERVIDOR
+            // FREE- garante que o servidor entenda a origem
             const novoCodigo = "FREE-" + Math.random().toString(36).substr(2, 6).toUpperCase();
             
             try {
-                // SALVANDO EXATAMENTE COMO O RENDER ESPERA
+                // FORMATO EXATO QUE O SEU SERVIDOR (RENDER) BUSCA
                 await set(ref(db, 'codigos_vips/' + novoCodigo), {
-                    status: "disponivel",      // OBRIGATÓRIO PARA O SERVIDOR
-                    validadeHoras: 24,         // OBRIGATÓRIO PARA O SERVIDOR
-                    criadoEm: new Date().toISOString(),
-                    origem: "moedas_conta"
+                    status: "disponivel",      // ESSENCIAL para o seu servidor validar
+                    validadeHoras: 24,         // ESSENCIAL para o seu servidor
+                    criadoEm: new Date().toISOString()
                 });
 
                 moedas -= CUSTO_VIP;
