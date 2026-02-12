@@ -46,7 +46,6 @@
         
         h2 { color: #555; font-size: 18px; margin-bottom: 5px; }
 
-        /* Container Moeda */
         .moedas-container {
             display: flex;
             align-items: center;
@@ -57,7 +56,6 @@
         
         .moedas-display { font-size: 55px; font-weight: 900; color: #ff9800; text-shadow: 2px 2px 4px rgba(0,0,0,0.05); }
         
-        /* MOEDA DOURADA COM $ DENTRO */
         .moeda-gold {
             width: 50px;
             height: 50px;
@@ -154,7 +152,7 @@
         const db = getDatabase(app);
 
         const CUSTO_VIP = 30;
-        const LIMITE_DIA = 100;
+        const LIMITE_DIA = 30; // LIMITE ALTERADO PARA 30
 
         let meuId = localStorage.getItem('usuario_uid');
         if (!meuId) {
