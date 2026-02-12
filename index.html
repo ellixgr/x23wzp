@@ -936,38 +936,19 @@ async function salvarEdicao(grupoOriginal){
   const codDigitado = document.getElementById('grupoVipCodigo').value.trim();
   const fotoNova = previewFoto.src;
 
-  // 1️⃣ TRAVA CONTRA LIXO (O MESMO FILTRO DO ENVIO)
   const regexBlindada = /^https:\/\/chat\.whatsapp\.com\/[A-Za-z0-9_-]{20,30}(\?.*)?$/;
 
   if (!regexBlindada.test(linkNovo)) {
-    showAlert('❌ ERRO: Link inválido ou com texto extra! Use apenas o link puro do WhatsApp.');
+    showAlert('❌ ERRO: Link inválido!');
     return;
   }
 
-  // 2️⃣ TRAVA CONTRA REPETIDOS (DURANTE A EDIÇÃO)
-  // Extrai o ID do link que o cara quer colocar agora
-  const idNovo = linkNovo.split('chat.whatsapp.com/')[1].split('?')[0];
+  // --- LOGICA VIP CORRIGIDA ---
+  let vipNovo = grupoOriginal.vip; // Começa com o que o grupo já é
+  let dataExpiracaoVip = grupoOriginal.vipAte;
 
-  const jaExiste = todosGrupos.some(g => {
-    // Não comparar o grupo com ele mesmo (por isso checamos a key)
-    if (g.key === grupoOriginal.key) return false;
-    
-    if(!g.link.includes('chat.whatsapp.com/')) return false;
-    const idBanco = g.link.split('chat.whatsapp.com/')[1].split('?')[0];
-    return idBanco === idNovo;
-  });
-
-  if (jaExiste) {
-    showAlert('⚠️ Esse link já foi enviado');
-    return;
-  }
-
-  // Começamos assumindo que NÃO é VIP.
-  let vipNovo = false; 
-  let dataExpiracaoVip = null;
-
-  // Só tentamos ativar o VIP se o campo NÃO estiver vazio
-  if (codDigitado !== "") {
+  // Só valida no servidor se o código digitado for DIFERENTE do código que já estava lá
+  if (codDigitado !== "" && codDigitado !== grupoOriginal.vipCodigo) {
       try {
           const resVip = await fetch("https://x23wzp.onrender.com/validar-vip", {
               method: 'POST',
@@ -978,23 +959,17 @@ async function salvarEdicao(grupoOriginal){
           
           if (dataVip.valido) {
               vipNovo = true;
-              // Define o tempo de expiração com base no que o servidor retornar
               dataExpiracaoVip = Date.now() + ((dataVip.duracaoHoras || 24) * 60 * 60 * 1000);
           } else { 
-              showAlert("Código VIP inválido!"); 
+              showAlert("Este código VIP já foi usado ou é inválido!"); 
               return; 
           }
       } catch (e) { 
-          console.log("Erro servidor"); 
-          // Opcional: manter o VIP se houver erro no servidor, mas o ideal é bloquear
+          showAlert("Erro ao conectar com servidor VIP.");
+          return;
       }
-  } else {
-      // Se codDigitado for vazio, vipNovo continua false e dataExpiracaoVip fica null
-      vipNovo = false;
-      dataExpiracaoVip = null;
   }
 
-  // 4️⃣ MONTAGEM DO OBJETO PARA SALVAR
   const grupoEditado = {
       nome: nomeNovo, 
       link: linkNovo,
@@ -1003,23 +978,22 @@ async function salvarEdicao(grupoOriginal){
       categoria: categoriaNova,
       vip: vipNovo,
       vipAte: dataExpiracaoVip,
-      vipCodigo: codDigitado,
+      vipCodigo: codDigitado || grupoOriginal.vipCodigo, // Mantém o código antigo se não mudar
       dono: grupoOriginal.dono, 
       cliques: grupoOriginal.cliques || 0,
       ultimoImpulso: grupoOriginal.ultimoImpulso || 0
   };
 
-  
   try {
     const { ref: dbRef, set: dbSet } = await import("https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js");
     await dbSet(dbRef(db, 'grupos/' + grupoOriginal.key), grupoEditado);
-    document.getElementById('mensagemEnvio').textContent = '✅ Editado com sucesso!';
-    document.getElementById('mensagemEnvio').style.display = 'block';
-    setTimeout(() => { modal.style.display = 'none'; location.reload(); }, 1000);
+    showAlert('✅ Alterações salvas com sucesso!');
+    setTimeout(() => { location.reload(); }, 1200);
   } catch (error) {
-    showAlert('Erro ao salvar edição.');
+    showAlert('Erro ao salvar no banco de dados.');
   }
 }
+
 
 
 
