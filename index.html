@@ -32,6 +32,23 @@ body{
     background:#ebebeb; /* Cinza claro suave, sem ser branco ofuscante */
 }
 
+/* Botão da Conta na aba Meus Grupos */
+.btn-ir-conta {
+    background: #00bfff;
+    color: white;
+    text-align: center;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: bold;
+    text-decoration: none;
+    display: block;
+    width: 90%;
+    max-width: 380px;
+    margin: 10px auto 20px auto;
+    box-shadow: 0 4px 10px rgba(0, 191, 255, 0.3);
+    border: none;
+    cursor: pointer;
+}
 
 
 /* --- Estilos do Pop-up de Anúncio --- */
@@ -312,17 +329,6 @@ header p{margin-top:4px;text-shadow:none;}
     filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.9));
     text-shadow: 3px 3px 0px #b8860b, 5px 5px 12px rgba(0,0,0,0.5);
     transform: rotate(20deg);
-    pointer-events: none;
-    animation: estrelaBrilhando 1.5s infinite alternate ease-in-out;
-}
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.9));
-    text-shadow: 
-        3px 3px 0px #b8860b, 
-        5px 5px 12px rgba(0,0,0,0.5);
-    transform: rotate(20deg); /* Inclinação mais agressiva na ponta */
     pointer-events: none;
     animation: estrelaBrilhando 1.5s infinite alternate ease-in-out;
 }
@@ -1067,8 +1073,18 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
   const container = document.getElementById('lista-grupos');
   container.innerHTML = '';
 
+  // --- BOTÃO QUE VOCÊ QUERIA ---
+  if (modoMeusGrupos) {
+      const btnConta = document.createElement('a');
+      btnConta.href = "https://ellixgr.github.io/x23wzp/conta";
+      btnConta.className = "btn-ir-conta";
+      btnConta.innerHTML = "👤 ACESSAR MINHA CONTA";
+      container.appendChild(btnConta);
+  }
+  // ----------------------------
+
   if (lista.length === 0) {
-    container.innerHTML = '<p style="color:#555; text-align:center;">Nenhum grupo encontrado.</p>';
+    container.innerHTML += '<p style="color:#555; text-align:center;">Nenhum grupo encontrado.</p>';
     return;
   }
 
