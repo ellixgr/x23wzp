@@ -6,7 +6,7 @@
     <title>Ganhar VIP - Missões</title>
     <style>
         :root { --primary: #b78cff; --success: #2ecc71; --error: #ff4757; --warning: #ffa502; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #ebebeb; display: flex; flex-direction: column; align-items: center; padding: 20px; overflow-x: hidden; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #ebebeb; display: flex; flex-direction: column; align-items: center; padding: 20px; overflow-x: hidden; min-height: 100vh; }
         .card { background: #fff; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 350px; text-align: center; position: relative; }
         h2 { color: var(--primary); margin-bottom: 5px; }
         .moedas-display { font-size: 50px; font-weight: bold; color: #ff9800; margin: 10px 0; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); }
@@ -17,6 +17,10 @@
         #toast-container.show { top: 25px; }
         #timer { font-size: 14px; color: #666; margin-top: 15px; background: #f8f8f8; padding: 8px; border-radius: 8px; display: inline-block; width: 100%; box-sizing: border-box; }
         .status { font-size: 13px; margin-top: 8px; color: var(--success); font-weight: bold; }
+        
+        /* Rodapé com ID */
+        .footer-id { margin-top: auto; padding: 20px; text-align: center; width: 100%; color: #aaa; font-size: 11px; }
+        .id-badge { background: #ddd; padding: 2px 6px; border-radius: 4px; font-family: monospace; color: #666; }
     </style>
 </head>
 <body>
@@ -33,6 +37,10 @@
         <button id="btnResgatar" class="btn-missao btn-resgatar">⭐ GERAR VIP 24H (30 Moedas)</button>
     </div>
 
+    <div class="footer-id">
+        SEU ID DE USUÁRIO: <span id="exibirId" class="id-badge">...</span>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
         import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
@@ -46,7 +54,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // CONFIGURAÇÕES
         const CUSTO_VIP = 30;
         const LIMITE_DIA = 100;
 
@@ -55,6 +62,9 @@
             meuId = "user_" + Math.random().toString(36).substr(2, 9);
             localStorage.setItem('usuario_uid', meuId);
         }
+
+        // MOSTRAR ID NO FINAL DO SITE
+        document.getElementById('exibirId').innerText = meuId;
 
         const moedasTxt = document.getElementById('moedasTxt');
         const btnVideo = document.getElementById('btnVideo');
@@ -78,7 +88,6 @@
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
 
-        // LER MOEDAS DO FIREBASE
         onValue(ref(db, 'usuarios/' + meuId), (snap) => {
             moedasBD = (snap.val() && snap.val().moedas) ? snap.val().moedas : 0;
             moedasTxt.innerText = moedasBD;
@@ -128,7 +137,7 @@
             if (moedasBD < CUSTO_VIP) return notify("Precisa de " + CUSTO_VIP + " moedas!", "error");
             const novoCodigo = "VIP-" + Math.random().toString(36).substr(2, 6).toUpperCase();
             try {
-                await set(ref(db, 'codigos_vips/' + novoCodigo), { duracaoHoras: 24, usado: false });
+                await set(ref(db, 'codigos_vips/' + novoCodigo), { duracaoHoras: 24, usado: false, valido: true });
                 await update(ref(db, 'usuarios/' + meuId), { moedas: moedasBD - CUSTO_VIP });
                 notify("VIP GERADO!", "success");
                 alert("CÓDIGO VIP: " + novoCodigo);
