@@ -8,39 +8,24 @@
     <style>
         :root { --primary: #b78cff; --vip: #ffd700; --danger: #ff4d4d; --success: #2ecc71; --blue: #3498db; --boost: #f1c40f; }
         body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; display: flex; flex-direction: column; align-items: center; margin: 0; }
-        
         .stats-container { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; width: 100%; max-width: 500px; margin-bottom: 20px; }
         .stat-card { background: white; padding: 12px; border-radius: 12px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
         .stat-card h4 { margin: 0; font-size: 12px; color: #666; text-transform: uppercase; }
         .stat-card p { margin: 5px 0 0; font-size: 18px; font-weight: bold; color: var(--primary); }
-
         .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 500px; margin-bottom: 20px; box-sizing: border-box; }
         input, select, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; font-weight: bold; }
         button { background: var(--primary); color: white; border: none; cursor: pointer; transition: 0.2s; }
         button:hover { opacity: 0.9; }
-
-        #btn-copiar { background: #f0ebff; color: #7d5fff; border: 2px dashed var(--primary); margin-top: 15px; display: none; font-size: 18px; }
         #area-abareta { display: none; width: 100%; max-width: 500px; }
-        
         .lista-codigos { background: #fdfdfd; border: 1px solid #eee; border-radius: 10px; margin-top: 10px; max-height: 150px; overflow-y: auto; }
         .codigo-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #f5f5f5; font-size: 13px; }
-        
-        .item-grupo { background: white; padding: 15px; margin-top: 12px; border-radius: 12px; border-left: 5px solid #ccc; position: relative; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .item-grupo { background: white; padding: 15px; margin-top: 12px; border-radius: 12px; border-left: 5px solid #ccc; position: relative; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 10px;}
         .item-grupo.is-vip { border-left-color: var(--vip); background: #fffdf0; }
-        
         .info-resumo { font-size: 11px; color: #555; margin-top: 8px; padding: 10px; background: #f1f4f9; border-radius: 8px; border: 1px solid #e0e6ed; }
-        .id-box { display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 5px 8px; border-radius: 6px; border: 1px solid #ddd; margin-top: 4px; }
-        .id-text { color: var(--blue); font-family: monospace; font-weight: bold; font-size: 13px; overflow: hidden; text-overflow: ellipsis; }
-
         .btns-acao-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 10px; }
         .btns-acao-grid button { padding: 8px 0; font-size: 10px; margin-top: 0; }
-
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 1000; }
         .modal-content { background: white; padding: 20px; border-radius: 15px; width: 90%; max-width: 400px; }
-        label { font-size: 11px; font-weight: bold; color: #888; display: block; margin-top: 10px; }
-        
-        .timer-vip { color: #d35400; font-weight: bold; font-size: 12px; margin-top: 5px; display: block; }
-        .badge-vip { background: var(--vip); color: #000; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -64,53 +49,26 @@
             <div class="stat-card"><h4>Visitas</h4><p id="count-visitas">0</p></div>
         </div>
 
-        <div class="card" style="border-top: 4px solid var(--success);">
-            <h3 style="margin:0; color: var(--success);"><i class="fa fa-coins"></i> Dar Moedas por ID</h3>
-            <input type="text" id="moeda-user-id" placeholder="Cole o ID do Usuário aqui">
-            <input type="number" id="moeda-qtd" placeholder="Quantidade de Moedas">
-            <button onclick="adicionarMoedasManual()" style="background:var(--success)">ADICIONAR MOEDAS</button>
-        </div>
-
         <div class="card">
-            <h3 style="margin:0">⭐ Códigos VIP</h3>
+            <h3 style="margin:0">⭐ Gerar Código VIP</h3>
             <select id="tempo-vip">
-                <option value="2">2 Horas</option>
                 <option value="24">24 Horas</option>
                 <option value="48">48 Horas</option>
+                <option value="168">7 Dias</option>
             </select>
             <button onclick="gerarCodigo()">GERAR NOVO CÓDIGO</button>
-            <button id="btn-copiar" onclick="copiarCodigo()"></button>
-            <div id="lista-codigos-ativos" class="lista-codigos">...</div>
-        </div>
-
-        <div class="card" style="border-top: 4px solid #ff4500;">
-            <h3 style="margin:0; color: #ff4500;"><i class="fa fa-video"></i> Vídeos Shopee</h3>
-            <input type="text" id="novo-video-link" placeholder="Link do produto Shopee">
-            <button onclick="adicionarVideo()" style="background:#ff4500">ADICIONAR VÍDEO</button>
-            <div id="lista-videos-shopee" class="lista-codigos">...</div>
+            <div id="lista-codigos-ativos" class="lista-codigos">Carregando códigos...</div>
         </div>
 
         <h2 style="font-size: 16px; color: #555; width: 100%; text-align: left;">LISTA DE GRUPOS</h2>
         <div id="lista-grupos" style="width: 100%;"></div>
     </div>
 
-    <div id="modalEdicao" class="modal">
-        <div class="modal-content">
-            <h3>Editar Grupo</h3>
-            <label>NOME</label><input type="text" id="edit-nome">
-            <label>LINK WHATSAPP</label><input type="text" id="edit-link">
-            <label>LINK FOTO</label><input type="text" id="edit-foto">
-            <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button onclick="salvarEdicao()" style="background:var(--success)">SALVAR</button>
-                <button onclick="fecharModal()" style="background:#888">CANCELAR</button>
-            </div>
-        </div>
-    </div>
-
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getDatabase, ref, onValue, remove, update, get, push } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+    import { getDatabase, ref, onValue, remove, update } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
+    // CONFIGURAÇÃO SINCRONIZADA COM O SITE PRINCIPAL
     const firebaseConfig = {
         apiKey: "AIzaSyDsrYjO2yVTemKqwmJRzNjh5sfaMalPqhE",
         databaseURL: "https://cliques-4a2c1-default-rtdb.firebaseio.com",
@@ -120,8 +78,6 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     let SENHA_MASTER = localStorage.getItem('abareta_acesso') || "";
-    let gruposCache = {};
-    let idSendoEditado = null;
 
     if(SENHA_MASTER) mostrarPainel();
 
@@ -148,110 +104,52 @@
         carregarDados();
     }
 
-    window.copiarID = (id) => {
-        navigator.clipboard.writeText(id);
-        alert("ID Copiado: " + id);
-        document.getElementById('moeda-user-id').value = id;
-        window.scrollTo({top: 0, behavior: 'smooth'});
-    }
-
-    // FUNÇÃO PARA CALCULAR O TEMPO RESTANTE
-    function calcularTempoRestante(vencimento) {
-        const agora = Date.now();
-        const diff = vencimento - agora;
-        if (diff <= 0) return "Expirado";
-
-        const horas = Math.floor(diff / (1000 * 60 * 60));
-        const minutos = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        const segundos = Math.floor((diff % (1000 * 60)) / 1000);
-
-        return `${horas}h ${minutos}m ${segundos}s`;
-    }
-
-    // CRONÔMETRO GLOBAL PARA ATUALIZAR A TELA A CADA SEGUNDO
-    setInterval(() => {
-        const elementos = document.querySelectorAll('.timer-restante');
-        elementos.forEach(el => {
-            const fim = parseInt(el.getAttribute('data-fim'));
-            el.innerText = calcularTempoRestante(fim);
-        });
-    }, 1000);
-
     function carregarDados() {
+        // LÊ TODA A RAIZ DO BANCO
         onValue(ref(db, '/'), (snapshot) => {
-            const data = snapshot.val();
-            if(!data) return;
+            const data = snapshot.val() || {};
+            const grupos = data.grupos || {};
+            const visitas = data.visitas || 0;
+            const codigos = data.codigos_vips || {};
 
-            const lista = document.getElementById('lista-grupos');
-            lista.innerHTML = "";
-            gruposCache = data.grupos || {};
-            const usuarios = data.usuarios || {};
-            const agora = Date.now();
-            let t = 0, v = 0;
+            // Atualiza Stats
+            let total = 0, vips = 0;
+            const listaHtml = document.getElementById('lista-grupos');
+            listaHtml.innerHTML = "";
 
-            for (const key in gruposCache) {
-                const g = gruposCache[key]; t++;
-                const donoId = g.dono || "Nao_Definido";
-                const moedas = (usuarios[donoId] && usuarios[donoId].moedas !== undefined) ? usuarios[donoId].moedas : 0;
-                
-                const isVip = g.vip === true && g.vipAte > agora;
-                if(isVip) v++;
+            for (let key in grupos) {
+                total++;
+                const g = grupos[key];
+                const isVip = g.vip === true;
+                if(isVip) vips++;
 
                 const div = document.createElement('div');
                 div.className = `item-grupo ${isVip ? 'is-vip' : ''}`;
                 div.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <b>${g.nome}</b>
-                        ${isVip ? '<span class="badge-vip">VIP ATIVO</span>' : ''}
-                    </div>
-                    ${isVip ? `<span class="timer-vip">⏳ Tempo Restante: <span class="timer-restante" data-fim="${g.vipAte}">${calcularTempoRestante(g.vipAte)}</span></span>` : ''}
+                    <b>${g.nome}</b> ${isVip ? '⭐' : ''}
                     <div class="info-resumo">
-                        <span>ID DO DONO:</span>
-                        <div class="id-box">
-                            <span class="id-text">${donoId}</span>
-                            <button onclick="copiarID('${donoId}')" style="width:auto; margin:0; padding:4px 8px; font-size:10px; background:var(--blue)">COPIAR ID</button>
-                        </div>
-                        <div style="margin-top:8px">Saldo: <b style="color:var(--success)">${moedas} moedas</b></div>
+                        ID Dono: ${g.dono || 'Desconhecido'}<br>
+                        Cliques: ${g.cliques || 0}
                     </div>
                     <div class="btns-acao-grid">
-                        <button style="background:var(--blue)" onclick="abrirModal('${key}')">EDITAR</button>
-                        <button style="background:#555" onclick="window.open('${g.link}')">VER</button>
-                        <button style="background:var(--boost); color:#000" onclick="removerBoost('${key}')">LIMPAR</button>
-                        <button style="background:var(--danger)" onclick="excluirGrp('${key}')">DEL</button>
-                    </div>`;
-                lista.appendChild(div);
+                        <button style="background:var(--danger)" onclick="excluirGrp('${key}')">APAGAR</button>
+                        <button style="background:var(--blue)" onclick="window.open('${g.link}')">VER LINK</button>
+                    </div>
+                `;
+                listaHtml.appendChild(div);
             }
-            document.getElementById('count-total').innerText = t;
-            document.getElementById('count-vip').innerText = v;
-            document.getElementById('count-visitas').innerText = data.visitas || 0;
-        });
 
-        onValue(ref(db, 'codigos_vips'), snap => {
-            const c = document.getElementById('lista-codigos-ativos');
-            c.innerHTML = "";
-            snap.forEach(i => {
-                c.innerHTML += `<div class="codigo-item"><span>${i.key}</span><i class="fa fa-trash" onclick="apagarCod('${i.key}')"></i></div>`;
-            });
-        });
+            document.getElementById('count-total').innerText = total;
+            document.getElementById('count-vip').innerText = vips;
+            document.getElementById('count-visitas').innerText = visitas;
 
-        onValue(ref(db, 'videos_shopee'), snap => {
-            const v = document.getElementById('lista-videos-shopee');
-            v.innerHTML = "";
-            snap.forEach(i => {
-                v.innerHTML += `<div class="codigo-item"><span style="font-size:10px">${i.val().link.substring(0,30)}...</span><i class="fa fa-trash" onclick="apagarVideo('${i.key}')"></i></div>`;
-            });
+            // Lista de Códigos
+            const codHtml = document.getElementById('lista-codigos-ativos');
+            codHtml.innerHTML = "";
+            for (let c in codigos) {
+                codHtml.innerHTML += `<div class="codigo-item"><span>${c}</span> <button onclick="apagarCod('${c}')" style="width:30px; padding:2px; background:red">X</button></div>`;
+            }
         });
-    }
-
-    window.adicionarMoedasManual = async function() {
-        const id = document.getElementById('moeda-user-id').value.trim();
-        const qtd = parseInt(document.getElementById('moeda-qtd').value);
-        if(!id || isNaN(qtd)) return alert("Dados incompletos!");
-        const uRef = ref(db, 'usuarios/' + id);
-        const s = await get(uRef);
-        let m = s.exists() ? (s.val().moedas || 0) : 0;
-        await update(uRef, { moedas: m + qtd });
-        alert("Moedas entregues!");
     }
 
     window.gerarCodigo = async () => {
@@ -261,26 +159,11 @@
             body: JSON.stringify({ senha: SENHA_MASTER, duracaoHoras: parseInt(h) })
         });
         const d = await res.json();
-        document.getElementById('btn-copiar').innerText = d.codigo;
-        document.getElementById('btn-copiar').style.display = "block";
+        alert("Novo código gerado: " + d.codigo);
     }
 
-    window.copiarCodigo = () => { navigator.clipboard.writeText(document.getElementById('btn-copiar').innerText); alert("VIP Copiado!"); }
-    window.abrirModal = (id) => { idSendoEditado = id; const g = gruposCache[id]; document.getElementById('edit-nome').value = g.nome; document.getElementById('edit-link').value = g.link; document.getElementById('edit-foto').value = g.foto||""; document.getElementById('modalEdicao').style.display='flex'; }
-    window.salvarEdicao = async () => { await update(ref(db, 'grupos/'+idSendoEditado), { nome: document.getElementById('edit-nome').value, link: document.getElementById('edit-link').value, foto: document.getElementById('edit-foto').value }); fecharModal(); }
-    window.fecharModal = () => document.getElementById('modalEdicao').style.display='none';
-    window.excluirGrp = (id) => confirm("Apagar?") && remove(ref(db, 'grupos/'+id));
-    window.apagarVideo = (id) => remove(ref(db, 'videos_shopee/'+id));
+    window.excluirGrp = (id) => confirm("Apagar grupo?") && remove(ref(db, 'grupos/'+id));
     window.apagarCod = (id) => remove(ref(db, 'codigos_vips/'+id));
-    window.adicionarVideo = () => push(ref(db, 'videos_shopee'), { link: document.getElementById('novo-video-link').value });
-    
-    // Função para limpar o VIP manualmente se necessário
-    window.removerBoost = (id) => {
-        if(confirm("Deseja remover o status VIP deste grupo agora?")) {
-            update(ref(db, 'grupos/'+id), { vip: false, vipAte: null });
-        }
-    };
-
     window.logout = () => { localStorage.removeItem('abareta_acesso'); location.reload(); };
 </script>
 </body>
