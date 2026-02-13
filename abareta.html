@@ -20,11 +20,9 @@
         button { background: var(--primary); color: white; border: none; cursor: pointer; transition: 0.2s; }
         button:hover { opacity: 0.9; }
 
-        /* NOVOS ESTILOS PARA SOLICITAÇÕES */
         .card-solicitacao { border-top: 5px solid var(--boost); background: #fffcf0; }
         .btn-aprovar { background: var(--success) !important; flex: 1; }
         .btn-reprovar { background: var(--danger) !important; flex: 1; }
-        .badge-pendente { background: var(--boost); color: #000; padding: 3px 8px; border-radius: 5px; font-size: 10px; }
 
         #btn-copiar { background: #f0ebff; color: #7d5fff; border: 2px dashed var(--primary); margin-top: 15px; display: none; font-size: 18px; }
         #area-abareta { display: none; width: 100%; max-width: 500px; }
@@ -37,8 +35,6 @@
         .item-grupo.is-vip { border-left-color: var(--vip); background: #fffdf0; }
         
         .info-resumo { font-size: 11px; color: #555; margin-top: 8px; padding: 10px; background: #f1f4f9; border-radius: 8px; border: 1px solid #e0e6ed; }
-        .id-box { display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 5px 8px; border-radius: 6px; border: 1px solid #ddd; margin-top: 4px; }
-        .id-text { color: var(--blue); font-family: monospace; font-weight: bold; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 150px; }
 
         .btns-acao-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 10px; }
         .btns-acao-grid button { padding: 8px 0; font-size: 10px; margin-top: 0; }
@@ -52,7 +48,7 @@
 
     <div id="login-box" class="card">
         <h2 style="text-align:center; color:var(--primary)">Login abareta</h2>
-        <input type="email" id="user-input" placeholder="Seu E-mail Criado">
+        <input type="email" id="user-input" placeholder="Seu E-mail">
         <input type="password" id="pass-input" placeholder="Sua Senha">
         <button onclick="logar()">ENTRAR NO PAINEL</button>
     </div>
@@ -119,7 +115,7 @@
             <h3>Editar Grupo</h3>
             <label>NOME</label><input type="text" id="edit-nome">
             <label>LINK WHATSAPP</label><input type="text" id="edit-link">
-            <label>LINK FOTO (Base64 ou URL)</label><input type="text" id="edit-foto">
+            <label>LINK FOTO</label><input type="text" id="edit-foto">
             <div style="display: flex; gap: 10px; margin-top: 20px;">
                 <button onclick="salvarEdicao()" style="background:var(--success)">SALVAR</button>
                 <button onclick="fecharModal()" style="background:#888">CANCELAR</button>
@@ -145,11 +141,11 @@
     let gruposCache = {};
     let idSendoEditado = null;
 
-    // LOGIN ORIGINAL
+    // LOGIN
     window.logar = async function() {
         const email = document.getElementById('user-input').value;
         const pass = document.getElementById('pass-input').value;
-        try { await signInWithEmailAndPassword(auth, email, pass); } catch (e) { alert("Erro: Email ou senha inválidos."); }
+        try { await signInWithEmailAndPassword(auth, email, pass); } catch (e) { alert("Erro de login."); }
     }
 
     onAuthStateChanged(auth, (user) => {
@@ -158,14 +154,14 @@
             document.getElementById('login-box').style.display = 'none';
             document.getElementById('area-abareta').style.display = 'block';
             carregarDados();
-            carregarSolicitacoes(); // NOVA FUNÇÃO
+            carregarSolicitacoes(); 
         } else {
             document.getElementById('login-box').style.display = 'block';
             document.getElementById('area-abareta').style.display = 'none';
         }
     });
 
-    // --- NOVA FUNÇÃO: CARREGAR SOLICITAÇÕES ---
+    // CARREGAR SOLICITAÇÕES COM FILTRO DE STATUS
     function carregarSolicitacoes() {
         onValue(ref(db, 'solicitacoes'), (snapshot) => {
             const lista = document.getElementById('lista-solicitacoes');
@@ -173,35 +169,32 @@
             const dados = snapshot.val();
             if (!dados) { lista.innerHTML = "<p style='font-size:12px; color:#999'>Nenhuma solicitação pendente.</p>"; return; }
 
+            let temPendente = false;
             for (const key in dados) {
                 const s = dados[key];
-                if (s.status !== "pendente") continue;
+                // IMPORTANTE: Só mostra se estiver "pendente"
+                if (s.status !== "pendente") continue; 
+                temPendente = true;
 
                 const div = document.createElement('div');
                 div.className = "item-grupo card-solicitacao";
                 div.innerHTML = `
                     <div style="display:flex; align-items:center; gap:10px;">
                         <img src="${s.foto || 'https://via.placeholder.com/50'}" style="width:45px; height:45px; border-radius:8px; object-fit:cover;">
-                        <div>
-                            <b>${s.nome}</b> <br>
-                            <small>${s.categoria}</small>
-                        </div>
+                        <div><b>${s.nome}</b> <br><small>${s.categoria}</small></div>
                     </div>
-                    <div class="info-resumo">
-                        Dono: ${s.dono} <br>
-                        VIP: ${s.codigoVip ? '<b>'+s.codigoVip+'</b>' : 'Não'}
-                    </div>
+                    <div class="info-resumo">ID Dono: ${s.dono} <br>Link: ${s.link}</div>
                     <div style="display:flex; gap:5px; margin-top:10px;">
                         <button class="btn-aprovar" onclick="gerenciarSolicitacao('${key}', 'aprovado')">APROVAR</button>
                         <button class="btn-reprovar" onclick="abrirModalReprovar('${key}')">REPROVAR</button>
-                    </div>
-                `;
+                    </div>`;
                 lista.appendChild(div);
             }
+            if(!temPendente) lista.innerHTML = "<p style='font-size:12px; color:#999'>Nenhuma solicitação pendente.</p>";
         });
     }
 
-    // --- LOGICA DE APROVAÇÃO/REPROVAÇÃO ---
+    // APROVAÇÃO E REPROVAÇÃO CORRIGIDA
     window.gerenciarSolicitacao = async (id, novoStatus, motivo = "") => {
         const sRef = ref(db, `solicitacoes/${id}`);
         const snap = await get(sRef);
@@ -209,22 +202,21 @@
         const dados = snap.val();
 
         if (novoStatus === 'aprovado') {
-            // Move para a lista de grupos oficiais
-            const novoGrupoRef = ref(db, `grupos/${id}`);
-            await set(novoGrupoRef, {
+            // 1. Cria o grupo na lista oficial
+            await set(ref(db, `grupos/${id}`), {
                 ...dados,
                 status: "aprovado",
                 cliques: 0,
-                criadoEm: Date.now(),
-                vip: false // O servidor Render cuidará de ativar o VIP via código
+                criadoEm: Date.now()
             });
-            // Remove das solicitações
+            // 2. Remove das solicitações para sumir do painel
             await remove(sRef);
-            alert("Grupo aprovado e publicado!");
+            alert("Aprovado!");
         } else {
-            // Apenas atualiza o status para reprovado e coloca o motivo
+            // 1. Apenas atualiza o status para sumir da lista "pendente"
+            // 2. Mantém no banco para o usuário ver o motivo da reprovação
             await update(sRef, { status: "reprovado", motivo: motivo });
-            alert("Grupo reprovado.");
+            alert("Reprovado com sucesso.");
         }
     };
 
@@ -232,20 +224,19 @@
         document.getElementById('modalReprovar').style.display = 'flex';
         document.getElementById('confirmar-reprovar-btn').onclick = () => {
             const motivo = document.getElementById('motivo-reprovar').value;
-            if(!motivo) return alert("Digite um motivo!");
+            if(!motivo) return alert("Dê um motivo!");
             gerenciarSolicitacao(id, 'reprovado', motivo);
             document.getElementById('modalReprovar').style.display = 'none';
         };
     };
 
-    // --- MANTENDO SUAS FUNÇÕES ORIGINAIS ---
+    // MANTENDO TODAS AS SUAS OUTRAS FUNÇÕES
     function carregarDados() {
         onValue(ref(db, '/'), (snapshot) => {
             const data = snapshot.val() || {};
             const lista = document.getElementById('lista-grupos');
             lista.innerHTML = "";
             gruposCache = data.grupos || {};
-            const usuarios = data.usuarios || {};
             const agora = Date.now();
             let t = 0, v = 0;
 
@@ -258,7 +249,7 @@
                 div.innerHTML = `
                     <div style="display:flex; align-items:center; gap:10px;">
                         <img src="${g.foto || 'https://via.placeholder.com/50'}" style="width:45px; height:45px; border-radius:8px; object-fit:cover;">
-                        <b>${g.nome}</b> ${isVip ? '<span class="badge-vip">VIP</span>' : ''}
+                        <b>${g.nome}</b>
                     </div>
                     <div class="btns-acao-grid">
                         <button style="background:var(--blue)" onclick="abrirModal('${key}')">EDITAR</button>
@@ -275,9 +266,8 @@
     }
 
     function renderListaSimples(elementId, obj, funcName, field) {
-        const el = document.getElementById(elementId);
-        el.innerHTML = "";
-        if(!obj) { el.innerHTML = "<p style='font-size:10px; padding:10px;'>Nenhum item</p>"; return; }
+        const el = document.getElementById(elementId); el.innerHTML = "";
+        if(!obj) { el.innerHTML = "<p style='font-size:10px; padding:10px;'>Vazio</p>"; return; }
         for(let id in obj) {
             const txt = field ? (obj[id][field] ? obj[id][field].substring(0,20) : id) : id;
             el.innerHTML += `<div class="codigo-item"><span>${txt}</span><i class="fa fa-trash" onclick="${funcName}('${id}')"></i></div>`;
@@ -291,7 +281,7 @@
         const s = await get(uRef);
         let m = s.exists() ? (s.val().moedas || 0) : 0;
         await update(uRef, { moedas: m + qtd });
-        alert("Moedas adicionadas!");
+        alert("Moedas entregues!");
     }
 
     window.gerarCodigo = async () => {
@@ -302,7 +292,7 @@
         document.getElementById('btn-copiar').style.display = "block";
     }
 
-    window.copiarCodigo = () => { navigator.clipboard.writeText(document.getElementById('btn-copiar').innerText); alert("VIP Copiado!"); }
+    window.copiarCodigo = () => { navigator.clipboard.writeText(document.getElementById('btn-copiar').innerText); alert("Copiado!"); }
     window.abrirModal = (id) => { idSendoEditado = id; const g = gruposCache[id]; document.getElementById('edit-nome').value = g.nome; document.getElementById('edit-link').value = g.link; document.getElementById('edit-foto').value = g.foto||""; document.getElementById('modalEdicao').style.display='flex'; }
     window.salvarEdicao = async () => { await update(ref(db, 'grupos/'+idSendoEditado), { nome: document.getElementById('edit-nome').value, link: document.getElementById('edit-link').value, foto: document.getElementById('edit-foto').value }); fecharModal(); }
     window.fecharModal = () => document.getElementById('modalEdicao').style.display='none';
