@@ -908,61 +908,61 @@ function abrirEdicao(grupo){
   salvarGrupoBtn.onclick = () => salvarEdicao(grupo); 
 }
 
+const comprimirImagem = (base64Str) => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.src = base64Str;
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const MAX = 300;
+      let w = img.width, h = img.height;
+      if (w > h) { if (w > MAX) { h *= MAX / w; w = MAX; } }
+      else { if (h > MAX) { w *= MAX / h; h = MAX; } }
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL('image/jpeg', 0.7));
+    };
+  });
+};
+
 async function salvarEdicao(grupoOriginal) {
   const salvarBtn = document.getElementById('salvarGrupo');
-  const inputVip = document.getElementById('grupoVipCodigo');
   const preview = document.getElementById('previewFoto');
-  
   salvarBtn.disabled = true;
-  salvarBtn.textContent = "SALVANDO...";
-
-  const usuarioLocal = localStorage.getItem('usuarioID');
-  const vipDigitado = inputVip.value.trim();
-
-  // Lógica inteligente para a foto: 
-  // Se a foto no preview for a mesma que já estava no grupo, envia null ou a URL original
-  // para não sobrecarregar o servidor com Base64 desnecessário.
+  salvarBtn.textContent = "PROCESSANDO...";
+  
   let fotoParaEnviar = preview.src;
-  if (fotoParaEnviar === grupoOriginal.foto) {
-      fotoParaEnviar = grupoOriginal.foto; 
+  if (fotoParaEnviar.startsWith('data:image')) {
+      salvarBtn.textContent = "DIMINUINDO FOTO...";
+      fotoParaEnviar = await comprimirImagem(fotoParaEnviar);
   }
 
-  const dadosParaAtualizar = {
+  const dados = {
     key: grupoOriginal.key,
-    donoLocal: usuarioLocal,
+    donoLocal: localStorage.getItem('usuarioID'),
     nome: document.getElementById('grupoNome').value.trim(),
     link: document.getElementById('grupoLink').value.trim(),
     descricao: document.getElementById('grupoDescricao').value.trim(),
     categoria: document.getElementById('grupoCategoria').value,
     foto: fotoParaEnviar,
-    codigoVip: vipDigitado // Nome exato que o servidor espera
+    codigoVip: document.getElementById('grupoVipCodigo').value.trim()
   };
 
   try {
+    salvarBtn.textContent = "ENVIANDO...";
     const response = await fetch("https://x23wzp.onrender.com/editar-grupo", {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(dadosParaAtualizar)
+      body: JSON.stringify(dados)
     });
-
-    if (!response.ok) throw new Error("Erro no servidor");
-
-    const resData = await response.json();
-    
-    if (resData.success) {
-      window.showAlert("✅ Grupo atualizado com sucesso!");
+    const res = await response.json();
+    if (res.success) {
+      window.showAlert("✅ Atualizado!");
       document.getElementById('modalEnvioGrupo').style.display = 'none';
-      // O Firebase onValue vai atualizar a lista automaticamente
-    } else {
-      window.showAlert("❌ " + (resData.message || "Erro ao salvar"));
-    }
-  } catch (err) {
-    console.error(err);
-    window.showAlert("❌ Erro: Foto muito grande ou falha na conexão.");
-  } finally {
-    salvarBtn.disabled = false;
-    salvarBtn.textContent = "ENVIAR GRUPO";
-  }
+    } else { window.showAlert("❌ " + res.message); }
+  } catch (err) { window.showAlert("❌ Erro de conexão."); }
+  finally { salvarBtn.disabled = false; salvarBtn.textContent = "ENVIAR GRUPO"; }
 }
 
 
