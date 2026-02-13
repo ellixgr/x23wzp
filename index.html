@@ -613,30 +613,6 @@ footer a{color:#b78cff;text-decoration:none}
   </a>
 </div>
 
-
-
-<div style="width: 100%; max-width: 420px; display: flex; flex-direction: column; align-items: center; padding: 0 20px; flex-grow: 1;"> 
-    
-    <div id="lista-grupos" style="padding: 0; padding-bottom: 0; width: 100%; margin-top: 100px;"></div>
-
-    <div style="margin-top: 30px; margin-bottom: 20px; width: 100%; display: flex; justify-content: center;">
-        <script type="text/javascript">
-            atOptions = {
-                'key' : '3e1fe799cb19b129dba9470a4e2f2556',
-                'format' : 'iframe',
-                'height' : 250,
-                'width' : 300,
-                'params' : {}
-            };
-        </script>
-        <script type="text/javascript" src="https://www.highperformanceformat.com/3e1fe799cb19b129dba9470a4e2f2556/invoke.js"></script>
-    </div>
-
-</div>
-
-
-
-
 <footer>
   <a href="#" id="termosLink">Termos de Uso</a>
   <a href="#" id="privacidadeLink">Politica de Privacidade</a><br>
@@ -933,34 +909,46 @@ function abrirEdicao(grupo){
 }
 
 async function salvarEdicao(grupoOriginal) {
+  const salvarBtn = document.getElementById('salvarGrupo');
+  salvarBtn.disabled = true;
+  salvarBtn.textContent = "SALVANDO...";
+
   const usuarioLocal = localStorage.getItem('usuarioID');
   const vipCodigo = document.getElementById('grupoVipCodigo').value.trim();
 
   const dadosParaAtualizar = {
     key: grupoOriginal.key,
-    donoLocal: usuarioLocal, // O servidor vai conferir se ele é o dono real
+    donoLocal: usuarioLocal,
     nome: document.getElementById('grupoNome').value.trim(),
     link: document.getElementById('grupoLink').value.trim(),
     descricao: document.getElementById('grupoDescricao').value.trim(),
     categoria: document.getElementById('grupoCategoria').value,
-    foto: previewFoto.src,
-    codigoVip: vipCodigo // Se tiver, o servidor ativa o VIP
+    foto: previewFoto.src, // Se a foto mudou, o servidor Admin salvará sem erro
+    codigoVip: vipCodigo 
   };
 
-  const response = await fetch("https://x23wzp.onrender.com/editar-grupo", {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(dadosParaAtualizar)
-  });
+  try {
+    const response = await fetch("https://x23wzp.onrender.com/editar-grupo", {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dadosParaAtualizar)
+    });
 
-  const resData = await response.json();
-  if (resData.success) {
-    window.showAlert("✅ Grupo atualizado com sucesso!");
-    modal.style.display = 'none';
-  } else {
-    window.showAlert("❌ Erro: " + resData.message);
+    const resData = await response.json();
+    if (resData.success) {
+      window.showAlert("✅ Grupo atualizado!");
+      document.getElementById('modalEnvioGrupo').style.display = 'none';
+    } else {
+      window.showAlert("❌ " + (resData.message || "Erro ao salvar"));
+    }
+  } catch (err) {
+    window.showAlert("❌ Erro de conexão com o servidor.");
+  } finally {
+    salvarBtn.disabled = false;
+    salvarBtn.textContent = "ENVIAR GRUPO";
   }
 }
+
 
 
 // *** FUNÇÃO EXCLUIR GRUPO PERSONALIZADA (SEM CAIXA FEIA) ***
@@ -971,21 +959,28 @@ window.excluirGrupo = function(grupo){
 
   modalConfirm.style.display = 'flex';
 
-  btnNao.onclick = () => {
-    modalConfirm.style.display = 'none';
-  };
+  btnNao.onclick = () => modalConfirm.style.display = 'none';
 
   btnSim.onclick = async () => {
     modalConfirm.style.display = 'none';
     try {
-      const { ref: dbRef, remove: dbRemove } = await import("https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js");
-      await dbRemove(dbRef(db, 'grupos/' + grupo.key));
-      showAlert('✅ Grupo excluído!');
+      const response = await fetch("https://x23wzp.onrender.com/excluir-grupo", {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+              key: grupo.key, 
+              donoLocal: localStorage.getItem('usuarioID') 
+          })
+      });
+      const res = await response.json();
+      if (res.success) window.showAlert('✅ Grupo excluído!');
+      else window.showAlert('❌ Você não tem permissão.');
     } catch (error) {
-      showAlert('❌ Erro ao excluir.');
+      window.showAlert('❌ Erro no servidor.');
     }
   };
 }
+
 
 // *** FUNÇÃO CARREGAR GRUPOS (CORRIGIDA E SIMPLIFICADA) ***
 async function carregarGrupos() {
@@ -1112,42 +1107,37 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
         
 btnEntrar.onclick = (e) => {
     e.preventDefault();
-    
-    // Referência direta ao contador de cliques
     const cliqueRef = ref(db, 'grupos/' + g.key + '/cliques');
 
-    const finalizarAcao = () => {
-        // SOMA SEMPRE que clicar
+    if (vipAtivo) {
         runTransaction(cliqueRef, (c) => (c || 0) + 1);
         window.location.href = g.link;
-    };
-
-    if (vipAtivo) {
-        finalizarAcao();
         return;
     }
 
-    // Lógica de anúncio: Abre o anúncio e JÁ SOMA o clique no banco
+    // Para usuários grátis: Abre anúncio e inicia contador
     window.open('https://www.effectivegatecpm.com/afavj9a2y?key=5875f3c51a281666d53e659422973930', '_blank');
-    runTransaction(cliqueRef, (c) => (c || 0) + 1);
-
+    
     let cont = 5;
     btnEntrar.style.pointerEvents = "none";
     btnEntrar.style.background = "#e74c3c";
+    
     const timer = setInterval(() => {
-        if (!document.hidden) {
-            cont--;
-            btnEntrar.textContent = `AGUARDE... ${cont}s`;
-            if (cont <= 0) {
-                clearInterval(timer);
-                btnEntrar.textContent = "✅ LIBERADO";
-                btnEntrar.style.background = "#2ecc71";
-                btnEntrar.style.pointerEvents = "auto";
-                btnEntrar.onclick = () => finalizarAcao();
-            }
+        cont--;
+        btnEntrar.textContent = `AGUARDE... ${cont}s`;
+        if (cont <= 0) {
+            clearInterval(timer);
+            btnEntrar.textContent = "✅ ENTRAR AGORA";
+            btnEntrar.style.background = "#2ecc71";
+            btnEntrar.style.pointerEvents = "auto";
+            btnEntrar.onclick = () => {
+                runTransaction(cliqueRef, (c) => (c || 0) + 1);
+                window.location.href = g.link;
+            };
         }
     }, 1000);
 };
+
 btnContainer.appendChild(btnEntrar);
 }
 
@@ -1208,15 +1198,28 @@ function ordenarGrupos(lista) {
     });
 }
 
-window.impulsionarGrupo = function(key) {
-    const gRef = ref(db, 'grupos/' + key + '/ultimoImpulso');
-    set(gRef, Date.now()).then(() => {
-        window.showAlert("🚀 Grupo Impulsionado para o topo da página🥳");
-        const usuario = localStorage.getItem('usuarioID');
-        const meus = todosGrupos.filter(g => g.dono === usuario);
-        renderizarGrupos(meus, true);
-    });
+window.impulsionarGrupo = async function(key) {
+    try {
+        const response = await fetch("https://x23wzp.onrender.com/impulsionar-grupo", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                key: key, 
+                donoLocal: localStorage.getItem('usuarioID') 
+            })
+        });
+        const res = await response.json();
+        if (res.success) {
+            window.showAlert("🚀 Grupo Impulsionado para o topo!");
+            // Não precisa recarregar, o onValue do Firebase atualizará a tela
+        } else {
+            window.showAlert("❌ Erro ao impulsionar.");
+        }
+    } catch (e) {
+        window.showAlert("❌ Erro de conexão com o servidor.");
+    }
 };
+
 
 function renderAnuncioTikTok(container) {
     const ad1 = document.createElement('div');
