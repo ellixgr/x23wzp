@@ -34,8 +34,7 @@
         .item-grupo.is-vip { border-left-color: var(--vip); background: #fffdf0; }
         
         .info-resumo { font-size: 11px; color: #555; margin-top: 8px; padding: 10px; background: #f1f4f9; border-radius: 8px; border: 1px solid #e0e6ed; }
-
-        .btns-acao-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 10px; }
+        .btns-acao-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px; margin-top: 10px; }
         .btns-acao-grid button { padding: 8px 0; font-size: 10px; margin-top: 0; }
 
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 1000; }
@@ -97,18 +96,6 @@
         <div id="lista-grupos" style="width: 100%;"></div>
     </div>
 
-    <div id="modalReprovar" class="modal">
-        <div class="modal-content">
-            <h3>Reprovar Grupo</h3>
-            <label>MOTIVO DA REPROVAÇÃO</label>
-            <input type="text" id="motivo-reprovar" placeholder="Ex: Link quebrado, foto inadequada...">
-            <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button id="confirmar-reprovar-btn" style="background:var(--danger)">CONFIRMAR REPROVAÇÃO</button>
-                <button onclick="document.getElementById('modalReprovar').style.display='none'" style="background:#888">CANCELAR</button>
-            </div>
-        </div>
-    </div>
-
     <div id="modalEdicao" class="modal">
         <div class="modal-content">
             <h3>Editar Grupo</h3>
@@ -151,135 +138,105 @@
             document.getElementById('label-user').innerHTML = `Logado: <b>${user.email}</b>`;
             document.getElementById('login-box').style.display = 'none';
             document.getElementById('area-abareta').style.display = 'block';
-            carregarDados();
-            carregarSolicitacoes(); 
+            carregarTudo();
         } else {
             document.getElementById('login-box').style.display = 'block';
             document.getElementById('area-abareta').style.display = 'none';
         }
     });
 
-    function carregarSolicitacoes() {
-        const sRef = ref(db, 'solicitacoes');
-        onValue(sRef, (snapshot) => {
+    function carregarTudo() {
+        // Solicitações (Sem filtro de status para garantir que tudo apareça e possa ser apagado)
+        onValue(ref(db, 'solicitacoes'), (snapshot) => {
             const lista = document.getElementById('lista-solicitacoes');
             lista.innerHTML = "";
             const dados = snapshot.val();
-            if (!dados) { lista.innerHTML = "<p style='font-size:12px; color:#999'>Nenhuma solicitação pendente.</p>"; return; }
+            if (!dados) { lista.innerHTML = "<p style='font-size:12px; color:#999'>Vazio.</p>"; return; }
 
-            let temPendente = false;
             for (const key in dados) {
                 const s = dados[key];
-                if (s.status !== "pendente") continue; 
-                temPendente = true;
-
                 const div = document.createElement('div');
-                div.id = "solic-" + key; // ID para remoção forçada
                 div.className = "item-grupo card-solicitacao";
                 div.innerHTML = `
                     <div style="display:flex; align-items:center; gap:10px;">
                         <img src="${s.foto || 'https://via.placeholder.com/50'}" style="width:45px; height:45px; border-radius:8px; object-fit:cover;">
-                        <div><b>${s.nome}</b> <br><small>${s.categoria}</small></div>
+                        <div><b>${s.nome || 'Sem nome'}</b></div>
                     </div>
-                    <div class="info-resumo">Dono: ${s.dono} <br>Link: ${s.link}</div>
+                    <div class="info-resumo">Dono: ${s.dono} <br> Link: ${s.link}</div>
                     <div style="display:flex; gap:5px; margin-top:10px;">
                         <button class="btn-aprovar" onclick="gerenciarSolicitacao('${key}', 'aprovado')">APROVAR</button>
-                        <button class="btn-reprovar" onclick="abrirModalReprovar('${key}')">REPROVAR</button>
+                        <button class="btn-reprovar" onclick="gerenciarSolicitacao('${key}', 'reprovar')">REPROVAR</button>
                     </div>`;
                 lista.appendChild(div);
             }
-            if(!temPendente) lista.innerHTML = "<p style='font-size:12px; color:#999'>Nenhuma solicitação pendente.</p>";
         });
-    }
 
-    window.gerenciarSolicitacao = async (id, novoStatus, motivo = "") => {
-        const sRef = ref(db, `solicitacoes/${id}`);
-        const snap = await get(sRef);
-        
-        // REMOÇÃO FORÇADA DA TELA (Pra não te irritar mais)
-        const element = document.getElementById("solic-" + id);
-        if (element) element.style.display = "none";
-
-        if (!snap.exists()) return;
-        const dados = snap.val();
-
-        if (novoStatus === 'aprovado') {
-            // Cria o grupo oficial
-            await set(ref(db, `grupos/${id}`), {
-                ...dados,
-                status: "aprovado",
-                cliques: 0,
-                criadoEm: Date.now()
-            });
-            // DELETA A SOLICITAÇÃO DE VEZ
-            await remove(sRef);
-        } else {
-            // SE REPROVAR, DELETA TAMBÉM PRA SUMIR DO PAINEL
-            await remove(sRef);
-        }
-    };
-
-    window.abrirModalReprovar = (id) => {
-        document.getElementById('modalReprovar').style.display = 'flex';
-        document.getElementById('confirmar-reprovar-btn').onclick = () => {
-            const motivo = document.getElementById('motivo-reprovar').value;
-            gerenciarSolicitacao(id, 'reprovado', motivo);
-            document.getElementById('modalReprovar').style.display = 'none';
-        };
-    };
-
-    function carregarDados() {
+        // Grupos Ativos e Stats
         onValue(ref(db, '/'), (snapshot) => {
             const data = snapshot.val() || {};
             const lista = document.getElementById('lista-grupos');
             lista.innerHTML = "";
             gruposCache = data.grupos || {};
             const agora = Date.now();
-            let t = 0, v = 0;
+            let total = 0, vips = 0;
 
             for (const key in gruposCache) {
-                const g = gruposCache[key]; t++;
+                const g = gruposCache[key]; total++;
                 const isVip = g.vip === true && g.vipAte > agora;
-                if(isVip) v++;
+                if(isVip) vips++;
+                
                 const div = document.createElement('div');
                 div.className = `item-grupo ${isVip ? 'is-vip' : ''}`;
                 div.innerHTML = `
                     <div style="display:flex; align-items:center; gap:10px;">
-                        <img src="${g.foto || 'https://via.placeholder.com/50'}" style="width:45px; height:45px; border-radius:8px; object-fit:cover;">
+                        <img src="${g.foto || 'https://via.placeholder.com/50'}" style="width:40px; height:40px; border-radius:5px; object-fit:cover;">
                         <b>${g.nome}</b>
                     </div>
                     <div class="btns-acao-grid">
                         <button style="background:var(--blue)" onclick="abrirModal('${key}')">EDITAR</button>
-                        <button style="background:var(--danger)" onclick="excluirGrp('${key}')">DEL</button>
+                        <button style="background:var(--danger)" onclick="excluirGrp('${key}')">APAGAR</button>
                     </div>`;
                 lista.appendChild(div);
             }
-            document.getElementById('count-total').innerText = t;
-            document.getElementById('count-vip').innerText = v;
+            document.getElementById('count-total').innerText = total;
+            document.getElementById('count-vip').innerText = vips;
             document.getElementById('count-visitas').innerText = data.visitas || 0;
+
             renderListaSimples('lista-videos-shopee', data.videos_shopee, 'apagarVideo', 'link');
             renderListaSimples('lista-codigos-ativos', data.codigos_vips, 'apagarCod', null);
         });
     }
 
+    window.gerenciarSolicitacao = async (id, novoStatus) => {
+        const sRef = ref(db, `solicitacoes/${id}`);
+        const snap = await get(sRef);
+        if (!snap.exists()) return;
+
+        if (novoStatus === 'aprovado') {
+            await set(ref(db, `grupos/${id}`), { ...snap.val(), status: "aprovado", cliques: 0, criadoEm: Date.now() });
+        }
+        await remove(sRef); // Apaga da lista de solicitações sempre
+    };
+
     function renderListaSimples(elementId, obj, funcName, field) {
         const el = document.getElementById(elementId); el.innerHTML = "";
-        if(!obj) { el.innerHTML = "<p style='font-size:10px; padding:10px;'>Vazio</p>"; return; }
+        if(!obj) { el.innerHTML = "<p style='padding:10px; font-size:10px'>Vazio</p>"; return; }
         for(let id in obj) {
-            const txt = field ? (obj[id][field] ? obj[id][field].substring(0,20) : id) : id;
+            const txt = field ? (obj[id][field] ? obj[id][field].substring(0,25) : id) : id;
             el.innerHTML += `<div class="codigo-item"><span>${txt}</span><i class="fa fa-trash" onclick="${funcName}('${id}')"></i></div>`;
         }
     }
 
-    window.adicionarMoedasManual = async function() {
+    // Funções de Ação
+    window.adicionarMoedasManual = async () => {
         const id = document.getElementById('moeda-user-id').value.trim();
         const qtd = parseInt(document.getElementById('moeda-qtd').value);
         const uRef = ref(db, 'usuarios/' + id);
         const s = await get(uRef);
         let m = s.exists() ? (s.val().moedas || 0) : 0;
         await update(uRef, { moedas: m + qtd });
-        alert("Moedas entregues!");
-    }
+        alert("Moedas enviadas!");
+    };
 
     window.gerarCodigo = async () => {
         const h = parseInt(document.getElementById('tempo-vip').value);
@@ -287,19 +244,20 @@
         await update(ref(db, 'codigos_vips/' + cod), { horas: h, usado: false });
         document.getElementById('btn-copiar').innerText = cod;
         document.getElementById('btn-copiar').style.display = "block";
-    }
+    };
 
-    window.copiarCodigo = () => { navigator.clipboard.writeText(document.getElementById('btn-copiar').innerText); alert("Copiado!"); }
-    window.abrirModal = (id) => { idSendoEditado = id; const g = gruposCache[id]; document.getElementById('edit-nome').value = g.nome; document.getElementById('edit-link').value = g.link; document.getElementById('edit-foto').value = g.foto||""; document.getElementById('modalEdicao').style.display='flex'; }
-    window.salvarEdicao = async () => { await update(ref(db, 'grupos/'+idSendoEditado), { nome: document.getElementById('edit-nome').value, link: document.getElementById('edit-link').value, foto: document.getElementById('edit-foto').value }); fecharModal(); }
-    window.fecharModal = () => document.getElementById('modalEdicao').style.display='none';
-    window.excluirGrp = (id) => confirm("Apagar?") && remove(ref(db, 'grupos/'+id));
-    window.apagarVideo = (id) => remove(ref(db, 'videos_shopee/'+id));
-    window.apagarCod = (id) => remove(ref(db, 'codigos_vips/'+id));
+    window.copiarCodigo = () => { navigator.clipboard.writeText(document.getElementById('btn-copiar').innerText); alert("Copiado!"); };
     window.adicionarVideo = () => {
         const link = document.getElementById('novo-video-link').value;
         if(link) push(ref(db, 'videos_shopee'), { link: link }).then(() => document.getElementById('novo-video-link').value="");
     };
+
+    window.abrirModal = (id) => { idSendoEditado = id; const g = gruposCache[id]; document.getElementById('edit-nome').value = g.nome; document.getElementById('edit-link').value = g.link; document.getElementById('edit-foto').value = g.foto||""; document.getElementById('modalEdicao').style.display='flex'; };
+    window.salvarEdicao = async () => { await update(ref(db, 'grupos/'+idSendoEditado), { nome: document.getElementById('edit-nome').value, link: document.getElementById('edit-link').value, foto: document.getElementById('edit-foto').value }); fecharModal(); };
+    window.fecharModal = () => document.getElementById('modalEdicao').style.display='none';
+    window.excluirGrp = (id) => confirm("Apagar grupo?") && remove(ref(db, 'grupos/'+id));
+    window.apagarVideo = (id) => remove(ref(db, 'videos_shopee/'+id));
+    window.apagarCod = (id) => remove(ref(db, 'codigos_vips/'+id));
     window.logout = () => signOut(auth);
 </script>
 </body>
