@@ -932,59 +932,36 @@ function abrirEdicao(grupo){
   salvarGrupoBtn.onclick = () => salvarEdicao(grupo); 
 }
 
-async function salvarEdicao(grupoOriginal){
+async function salvarEdicao(grupoOriginal) {
   const usuarioLocal = localStorage.getItem('usuarioID');
+  const vipCodigo = document.getElementById('grupoVipCodigo').value.trim();
 
-  // 1. Trava de segurança
-  if (!usuarioLocal || usuarioLocal !== grupoOriginal.dono) {
-      window.showAlert("❌ Erro de permissão!");
-      return;
-  }
-
-  const nomeNovo = document.getElementById('grupoNome').value.trim();
-  const linkNovo = document.getElementById('grupoLink').value.trim();
-  const descricaoNova = document.getElementById('grupoDescricao').value.trim();
-  const categoriaNova = document.getElementById('grupoCategoria').value;
-  const fotoNova = previewFoto.src;
-
-  // 2. Validação do Link (Onde a maioria trava)
-  const regexBlindada = /^https:\/\/chat\.whatsapp\.com\/[A-Za-z0-9_-]{20,30}(\?.*)?$/;
-  if (!regexBlindada.test(linkNovo)) {
-    window.showAlert('❌ Link de WhatsApp inválido!');
-    return;
-  }
-
-  // 3. Monta o objeto EXATAMENTE como o Firebase espera
-  const grupoEditado = {
-      nome: nomeNovo, 
-      link: linkNovo,
-      descricao: descricaoNova,
-      foto: fotoNova,
-      categoria: categoriaNova,
-      vip: grupoOriginal.vip || false,
-      vipAte: grupoOriginal.vipAte || null,
-      vipCodigo: grupoOriginal.vipCodigo || null,
-      dono: grupoOriginal.dono,
-      cliques: grupoOriginal.cliques || 0,
-      ultimoImpulso: grupoOriginal.ultimoImpulso || 0
+  const dadosParaAtualizar = {
+    key: grupoOriginal.key,
+    donoLocal: usuarioLocal, // O servidor vai conferir se ele é o dono real
+    nome: document.getElementById('grupoNome').value.trim(),
+    link: document.getElementById('grupoLink').value.trim(),
+    descricao: document.getElementById('grupoDescricao').value.trim(),
+    categoria: document.getElementById('grupoCategoria').value,
+    foto: previewFoto.src,
+    codigoVip: vipCodigo // Se tiver, o servidor ativa o VIP
   };
 
-  try {
-    // IMPORTANTE: Usando as variáveis que você já definiu no topo do seu <script type="module">
-    const { ref: dbRef, set: dbSet } = await import("https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js");
-    
-    // A mágica: USA O db QUE JÁ FOI CRIADO NO TOPO
-    await dbSet(dbRef(db, 'grupos/' + grupoOriginal.key), grupoEditado);
-    
-    window.showAlert('✅ Grupo atualizado!');
-    document.getElementById('modalEnvioGrupo').style.display = 'none';
-    // Recarrega a lista sem dar refresh na página inteira
-    carregarGrupos(); 
-  } catch (error) {
-    console.error(error);
-    window.showAlert('Erro ao salvar: ' + error.message);
+  const response = await fetch("https://x23wzp.onrender.com/editar-grupo", {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(dadosParaAtualizar)
+  });
+
+  const resData = await response.json();
+  if (resData.success) {
+    window.showAlert("✅ Grupo atualizado com sucesso!");
+    modal.style.display = 'none';
+  } else {
+    window.showAlert("❌ Erro: " + resData.message);
   }
 }
+
 
 // *** FUNÇÃO EXCLUIR GRUPO PERSONALIZADA (SEM CAIXA FEIA) ***
 window.excluirGrupo = function(grupo){
