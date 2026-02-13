@@ -910,11 +910,22 @@ function abrirEdicao(grupo){
 
 async function salvarEdicao(grupoOriginal) {
   const salvarBtn = document.getElementById('salvarGrupo');
+  const inputVip = document.getElementById('grupoVipCodigo');
+  const preview = document.getElementById('previewFoto');
+  
   salvarBtn.disabled = true;
   salvarBtn.textContent = "SALVANDO...";
 
   const usuarioLocal = localStorage.getItem('usuarioID');
-  const vipCodigo = document.getElementById('grupoVipCodigo').value.trim();
+  const vipDigitado = inputVip.value.trim();
+
+  // Lógica inteligente para a foto: 
+  // Se a foto no preview for a mesma que já estava no grupo, envia null ou a URL original
+  // para não sobrecarregar o servidor com Base64 desnecessário.
+  let fotoParaEnviar = preview.src;
+  if (fotoParaEnviar === grupoOriginal.foto) {
+      fotoParaEnviar = grupoOriginal.foto; 
+  }
 
   const dadosParaAtualizar = {
     key: grupoOriginal.key,
@@ -923,8 +934,8 @@ async function salvarEdicao(grupoOriginal) {
     link: document.getElementById('grupoLink').value.trim(),
     descricao: document.getElementById('grupoDescricao').value.trim(),
     categoria: document.getElementById('grupoCategoria').value,
-    foto: previewFoto.src, // Se a foto mudou, o servidor Admin salvará sem erro
-    codigoVip: vipCodigo 
+    foto: fotoParaEnviar,
+    codigoVip: vipDigitado // Nome exato que o servidor espera
   };
 
   try {
@@ -934,20 +945,26 @@ async function salvarEdicao(grupoOriginal) {
       body: JSON.stringify(dadosParaAtualizar)
     });
 
+    if (!response.ok) throw new Error("Erro no servidor");
+
     const resData = await response.json();
+    
     if (resData.success) {
-      window.showAlert("✅ Grupo atualizado!");
+      window.showAlert("✅ Grupo atualizado com sucesso!");
       document.getElementById('modalEnvioGrupo').style.display = 'none';
+      // O Firebase onValue vai atualizar a lista automaticamente
     } else {
       window.showAlert("❌ " + (resData.message || "Erro ao salvar"));
     }
   } catch (err) {
-    window.showAlert("❌ Erro de conexão com o servidor.");
+    console.error(err);
+    window.showAlert("❌ Erro: Foto muito grande ou falha na conexão.");
   } finally {
     salvarBtn.disabled = false;
     salvarBtn.textContent = "ENVIAR GRUPO";
   }
 }
+
 
 
 
