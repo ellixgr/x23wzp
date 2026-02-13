@@ -3,97 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🛡️ PAINEL abareta PRO - GESTÃO</title>
+    <title>🛡️ PAINEL abareta PRO</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --primary: #b78cff; --vip: #ffd700; --danger: #ff4d4d; --success: #2ecc71; --blue: #3498db; --boost: #f1c40f; }
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; display: flex; flex-direction: column; align-items: center; margin: 0; }
-        
-        .stats-container { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; width: 100%; max-width: 500px; margin-bottom: 20px; }
-        .stat-card { background: white; padding: 12px; border-radius: 12px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        .stat-card h4 { margin: 0; font-size: 12px; color: #666; text-transform: uppercase; }
+        :root { --primary: #b78cff; --vip: #ffd700; --danger: #ff4d4d; --success: #2ecc71; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 15px; display: flex; flex-direction: column; align-items: center; margin: 0; }
+        .stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; width: 100%; max-width: 500px; margin-bottom: 15px; }
+        .stat-card { background: white; padding: 10px; border-radius: 10px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .stat-card p { margin: 5px 0 0; font-size: 18px; font-weight: bold; color: var(--primary); }
-
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 500px; margin-bottom: 20px; box-sizing: border-box; }
-        input, select, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; font-weight: bold; }
-        button { background: var(--primary); color: white; border: none; cursor: pointer; transition: 0.2s; }
-        
-        #btn-copiar { background: #f0ebff; color: #7d5fff; border: 2px dashed var(--primary); margin-top: 15px; display: none; font-size: 18px; }
-        #area-abareta { display: none; width: 100%; max-width: 500px; }
-        
-        .lista-codigos { background: #fdfdfd; border: 1px solid #eee; border-radius: 10px; margin-top: 10px; max-height: 150px; overflow-y: auto; }
-        .codigo-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #f5f5f5; font-size: 13px; }
-        
-        .item-grupo { background: white; padding: 15px; margin-top: 12px; border-radius: 12px; border-left: 5px solid #ccc; position: relative; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .item-grupo.is-vip { border-left-color: var(--vip); background: #fffdf0; }
-        
-        .info-resumo { font-size: 11px; color: #555; margin-top: 8px; padding: 10px; background: #f1f4f9; border-radius: 8px; border: 1px solid #e0e6ed; }
-        .id-box { display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 5px 8px; border-radius: 6px; border: 1px solid #ddd; margin-top: 4px; }
-        .id-text { color: var(--blue); font-family: monospace; font-weight: bold; font-size: 13px; overflow: hidden; text-overflow: ellipsis; }
-
-        .btns-acao-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 10px; }
-        .btns-acao-grid button { padding: 8px 0; font-size: 10px; margin-top: 0; }
-
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 1000; }
-        .modal-content { background: white; padding: 20px; border-radius: 15px; width: 90%; max-width: 400px; }
-        .timer-vip { color: #d35400; font-weight: bold; font-size: 12px; margin-top: 5px; display: block; }
-        .badge-vip { background: var(--vip); color: #000; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; }
+        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 500px; margin-bottom: 15px; box-sizing: border-box; }
+        input, select, button { width: 100%; padding: 12px; margin-top: 8px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; font-weight: bold; }
+        button { background: var(--primary); color: white; border: none; cursor: pointer; }
+        .lista-itens { background: #fafafa; border: 1px solid #eee; border-radius: 8px; margin-top: 10px; max-height: 200px; overflow-y: auto; }
+        .item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; font-size: 13px; color: #333; }
+        .item-video { border-left: 4px solid #ff4500; }
+        .item-grupo { border-left: 4px solid var(--primary); }
+        #area-painel { display: none; width: 100%; max-width: 500px; }
     </style>
 </head>
 <body>
 
     <div id="login-box" class="card">
-        <h2 style="text-align:center; color:var(--primary)">Login abareta</h2>
-        <input type="text" id="user-input" placeholder="Usuário">
+        <h2 style="text-align:center;">Login Admin</h2>
         <input type="password" id="pass-input" placeholder="Senha Mestra">
         <button onclick="logar()">ENTRAR</button>
     </div>
 
-    <div id="area-abareta">
-        <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 10px;">
-            <span style="font-size: 12px; color: #888;">Logado: <b>https67</b></span>
-            <a href="#" onclick="logout()" style="color:red; font-size: 12px; text-decoration: none; font-weight: bold;">SAIR</a>
-        </div>
-
-        <div class="stats-container">
-            <div class="stat-card"><h4>Grupos</h4><p id="count-total">0</p></div>
-            <div class="stat-card"><h4>VIPs</h4><p id="count-vip">0</p></div>
-            <div class="stat-card"><h4>Visitas</h4><p id="count-visitas">0</p></div>
-        </div>
-
-        <div class="card" style="border-top: 4px solid var(--success);">
-            <h3 style="margin:0; color: var(--success);"><i class="fa fa-coins"></i> Dar Moedas por ID</h3>
-            <input type="text" id="moeda-user-id" placeholder="ID do Usuário">
-            <input type="number" id="moeda-qtd" placeholder="Qtd Moedas">
-            <button onclick="adicionarMoedasManual()" style="background:var(--success)">ADICIONAR MOEDAS</button>
-        </div>
-
-        <div class="card">
-            <h3 style="margin:0">⭐ Códigos VIP</h3>
-            <select id="tempo-vip">
-                <option value="2">2 Horas</option>
-                <option value="24">24 Horas</option>
-                <option value="48">48 Horas</option>
-            </select>
-            <button onclick="gerarCodigo()">GERAR NOVO CÓDIGO</button>
-            <button id="btn-copiar" onclick="copiarCodigo()"></button>
-            <div id="lista-codigos-ativos" class="lista-codigos">...</div>
+    <div id="area-painel">
+        <div class="stats">
+            <div class="stat-card"><h4>Grupos</h4><p id="c-grupos">0</p></div>
+            <div class="stat-card"><h4>VIPs</h4><p id="c-vips">0</p></div>
+            <div class="stat-card"><h4>Visitas</h4><p id="c-visitas">0</p></div>
         </div>
 
         <div class="card" style="border-top: 4px solid #ff4500;">
-            <h3 style="margin:0; color: #ff4500;"><i class="fa fa-video"></i> Vídeos Shopee</h3>
-            <input type="text" id="novo-video-link" placeholder="Link do produto Shopee">
-            <button onclick="adicionarVideo()" style="background:#ff4500">ADICIONAR VÍDEO</button>
-            <div id="lista-videos-shopee" class="lista-codigos">...</div>
+            <h3 style="margin:0; color:#ff4500;"><i class="fa fa-video"></i> Vídeos Shopee</h3>
+            <input type="text" id="v-link" placeholder="Link do vídeo Shopee">
+            <button onclick="addVideo()" style="background:#ff4500">ADICIONAR VÍDEO</button>
+            <div id="lista-videos" class="lista-itens">Carregando vídeos...</div>
         </div>
 
-        <h2 style="font-size: 16px; color: #555; width: 100%; text-align: left;">LISTA DE GRUPOS</h2>
-        <div id="lista-grupos" style="width: 100%;"></div>
+        <div class="card">
+            <h3 style="margin:0;"><i class="fa fa-users"></i> Grupos no Banco</h3>
+            <div id="lista-grupos" class="lista-itens" style="max-height: 400px;">Carregando grupos...</div>
+        </div>
     </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getDatabase, ref, onValue, remove, update, get, push } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+    import { getDatabase, ref, onValue, remove, push } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDsrYjO2yVTemKqwmJRzNjh5sfaMalPqhE",
@@ -103,88 +61,61 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    let SENHA_MASTER = localStorage.getItem('abareta_acesso') || "";
-    let gruposCache = {};
 
-    if(SENHA_MASTER) mostrarPainel();
+    window.logar = () => {
+        if(document.getElementById('pass-input').value === "123") { // Ajuste sua senha aqui
+            document.getElementById('login-box').style.display = 'none';
+            document.getElementById('area-painel').style.display = 'block';
+            carregarTudo();
+        } else { alert("Senha Errada!"); }
+    };
 
-    window.logar = async function() {
-        const u = document.getElementById('user-input').value;
-        const s = document.getElementById('pass-input').value;
-        if(u !== "https67") return alert("Usuário Errado!");
-        
-        const res = await fetch("https://x23wzp.onrender.com/login-abareta", {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ senha: s })
-        });
-        
-        if(res.ok) {
-            SENHA_MASTER = s;
-            localStorage.setItem('abareta_acesso', s);
-            mostrarPainel();
-        } else { alert("Senha Incorreta!"); }
-    }
-
-    function mostrarPainel() {
-        document.getElementById('login-box').style.display = 'none';
-        document.getElementById('area-abareta').style.display = 'block';
-        carregarDados();
-    }
-
-    function carregarDados() {
-        // Escuta o banco inteiro para atualizar tudo de uma vez
+    function carregarTudo() {
+        // LÊ A RAIZ DO BANCO UMA VEZ E ATUALIZA TUDO
         onValue(ref(db, '/'), (snapshot) => {
-            const data = snapshot.val();
-            if(!data) return;
+            const data = snapshot.val() || {};
+            
+            // 1. Atualizar Contadores
+            const grupos = data.grupos || {};
+            const videos = data.videos_shopee || {};
+            document.getElementById('c-grupos').innerText = Object.keys(grupos).length;
+            document.getElementById('c-visitas').innerText = data.visitas || 0;
 
-            // 1. Grupos
-            const lista = document.getElementById('lista-grupos');
-            lista.innerHTML = "";
-            gruposCache = data.grupos || {};
-            const usuarios = data.usuarios || {};
-            const agora = Date.now();
-            let t = 0, v = 0;
-
-            for (const key in gruposCache) {
-                const g = gruposCache[key]; t++;
-                const isVip = g.vip === true && g.vipAte > agora;
-                if(isVip) v++;
-
-                lista.innerHTML += `
-                    <div class="item-grupo ${isVip ? 'is-vip' : ''}">
-                        <b>${g.nome}</b>
-                        <div class="info-resumo">Cliques: ${g.cliques || 0}</div>
-                        <button onclick="excluirGrp('${key}')" style="background:red; color:white; border:none; padding:5px; border-radius:5px; margin-top:5px;">APAGAR</button>
+            // 2. Renderizar Grupos
+            const gLista = document.getElementById('lista-grupos');
+            gLista.innerHTML = "";
+            for(let id in grupos) {
+                gLista.innerHTML += `
+                    <div class="item item-grupo">
+                        <span><b>${grupos[id].nome}</b> (${grupos[id].cliques || 0} clicks)</span>
+                        <i class="fa fa-trash" style="color:red; cursor:pointer;" onclick="delItem('grupos/${id}')"></i>
                     </div>`;
             }
-            document.getElementById('count-total').innerText = t;
-            document.getElementById('count-vip').innerText = v;
-            document.getElementById('count-visitas').innerText = data.visitas || 0;
 
-            // 2. Vídeos Shopee
-            const vDiv = document.getElementById('lista-videos-shopee');
-            vDiv.innerHTML = "";
-            const videos = data.videos_shopee || {};
-            for(let vid in videos) {
-                vDiv.innerHTML += `<div class="codigo-item"><span style="font-size:10px">${videos[vid].link.substring(0,30)}...</span><i class="fa fa-trash" onclick="apagarVideo('${vid}')"></i></div>`;
+            // 3. Renderizar Vídeos
+            const vLista = document.getElementById('lista-videos');
+            vLista.innerHTML = "";
+            for(let id in videos) {
+                vLista.innerHTML += `
+                    <div class="item item-video">
+                        <span style="font-size:10px; overflow:hidden;">${videos[id].link.substring(0,40)}...</span>
+                        <i class="fa fa-trash" style="color:red; cursor:pointer;" onclick="delItem('videos_shopee/${id}')"></i>
+                    </div>`;
             }
         });
     }
 
-    window.adicionarVideo = () => {
-        const link = document.getElementById('novo-video-link').value;
-        if(!link) return;
-        push(ref(db, 'videos_shopee'), { link: link })
-        .then(() => {
-            alert("Vídeo Adicionado!");
-            document.getElementById('novo-video-link').value = "";
+    window.addVideo = () => {
+        const link = document.getElementById('v-link').value;
+        if(link) push(ref(db, 'videos_shopee'), { link: link }).then(() => {
+            document.getElementById('v-link').value = "";
+            alert("Vídeo salvo!");
         });
     };
 
-    window.apagarVideo = (id) => remove(ref(db, 'videos_shopee/'+id));
-    window.excluirGrp = (id) => confirm("Apagar?") && remove(ref(db, 'grupos/'+id));
-    window.logout = () => { localStorage.removeItem('abareta_acesso'); location.reload(); };
-
+    window.delItem = (path) => {
+        if(confirm("Deseja apagar?")) remove(ref(db, path));
+    };
 </script>
 </body>
 </html>
