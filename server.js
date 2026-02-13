@@ -7,6 +7,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// CONFIGURAÇÃO DO FIREBASE
 if (!admin.apps.length) {
     try {
         const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
@@ -21,42 +22,33 @@ if (!admin.apps.length) {
 }
 
 const db = admin.database();
-const SENHA_MESTRE = "cavalo777_";
+const SENHA_MESTRE = "cavalo777_"; // <--- SUA SENHA AQUI
 
-/**
- * FUNÇÃO DE FAXINA AUTOMÁTICA
- * Verifica grupos com VIP vencido e os transforma em grupos normais.
- */
+// ROTA DE LOGIN (ATUALIZADA PARA O NOVO PAINEL ABARETA)
+app.post('/login-abareta', (req, res) => {
+    const { senha } = req.body;
+    if (senha === SENHA_MESTRE) {
+        return res.json({ autorizado: true });
+    } else {
+        res.status(401).json({ autorizado: false });
+    }
+});
+
+// FAXINA AUTOMÁTICA
 async function limparVipsVencidos() {
     console.log("🔍 Verificando validade dos VIPs...");
     const agora = Date.now();
     try {
         const gruposRef = db.ref('grupos');
         const snapshot = await gruposRef.once('value');
-
         if (snapshot.exists()) {
             snapshot.forEach((child) => {
                 const grupo = child.val();
-                
                 if (grupo.vip === true) {
                     const dataVencimento = Number(grupo.vipAte);
-
-                    // LOG DE DEBUG - OLHE ISSO NO CONSOLE DO RENDER
-                    console.log(`Grupo: ${grupo.nome} | Agora: ${agora} | Vence em: ${dataVencimento}`);
-
-                    if (!dataVencimento || dataVencimento === 0) {
-                        console.log(`⚠️ Erro: Grupo ${grupo.nome} está VIP mas a data 'vipAte' é inválida (${grupo.vipAte}).`);
-                        return; // Pula esse grupo, não remove nada por segurança
-                    }
-
-                    if (agora > dataVencimento) {
-                        db.ref(`grupos/${child.key}`).update({
-                            vip: false,
-                            vipAte: null
-                        });
-                        console.log(`🚫 VIP removido por vencimento: ${grupo.nome}`);
-                    } else {
-                        console.log(`✅ VIP ainda válido: ${grupo.nome}`);
+                    if (dataVencimento && agora > dataVencimento) {
+                        db.ref(`grupos/${child.key}`).update({ vip: false, vipAte: null });
+                        console.log(`🚫 VIP removido: ${grupo.nome}`);
                     }
                 }
             });
@@ -65,26 +57,17 @@ async function limparVipsVencidos() {
         console.error("❌ Erro na faxina:", error.message);
     }
 }
-
-
-// Executa a limpeza a cada 15 minutos (900.000 milissegundos)
 setInterval(limparVipsVencidos, 15 * 60 * 1000);
 
-// ROTA PARA VALIDAR O CÓDIGO E RETORNAR O TEMPO DE VIP
+// VALIDAR CÓDIGO VIP
 app.post('/validar-vip', async (req, res) => {
     const { codigo } = req.body;
     try {
         const snapshot = await db.ref(`codigos_vips/${codigo}`).once('value');
         if (snapshot.exists() && snapshot.val().status === "disponivel") {
             const dadosVip = snapshot.val();
-            // Marca como usado
             await db.ref(`codigos_vips/${codigo}`).update({ status: "usado" });
-            
-            // Retorna 'valido' e a quantidade de horas que o VIP deve durar
-            res.json({ 
-                valido: true, 
-                duracaoHoras: dadosVip.validadeHoras || 24 
-            });
+            res.json({ valido: true, duracaoHoras: dadosVip.validadeHoras || 24 });
         } else {
             res.json({ valido: false });
         }
@@ -93,6 +76,7 @@ app.post('/validar-vip', async (req, res) => {
     }
 });
 
+// GERAR NOVO CÓDIGO VIP
 app.post('/gerar-vip', async (req, res) => {
     const { senha, duracaoHoras } = req.body;
     if (senha !== SENHA_MESTRE) return res.status(403).json({ error: "Senha incorreta" });
@@ -109,44 +93,25 @@ app.post('/gerar-vip', async (req, res) => {
     }
 });
 
-app.post('/login-admin', (req, res) => {
-    if (req.body.senha === SENHA_MESTRE) return res.json({ autorizado: true });
-    res.status(401).json({ autorizado: false });
-});
-
-const PORT = process.env.PORT || 10000; // O Render usa a porta 10000 por padrão
-
-// ROTA PARA GERAR VIP GRÁTIS USANDO MOEDAS (SISTEMA DE VÍDEO)
+// GERAR VIP GRÁTIS COM MOEDAS
 app.post('/gerar-vip-gratis', async (req, res) => {
     const { moedas } = req.body;
-
-    // Verificação de segurança básica
-    if (!moedas || moedas < 20) {
-        return res.status(400).json({ sucesso: false, mensagem: "Moedas insuficientes" });
-    }
-
+    if (!moedas || moedas < 20) return res.status(400).json({ sucesso: false, mensagem: "Moedas insuficientes" });
     try {
-        // Gera um código aleatório de 8 caracteres
         const codigoGerado = "FREE-" + crypto.randomBytes(4).toString('hex').toUpperCase();
-
-        // Salva o novo código no seu Firebase para ele ser validado depois
         await db.ref(`codigos_vips/${codigoGerado}`).set({
             status: "disponivel",
-            validadeHoras: 24, // VIP Grátis de 24 horas
+            validadeHoras: 24,
             criadoEm: new Date().toISOString(),
             origem: "moedas_video"
         });
-
-        console.log(`🎁 VIP Grátis Gerado: ${codigoGerado}`);
         res.json({ sucesso: true, codigo: codigoGerado });
-
     } catch (error) {
-        console.error("Erro ao gerar VIP grátis:", error.message);
-        res.status(500).json({ sucesso: false, error: "Erro no servidor ao gerar código" });
+        res.status(500).json({ sucesso: false, error: "Erro no servidor" });
     }
 });
 
-
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Servidor rodando na porta ${PORT}`);
-}); 
+});
