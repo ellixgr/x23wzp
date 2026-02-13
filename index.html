@@ -16,6 +16,7 @@
 <meta property="og:url" content="https://ellixgr.github.io/x23wzp/">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#b78cff">
 
 <style>
 /* Reset e Estilos Básicos */
@@ -135,11 +136,14 @@ header.header-visible {
 }
 
 /* ALTERADO: Cor do título para azul escuro */
-header h1{
-    font-size:28px;
-    text-shadow:none;
-    color:#00008b; /* ALTERADO: Azul escuro */
-} 
+header h1 {
+    font-size: 24px;
+    font-weight: 900;
+    background: linear-gradient(45deg, #00008b, #b78cff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
 header p{margin-top:4px;text-shadow:none;} 
 
 #categorias{margin-top:8px;display:flex;justify-content:center;gap:6px;flex-wrap:wrap}
@@ -559,7 +563,8 @@ footer a{color:#b78cff;text-decoration:none}
     <img src="https://i.postimg.cc/1tMNbvyP/image.png" class="img-topo-esquerda" onclick="window.location.href='https://ellixgr.github.io/x23wzp/'">
 
     <div style="display: flex; gap: 10px; justify-content: center; align-items: center;">
-        <button onclick="document.getElementById('enviarGrupo').click()" style="background: #25d366; color: #fff; border: none; padding: 12px 18px; font-weight: 800; font-size: 11px; border-radius: 8px; cursor: pointer; text-transform: uppercase; line-height: 1.2; min-width: 110px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">ENVIAR<br>GRUPO</button>
+        <button onclick="abrirModalEnvio()" style="background: #25d366; color: #fff; border: none; padding: 12px 18px; font-weight: 800; font-size: 11px; border-radius: 8px; cursor: pointer; text-transform: uppercase; line-height: 1.2; min-width: 110px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">ENVIAR<br>GRUPO</button>
+
         <button onclick="document.getElementById('meusGrupos').click()" style="background: #232f3e; color: #fff; border: none; padding: 12px 18px; font-weight: 800; font-size: 11px; border-radius: 8px; cursor: pointer; text-transform: uppercase; line-height: 1.2; min-width: 110px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">MEUS<br>GRUPOS</button>
     </div>
 </header>
@@ -684,7 +689,7 @@ footer a{color:#b78cff;text-decoration:none}
     
     <input type="text" id="grupoNome" placeholder=" Nome do grupo" maxlength="25" required>
     <input type="text" id="grupoLink" placeholder=" Link do grupo (https://chat.whatsapp.com/...)" required>
-    <input type="text" id="grupoDescricao" placeholder=" Descrição curta (Máx 60 letras)" maxlength="60" required>
+    <textarea id="grupoDescricao" placeholder=" Descrição curta (Dê detalhes sobre o grupo)" maxlength="100" style="width: 90%; margin: 5px 0; padding: 10px; border-radius: 10px; border: 1px solid #ccc; background: #f9f9f9; font-family: inherit; resize: none; height: 60px;"></textarea>
           
     <select id="grupoCategoria" required>
       <option value=""> Selecione a Categoria</option>
@@ -786,169 +791,124 @@ fotoInput.addEventListener("change", (e) => {
     reader.readAsDataURL(file);
   }
 });
-
 window.salvarNovoGrupo = async function() {
-  const nome = document.getElementById('grupoNome').value.trim();
-  const linkCampo = document.getElementById('grupoLink').value.trim(); // O que o cara digitou
-  const categoria = document.getElementById('grupoCategoria').value;
-  const descricao = document.getElementById('grupoDescricao').value.trim() || "Clique para entrar!";
-  const vipCodigo = document.getElementById('grupoVipCodigo').value.trim();
-  const foto = previewFoto.src.trim().includes('9qdwuz.webp') ? 'https://i.postimg.cc/t4sRSJ6w/whatsapp-logo.png' : previewFoto.src.trim();
-
-  // 1️⃣ A REGEX QUE MANDA O "OI" PRO INFERNO
-  // Explicação: ^https significa que OBRIGATORIAMENTE tem que começar com https. 
-  // Se tiver um "a" ou um espaço antes, ela BLOQUEIA.
-  const regexBlindada = /^https:\/\/chat\.whatsapp\.com\/[A-Za-z0-9_-]{20,30}(\?.*)?$/;
-
-  if (!regexBlindada.test(linkCampo)) {
-    showAlert('❌ Use um link válido');
-    return; // Mata a execução aqui. Nada é salvo.
-  }
-
-  // 2️⃣ TRAVA DE REPETIDO (Comparando o ID do grupo)
-  // Extrai só o código (ex: D02lBo9OUbx92q0m0rz9Y5) para não ser enganado por ?mode=gi_t
-  const idAtual = linkCampo.split('chat.whatsapp.com/')[1].split('?')[0];
-
-  const jaExiste = todosGrupos.some(g => {
-    if(!g.link.includes('chat.whatsapp.com/')) return false;
-    const idBanco = g.link.split('chat.whatsapp.com/')[1].split('?')[0];
-    return idBanco === idAtual;
-  });
-
-  if (jaExiste) {
-    showAlert('⚠️ ESSE GRUPO JÁ ESTÁ NO SITE! Não aceitamos links repetidos.');
-    return;
-  }
-
-  // 3️⃣ VALIDAÇÃO DE CAMPOS VAZIOS
-  if (!nome || !categoria) {
-    showAlert('❌ Preencha o nome e a categoria!');
-    return;
-  }
-
-  // --- SE CHEGOU AQUI, O LINK É SAGRADO E VAI SER SALVO ---
-  
-  let isVip = false;
-  let dataExpiracaoVip = null;
-
-  if (vipCodigo) {
-    document.getElementById('msg-acordando').style.display = 'block';
-    try {
-        const response = await fetch("https://x23wzp.onrender.com/validar-vip", {
-            method: 'POST', 
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ codigo: vipCodigo })
-        });
-        const data = await response.json();
-        if (data.valido) {
-            isVip = true;
-            dataExpiracaoVip = Date.now() + ((data.duracaoHoras || 24) * 60 * 60 * 1000);
-        } else {
-            showAlert("❌ Código VIP inválido.");
-            document.getElementById('msg-acordando').style.display = 'none';
-            return;
-        }
-    } catch (err) { showAlert("Erro de conexão."); return; }
-  }
-
-  const usuario = localStorage.getItem('usuarioID') || crypto.randomUUID();
-  localStorage.setItem('usuarioID', usuario);
-
-  const novoGrupo = { 
-    nome, 
-    link: linkCampo, // Salva o link original (incluindo o ?mode se tiver, mas sem o lixo de texto)
-    descricao, 
-    foto, 
-    categoria, 
-    dono: usuario, 
-    vip: isVip, 
-    vipAte: dataExpiracaoVip,
-    vipCodigo: vipCodigo || null,
-    cliques: 0,
-    criadoEm: Date.now(),
-    ultimoImpulso: 0
-  };
-
-  try {
-    const { push, ref: dbRef } = await import("https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js");
-    await push(dbRef(db, 'grupos'), novoGrupo);
-    document.getElementById('mensagemEnvio').style.display = 'block';
-    setTimeout(() => { 
-        modal.style.display = 'none'; // Fecha o modal
-        const meus = todosGrupos.filter(g => g.dono === usuario);
-        renderizarGrupos(meus, true); // Carrega a aba Meus Grupos
-        window.scrollTo(0,0); // Sobe pro topo para ver o grupo
-    }, 1200);
-  } catch (error) {
-    showAlert('Erro ao salvar no banco.');
-  }
-};
-
-
-
-
-
-// SALVAR GRUPO AGORA APONTA PARA A FUNÇÃO DE NOVO GRUPO POR PADRÃO
-salvarGrupoBtn.onclick = () => window.salvarNovoGrupo();
-
-// FUNÇÕES DE EDIÇÃO/EXCLUSÃO, CARREGAR GRUPOS (CORRIGIDAS)  //
-
-// --- CORREÇÃO DEFINITIVA DO BOTÃO EDITAR ---
-window.abrirEdicao = function(grupo) {
-  window.grupoSendoEditadoKey = grupo.key;
-  document.getElementById('modalEnvioGrupo').style.display = 'flex';
-  document.getElementById('grupoNome').value = grupo.nome;
-  document.getElementById('grupoLink').value = grupo.link;
-  document.getElementById('grupoDescricao').value = grupo.descricao || "";
-  document.getElementById('previewFoto').src = grupo.foto;
-  document.getElementById('grupoCategoria').value = grupo.categoria;
-  document.getElementById('grupoVipCodigo').value = grupo.vipCodigo || "";
-  
-  // Muda o texto do botão para o usuário saber que está editando
-  const btnSalvar = document.getElementById('salvarGrupo');
-  btnSalvar.textContent = "SALVAR ALTERAÇÕES";
-  btnSalvar.onclick = () => window.executarEdicao(grupo.key);
-};
-
-window.executarEdicao = async function(key) {
-  const btn = document.getElementById('salvarGrupo');
-  const vipCod = document.getElementById('grupoVipCodigo').value.trim();
-  btn.textContent = "SALVANDO...";
-
-  // Importa as ferramentas necessárias do Firebase na hora da edição
-  const { ref, set } = await import("https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js");
-
-  let dadosVip = { vip: false, vipAte: null };
-  if (vipCod.length > 3) {
-      dadosVip.vip = true;
-      dadosVip.vipAte = Date.now() + (30 * 24 * 60 * 60 * 1000); 
-  }
-
-  const updates = {
-    nome: document.getElementById('grupoNome').value.trim(),
-    link: document.getElementById('grupoLink').value.trim(),
-    descricao: document.getElementById('grupoDescricao').value.trim(),
-    categoria: document.getElementById('grupoCategoria').value,
-    foto: document.getElementById('previewFoto').src,
-    vip: dadosVip.vip,
-    vipAte: dadosVip.vipAte,
-    vipCodigo: vipCod,
-    dono: localStorage.getItem('usuarioID'),
-    cliques: 0 // Reseta ou mantém conforme sua regra
-  };
-
-  try {
-    // AQUI ESTÁ O PULO DO GATO: Usando o 'db' que já foi criado no topo do seu script
-    await set(ref(db, 'grupos/' + key), updates);
+    console.log("Botão Salvar clicado!"); // ISSO APARECE NO F12 SE FUNCIONAR
     
-    window.showAlert("✅ Grupo Atualizado com Sucesso!");
-    document.getElementById('modalEnvioGrupo').style.display = 'none';
-    btn.textContent = "ENVIAR GRUPO";
-  } catch (e) {
-    console.error(e);
-    window.showAlert("❌ Erro ao salvar: " + e.message);
-    btn.textContent = "TENTAR NOVAMENTE";
-  }
+    const nome = document.getElementById('grupoNome').value.trim();
+    const link = document.getElementById('grupoLink').value.trim();
+    const categoria = document.getElementById('grupoCategoria').value;
+    const descricao = document.getElementById('grupoDescricao').value.trim();
+    const foto = document.getElementById('previewFoto').src;
+    const codigoVip = document.getElementById('grupoVipCodigo').value.trim();
+    
+    let usuario = localStorage.getItem('usuarioID');
+    if(!usuario) {
+        usuario = crypto.randomUUID();
+        localStorage.setItem('usuarioID', usuario);
+    }
+
+    const whatsappRegex = /^(https?:\/\/)?(chat\.whatsapp\.com\/[A-Za-z0-9]{20,25})$/;
+
+if (!nome || !link || !categoria) {
+    window.showAlert('⚠️ Preencha os campos obrigatórios!');
+    return;
+}
+
+if (!whatsappRegex.test(link)) {
+    window.showAlert('❌ Link de WhatsApp inválido! Use o formato: chat.whatsapp.com/codigo');
+    return;
+}
+
+
+    if (codigoVip !== "") {
+        const resultadoVip = await validarCodigoVip(codigoVip);
+        if (resultadoVip === "invalido") return;
+    }
+
+    const dados = { nome, link, categoria, descricao, foto, dono: usuario, codigoVip };
+
+    try {
+        const response = await fetch("https://x23wzp.onrender.com/salvar-grupo", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dados)
+        });
+
+        const res = await response.json();
+        if (res.success) {
+            window.showAlert('✅ Grupo enviado com sucesso!');
+            document.getElementById('modalEnvioGrupo').style.display = 'none';
+        } else {
+            window.showAlert('❌ Erro: ' + res.error);
+        }
+    } catch (error) {
+        window.showAlert('❌ Servidor Render fora do ar.');
+        console.error("Erro no fetch:", error);
+    }
+};
+
+
+
+// Agora as outras funções funcionam porque o script não quebra mais:
+
+window.abrirEdicao = function(g) {
+    const modal = document.getElementById('modalEnvioGrupo');
+    modal.style.display = 'flex';
+    document.getElementById('grupoNome').value = g.nome;
+    document.getElementById('grupoLink').value = g.link;
+    document.getElementById('grupoDescricao').value = g.descricao;
+    document.getElementById('grupoCategoria').value = g.categoria;
+    document.getElementById('previewFoto').src = g.foto;
+
+    modal.querySelector('h3').textContent = "Editar Grupo";
+    const btnSalvar = document.getElementById('salvarGrupo');
+    btnSalvar.textContent = "SALVAR ALTERAÇÕES";
+    btnSalvar.onclick = () => window.executarEdicao(g.key);
+};
+
+window.executarEdicao = async function(idDoGrupo) {
+    // Pega os valores dos campos do modal de edição
+    const nome = document.getElementById('grupoNome').value.trim();
+    const link = document.getElementById('grupoLink').value.trim();
+    const descricao = document.getElementById('grupoDescricao').value.trim();
+    const categoria = document.getElementById('grupoCategoria').value;
+    const foto = document.getElementById('previewFoto').src;
+    const codigoVip = document.getElementById('grupoVipCodigo') ? document.getElementById('grupoVipCodigo').value.trim() : "";
+    const donoLocal = localStorage.getItem('usuarioID');
+
+    // Monta o pacote de dados para o Render
+    const dados = { 
+        key: idDoGrupo, 
+        donoLocal, 
+        nome, 
+        link, 
+        descricao, 
+        categoria, 
+        foto,
+        codigoVip 
+    };
+
+    try {
+        const response = await fetch("https://x23wzp.onrender.com/editar-grupo", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dados)
+        });
+
+        const res = await response.json();
+
+        if (res.success) {
+            window.showAlert('✅ Alterações salvas com sucesso!');
+            document.getElementById('modalEnvioGrupo').style.display = 'none';
+            // Opcional: recarregar a página ou a lista de grupos aqui
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            window.showAlert('❌ Erro: ' + (res.message || 'Falha ao editar'));
+        }
+    } catch (error) {
+        console.error("Erro na edição:", error);
+        window.showAlert('❌ Erro de conexão com o servidor Render.');
+    }
 };
 
 
@@ -980,6 +940,38 @@ window.excluirGrupo = function(grupo){
       window.showAlert('❌ Erro no servidor.');
     }
   };
+}
+
+async function validarCodigoVip(codigo) {
+    if (!codigo) return null;
+    
+    const msgStatus = document.getElementById('msg-acordando');
+    msgStatus.style.display = 'block';
+    msgStatus.textContent = '🔍 Validando código VIP...';
+
+    try {
+        // A regra permite ler (read: true), então o 'get' vai funcionar
+        const vipRef = ref(db, `codigos_vips/${codigo}`);
+        const snapshot = await get(vipRef);
+
+        if (snapshot.exists()) {
+            const dadosVip = snapshot.val();
+            if (dadosVip.usado === true) {
+                window.showAlert('❌ Este código VIP já foi utilizado.');
+                msgStatus.style.display = 'none';
+                return "invalido";
+            }
+            msgStatus.textContent = '✅ Código VIP válido!';
+            return dadosVip; 
+        } else {
+            window.showAlert('❌ Código VIP inválido ou inexistente.');
+            msgStatus.style.display = 'none';
+            return "invalido";
+        }
+    } catch (error) {
+        window.showAlert('❌ Erro ao validar código.');
+        return "invalido";
+    }
 }
 
 
@@ -1139,7 +1131,8 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
             window.open('https://www.effectivegatecpm.com/afavj9a2y?key=5875f3c51a281666d53e659422973930', '_blank');
             let cont = 5;
             btnEntrar.style.pointerEvents = "none";
-            btnEntrar.style.background = "#e74c3c";
+            btnEntrar.style.background = "linear-gradient(90deg, #e74c3c, #c0392b)";
+btnEntrar.style.boxShadow = "0 4px 15px rgba(231, 76, 60, 0.4)";
             const timer = setInterval(() => {
                 cont--;
                 btnEntrar.textContent = `AGUARDE... ${cont}s`;
@@ -1338,31 +1331,34 @@ fecharVipIcon.onclick = () => { vipModal.style.display = 'none'; };
 fecharVipBtn.onclick = () => { vipModal.style.display = 'none'; };
 
 // ABRIR MODAL ENVIAR GRUPO (RESTAURA O SALVAR POR PADRÃO)
-enviarBtn.onclick = (e) => {
-  e.preventDefault(); 
-  document.getElementById('setor-vip-input').style.display = 'block';
-  document.getElementById('msg-acordando').style.display = 'none';
-  modal.style.display = 'flex';
-  menu.classList.remove('open');
+window.abrirModalEnvio = function() {
+  const modal = document.getElementById('modalEnvioGrupo');
+  const btnSalvar = document.getElementById('salvarGrupo');
   
-  // Limpa todos os campos para um novo envio não vir com lixo do anterior
+  // Reseta o Modal para modo de ENVIO
+  modal.style.display = 'flex';
+  modal.querySelector('h3').textContent = "Enviar Grupo";
+  btnSalvar.textContent = "ENVIAR GRUPO";
+  
+  // Limpa os campos
   document.getElementById('grupoNome').value = '';
   document.getElementById('grupoLink').value = '';
   document.getElementById('grupoDescricao').value = ''; 
   document.getElementById('grupoCategoria').value = '';
   document.getElementById('grupoVipCodigo').value = '';
+  document.getElementById('previewFoto').src = 'https://files.catbox.moe/9qdwuz.webp';
+  document.getElementById('msg-acordando').style.display = 'none';
+  document.getElementById('mensagemEnvio').style.display = 'none';
+
+  // Define a função de salvar como sendo a de NOVO grupo
+  btnSalvar.onclick = () => window.salvarNovoGrupo();
   
-  // Reseta a foto para o padrão
-  previewFoto.src = 'https://files.catbox.moe/9qdwuz.webp';
-  document.getElementById('grupoFotoUpload').value = null; 
-  document.getElementById('grupoVipCodigo').value = '';
-  previewFoto.src = 'https://files.catbox.moe/9qdwuz.webp';
-  document.getElementById('grupoFotoUpload').value = null; 
-  
-  salvarGrupoBtn.onclick = () => window.salvarNovoGrupo(); 
-  document.getElementById('mensagemEnvio').textContent = 'Grupo enviado com sucesso!'; 
-  document.getElementById('mensagemEnvio').style.display = 'none'; 
+  if(typeof menu !== 'undefined') menu.classList.remove('open');
 };
+
+// Vincula o botão antigo do menu lateral também
+if(enviarBtn) enviarBtn.onclick = (e) => { e.preventDefault(); abrirModalEnvio(); };
+
 
 // Função para carregar o Adsterra apenas sob demanda
 function carregarAdsterra() {
