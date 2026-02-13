@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -936,9 +935,9 @@ function abrirEdicao(grupo){
 async function salvarEdicao(grupoOriginal){
   const usuarioLocal = localStorage.getItem('usuarioID');
 
-  // TRAVA DE SEGURANÇA: Verifica se o ID do navegador bate com o dono no banco
+  // 1. Trava de segurança
   if (!usuarioLocal || usuarioLocal !== grupoOriginal.dono) {
-      window.showAlert("❌ Erro de permissão: Você não é o dono deste grupo!");
+      window.showAlert("❌ Erro de permissão!");
       return;
   }
 
@@ -946,48 +945,46 @@ async function salvarEdicao(grupoOriginal){
   const linkNovo = document.getElementById('grupoLink').value.trim();
   const descricaoNova = document.getElementById('grupoDescricao').value.trim();
   const categoriaNova = document.getElementById('grupoCategoria').value;
-  const codDigitado = document.getElementById('grupoVipCodigo').value.trim();
   const fotoNova = previewFoto.src;
 
-  // Filtro de Palavras Ofensivas (Exemplo básico para evitar o que houve no print)
-  const palavrasProibidas = ["chupa", "caceta", "puta"]; // Adicione as que desejar
-  const textoParaValidar = (nomeNovo + descricaoNova).toLowerCase();
-  
-  if (palavrasProibidas.some(p => textoParaValidar.includes(p))) {
-      window.showAlert("❌ Conteúdo impróprio detectado!");
-      return;
-  }
-
+  // 2. Validação do Link (Onde a maioria trava)
   const regexBlindada = /^https:\/\/chat\.whatsapp\.com\/[A-Za-z0-9_-]{20,30}(\?.*)?$/;
   if (!regexBlindada.test(linkNovo)) {
-    window.showAlert('❌ Link inválido!');
+    window.showAlert('❌ Link de WhatsApp inválido!');
     return;
   }
 
+  // 3. Monta o objeto EXATAMENTE como o Firebase espera
   const grupoEditado = {
       nome: nomeNovo, 
       link: linkNovo,
       descricao: descricaoNova,
       foto: fotoNova,
       categoria: categoriaNova,
-      vip: grupoOriginal.vip, // Mantém o status VIP original
-      vipAte: grupoOriginal.vipAte,
-      vipCodigo: grupoOriginal.vipCodigo,
-      dono: grupoOriginal.dono, // Garante que o dono não mude na edição
+      vip: grupoOriginal.vip || false,
+      vipAte: grupoOriginal.vipAte || null,
+      vipCodigo: grupoOriginal.vipCodigo || null,
+      dono: grupoOriginal.dono,
       cliques: grupoOriginal.cliques || 0,
       ultimoImpulso: grupoOriginal.ultimoImpulso || 0
   };
 
   try {
+    // IMPORTANTE: Usando as variáveis que você já definiu no topo do seu <script type="module">
     const { ref: dbRef, set: dbSet } = await import("https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js");
+    
+    // A mágica: USA O db QUE JÁ FOI CRIADO NO TOPO
     await dbSet(dbRef(db, 'grupos/' + grupoOriginal.key), grupoEditado);
-    window.showAlert('✅ Grupo atualizado com segurança!');
-    setTimeout(() => { location.reload(); }, 1000);
+    
+    window.showAlert('✅ Grupo atualizado!');
+    document.getElementById('modalEnvioGrupo').style.display = 'none';
+    // Recarrega a lista sem dar refresh na página inteira
+    carregarGrupos(); 
   } catch (error) {
-    window.showAlert('Erro ao salvar. Verifique sua conexão.');
+    console.error(error);
+    window.showAlert('Erro ao salvar: ' + error.message);
   }
 }
-
 
 // *** FUNÇÃO EXCLUIR GRUPO PERSONALIZADA (SEM CAIXA FEIA) ***
 window.excluirGrupo = function(grupo){
