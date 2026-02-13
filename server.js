@@ -15,16 +15,16 @@ if (!admin.apps.length) {
             credential: admin.credential.cert(serviceAccount),
             databaseURL: "https://cliques-4a2c1-default-rtdb.firebaseio.com"
         });
-        console.log("✅ Banco Conectado");
+        console.log("✅ Banco Conectado com Sucesso");
     } catch (e) {
-        console.log("❌ Erro Firebase:", e.message);
+        console.log("❌ Erro ao configurar Firebase:", e.message);
     }
 }
 
 const db = admin.database();
 const SENHA_MESTRE = "cavalo777_";
 
-// --- ROTAS QUE JÁ ESTAVAM PERFEITAS ---
+// --- ROTAS DE AUTENTICAÇÃO E VIP ---
 
 app.post('/login-abareta', (req, res) => {
     const { senha } = req.body;
@@ -38,7 +38,7 @@ app.post('/validar-vip', async (req, res) => {
         const snapshot = await db.ref(`codigos_vips/${codigo}`).once('value');
         if (snapshot.exists() && snapshot.val().status === "disponivel") {
             const dadosVip = snapshot.val();
-            await db.ref(`codigos_vips/${codigo}`).update({ status: "usado" });
+            // Marcamos como usado apenas no momento do uso real
             res.json({ valido: true, duracaoHoras: dadosVip.validadeHoras || 24 });
         } else {
             res.json({ valido: false });
@@ -60,24 +60,36 @@ app.post('/gerar-vip', async (req, res) => {
     } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
-app.post('/gerar-vip-gratis', async (req, res) => {
-    const { moedas } = req.body;
-    if (!moedas || moedas < 20) return res.status(400).json({ sucesso: false, mensagem: "Moedas insuficientes" });
+// --- ROTAS DE GERENCIAMENTO DE GRUPOS ---
+
+// NOVA ROTA: Impulsionar Grupo (A que estava faltando!)
+app.post('/impulsionar-grupo', async (req, res) => {
+    const { key, donoLocal } = req.body;
     try {
-        const codigoGerado = "FREE-" + crypto.randomBytes(4).toString('hex').toUpperCase();
-        await db.ref(`codigos_vips/${codigoGerado}`).set({
-            status: "disponivel",
-            validadeHoras: 24,
-            criadoEm: new Date().toISOString(),
-            origem: "moedas_video"
-        });
-        res.json({ sucesso: true, codigo: codigoGerado });
-    } catch (error) { res.status(500).json({ sucesso: false, error: "Erro no servidor" }); }
+        const grupoRef = db.ref(`grupos/${key}`);
+        const snapshot = await grupoRef.once('value');
+        
+        if (!snapshot.exists()) return res.status(404).json({ success: false, message: "Grupo não encontrado" });
+
+        const grupoData = snapshot.val();
+        if (grupoData.dono !== donoLocal) return res.status(403).json({ success: false, message: "Acesso negado" });
+
+        const agora = Date.now();
+        const espera = 60 * 60 * 1000; // 1 hora de intervalo
+        const tempoPassado = agora - (grupoData.ultimoImpulso || 0);
+
+        if (tempoPassado < espera) {
+            return res.status(429).json({ success: false, message: "Aguarde o tempo de recarga" });
+        }
+
+        await grupoRef.update({ ultimoImpulso: agora });
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
 });
 
-// --- NOVAS ROTAS PARA CONTORNAR A REGRA DO E-MAIL ---
-
-// ROTA EDITAR: O Admin SDK ignora a trava de e-mail do Firebase JSON
+// ROTA EDITAR: Com validação de VIP integrada
 app.post('/editar-grupo', async (req, res) => {
     const { key, donoLocal, nome, link, descricao, categoria, foto, codigoVip } = req.body;
     try {
@@ -86,28 +98,31 @@ app.post('/editar-grupo', async (req, res) => {
         if (!snapshot.exists()) return res.status(404).json({ success: false, message: "Grupo não existe" });
 
         const grupoData = snapshot.val();
-        // Segurança: Só o dono do ID pode mexer
         if (grupoData.dono !== donoLocal) return res.status(403).json({ success: false, message: "Acesso negado" });
 
         let dadosUpdate = { nome, link, descricao, categoria, foto };
 
-        // Se enviou código VIP, valida e ativa
+        // Lógica de Ativação de VIP via código no Edit
         if (codigoVip && codigoVip !== grupoData.vipCodigo) {
             const vipSnap = await db.ref(`codigos_vips/${codigoVip}`).once('value');
             if (vipSnap.exists() && vipSnap.val().status === "disponivel") {
                 const infoVip = vipSnap.val();
                 await db.ref(`codigos_vips/${codigoVip}`).update({ status: "usado" });
+                
                 dadosUpdate.vip = true;
                 dadosUpdate.vipCodigo = codigoVip;
                 dadosUpdate.vipAte = Date.now() + (infoVip.validadeHoras * 3600000);
             }
         }
+
         await grupoRef.update(dadosUpdate);
         res.json({ success: true });
-    } catch (e) { res.status(500).json({ success: false }); }
+    } catch (e) { 
+        res.status(500).json({ success: false, error: e.message }); 
+    }
 });
 
-// ROTA EXCLUIR: O usuário comum não consegue deletar via site, mas o servidor sim
+// ROTA EXCLUIR
 app.post('/excluir-grupo', async (req, res) => {
     const { key, donoLocal } = req.body;
     try {
@@ -117,11 +132,14 @@ app.post('/excluir-grupo', async (req, res) => {
             await grupoRef.remove();
             return res.json({ success: true });
         }
-        res.status(403).json({ success: false });
-    } catch (e) { res.status(500).json({ success: false }); }
+        res.status(403).json({ success: false, message: "Sem permissão" });
+    } catch (e) { 
+        res.status(500).json({ success: false }); 
+    }
 });
 
-// FAXINA AUTOMÁTICA
+// --- SISTEMAS AUTOMÁTICOS ---
+
 async function limparVipsVencidos() {
     const agora = Date.now();
     try {
@@ -130,14 +148,27 @@ async function limparVipsVencidos() {
         if (snapshot.exists()) {
             snapshot.forEach((child) => {
                 const grupo = child.val();
+                // Se for VIP e o tempo expirou, remove o status VIP
                 if (grupo.vip === true && grupo.vipAte && agora > grupo.vipAte) {
-                    db.ref(`grupos/${child.key}`).update({ vip: false, vipAte: null });
+                    db.ref(`grupos/${child.key}`).update({ 
+                        vip: false, 
+                        vipAte: null,
+                        vipCodigo: null 
+                    });
+                    console.log(`⭐ VIP expirado para o grupo: ${grupo.nome}`);
                 }
             });
         }
-    } catch (e) {}
+    } catch (e) {
+        console.log("Erro na faxina VIP:", e.message);
+    }
 }
+
+// Executa a cada 15 minutos
 setInterval(limparVipsVencidos, 15 * 60 * 1000);
 
+// INICIALIZAÇÃO DO SERVIDOR
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, '0.0.0.0', () => { console.log(`Rodando na porta ${PORT}`); });
+app.listen(PORT, '0.0.0.0', () => { 
+    console.log(`🚀 Servidor online na porta ${PORT}`); 
+});
