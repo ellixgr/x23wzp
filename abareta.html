@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🛡️ PAINEL abareta PRO - GESTÃO</title>
+    <title>🛡️ PAINEL abareta PRO - GESTÃO OFICIAL</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --primary: #b78cff; --vip: #ffd700; --danger: #ff4d4d; --success: #2ecc71; --blue: #3498db; --boost: #f1c40f; }
@@ -24,7 +24,8 @@
         
         .lista-codigos { background: #fdfdfd; border: 1px solid #eee; border-radius: 10px; margin-top: 10px; max-height: 150px; overflow-y: auto; }
         .codigo-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #f5f5f5; font-size: 13px; }
-        
+        .codigo-item i { color: var(--danger); cursor: pointer; }
+
         .item-grupo { background: white; padding: 15px; margin-top: 12px; border-radius: 12px; border-left: 5px solid #ccc; position: relative; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .item-grupo.is-vip { border-left-color: var(--vip); background: #fffdf0; }
         
@@ -47,14 +48,14 @@
 
     <div id="login-box" class="card">
         <h2 style="text-align:center; color:var(--primary)">Login abareta</h2>
-        <input type="text" id="user-input" placeholder="Usuário">
-        <input type="password" id="pass-input" placeholder="Senha Mestra">
-        <button onclick="logar()">ENTRAR</button>
+        <input type="email" id="user-input" placeholder="Seu E-mail Criado">
+        <input type="password" id="pass-input" placeholder="Sua Senha">
+        <button onclick="logar()">ENTRAR NO PAINEL</button>
     </div>
 
     <div id="area-abareta">
         <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 10px;">
-            <span style="font-size: 12px; color: #888;">Logado: <b>https67</b></span>
+            <span id="label-user" style="font-size: 12px; color: #888;">Logado: <b>...</b></span>
             <a href="#" onclick="logout()" style="color:red; font-size: 12px; text-decoration: none; font-weight: bold;">SAIR</a>
         </div>
 
@@ -66,9 +67,9 @@
 
         <div class="card" style="border-top: 4px solid var(--success);">
             <h3 style="margin:0; color: var(--success);"><i class="fa fa-coins"></i> Dar Moedas por ID</h3>
-            <input type="text" id="moeda-user-id" placeholder="Cole o ID do Usuário aqui">
-            <input type="number" id="moeda-qtd" placeholder="Quantidade de Moedas">
-            <button onclick="adicionarMoedasManual()" style="background:var(--success)">ADICIONAR MOEDAS</button>
+            <input type="text" id="moeda-user-id" placeholder="ID do Usuário">
+            <input type="number" id="moeda-qtd" placeholder="Quantidade">
+            <button onclick="adicionarMoedasManual()" style="background:var(--success)">ENTREGAR MOEDAS</button>
         </div>
 
         <div class="card">
@@ -80,14 +81,14 @@
             </select>
             <button onclick="gerarCodigo()">GERAR NOVO CÓDIGO</button>
             <button id="btn-copiar" onclick="copiarCodigo()"></button>
-            <div id="lista-codigos-ativos" class="lista-codigos">...</div>
+            <div id="lista-codigos-ativos" class="lista-codigos">Carregando...</div>
         </div>
 
         <div class="card" style="border-top: 4px solid #ff4500;">
             <h3 style="margin:0; color: #ff4500;"><i class="fa fa-video"></i> Vídeos Shopee</h3>
-            <input type="text" id="novo-video-link" placeholder="Link do produto Shopee">
+            <input type="text" id="novo-video-link" placeholder="Link Shopee">
             <button onclick="adicionarVideo()" style="background:#ff4500">ADICIONAR VÍDEO</button>
-            <div id="lista-videos-shopee" class="lista-codigos">...</div>
+            <div id="lista-videos-shopee" class="lista-codigos">Carregando...</div>
         </div>
 
         <h2 style="font-size: 16px; color: #555; width: 100%; text-align: left;">LISTA DE GRUPOS</h2>
@@ -99,7 +100,7 @@
             <h3>Editar Grupo</h3>
             <label>NOME</label><input type="text" id="edit-nome">
             <label>LINK WHATSAPP</label><input type="text" id="edit-link">
-            <label>LINK FOTO</label><input type="text" id="edit-foto">
+            <label>LINK FOTO (Base64 ou URL)</label><input type="text" id="edit-foto">
             <div style="display: flex; gap: 10px; margin-top: 20px;">
                 <button onclick="salvarEdicao()" style="background:var(--success)">SALVAR</button>
                 <button onclick="fecharModal()" style="background:#888">CANCELAR</button>
@@ -110,6 +111,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getDatabase, ref, onValue, remove, update, get, push } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDsrYjO2yVTemKqwmJRzNjh5sfaMalPqhE",
@@ -119,41 +121,32 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    let SENHA_MASTER = localStorage.getItem('abareta_acesso') || "";
+    const auth = getAuth(app);
+
     let gruposCache = {};
     let idSendoEditado = null;
 
-    if(SENHA_MASTER) mostrarPainel();
-
+    // LOGIN
     window.logar = async function() {
-        const u = document.getElementById('user-input').value;
-        const s = document.getElementById('pass-input').value;
-        if(u !== "https67") return alert("Usuário Errado!");
-        
-        const res = await fetch("https://x23wzp.onrender.com/login-abareta", {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ senha: s })
-        });
-        
-        if(res.ok) {
-            SENHA_MASTER = s;
-            localStorage.setItem('abareta_acesso', s);
-            mostrarPainel();
-        } else { alert("Senha Incorreta!"); }
+        const email = document.getElementById('user-input').value;
+        const pass = document.getElementById('pass-input').value;
+        try {
+            await signInWithEmailAndPassword(auth, email, pass);
+        } catch (e) { alert("Erro: Email ou senha inválidos."); }
     }
 
-    function mostrarPainel() {
-        document.getElementById('login-box').style.display = 'none';
-        document.getElementById('area-abareta').style.display = 'block';
-        carregarDados();
-    }
-
-    window.copiarID = (id) => {
-        navigator.clipboard.writeText(id);
-        alert("ID Copiado: " + id);
-        document.getElementById('moeda-user-id').value = id;
-        window.scrollTo({top: 0, behavior: 'smooth'});
-    }
+    // MONITOR DE SESSÃO
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            document.getElementById('label-user').innerHTML = `Logado: <b>${user.email}</b>`;
+            document.getElementById('login-box').style.display = 'none';
+            document.getElementById('area-abareta').style.display = 'block';
+            carregarDados();
+        } else {
+            document.getElementById('login-box').style.display = 'block';
+            document.getElementById('area-abareta').style.display = 'none';
+        }
+    });
 
     function calcularTempoRestante(vencimento) {
         if (!vencimento) return "Sem Tempo";
@@ -162,22 +155,12 @@
         if (diff <= 0) return "Expirado";
         const horas = Math.floor(diff / (1000 * 60 * 60));
         const minutos = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        const segundos = Math.floor((diff % (1000 * 60)) / 1000);
-        return `${horas}h ${minutos}m ${segundos}s`;
+        return `${horas}h ${minutos}m`;
     }
 
-    setInterval(() => {
-        document.querySelectorAll('.timer-restante').forEach(el => {
-            const fim = parseInt(el.getAttribute('data-fim'));
-            if(fim) el.innerText = calcularTempoRestante(fim);
-        });
-    }, 1000);
-
     function carregarDados() {
-        // LER TUDO NA RAIZ PARA EVITAR ERRO DE CAMINHO
         onValue(ref(db, '/'), (snapshot) => {
             const data = snapshot.val() || {};
-            
             const lista = document.getElementById('lista-grupos');
             lista.innerHTML = "";
             
@@ -188,30 +171,25 @@
 
             for (const key in gruposCache) {
                 const g = gruposCache[key]; t++;
-                const donoId = g.dono || "ID_Nao_Encontrado";
-                
-                // Mapeia saldo de moedas do usuário
+                const donoId = g.dono || "N/A";
                 const moedas = (usuarios[donoId] && usuarios[donoId].moedas !== undefined) ? usuarios[donoId].moedas : 0;
-                
                 const isVip = g.vip === true && g.vipAte > agora;
                 if(isVip) v++;
 
                 const div = document.createElement('div');
                 div.className = `item-grupo ${isVip ? 'is-vip' : ''}`;
                 div.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <img src="${g.foto || 'https://via.placeholder.com/50'}" style="width:45px; height:45px; border-radius:8px; object-fit:cover;">
                         <b>${g.nome || 'Sem Nome'}</b>
-                        ${isVip ? '<span class="badge-vip">VIP ATIVO</span>' : ''}
+                        ${isVip ? '<span class="badge-vip">VIP</span>' : ''}
                     </div>
-                    ${isVip ? `<span class="timer-vip">⏳ Tempo Restante: <span class="timer-restante" data-fim="${g.vipAte}">${calcularTempoRestante(g.vipAte)}</span></span>` : ''}
                     <div class="info-resumo">
-                        <span>ID DO DONO:</span>
                         <div class="id-box">
                             <span class="id-text">${donoId}</span>
-                            <button onclick="copiarID('${donoId}')" style="width:auto; margin:0; padding:4px 8px; font-size:10px; background:var(--blue)">COPIAR ID</button>
+                            <button onclick="copiarID('${donoId}')" style="width:auto; margin:0; padding:4px 8px; font-size:10px; background:var(--blue)">COPY ID</button>
                         </div>
-                        <div style="margin-top:8px">Saldo: <b style="color:var(--success)">${moedas} moedas</b></div>
-                        <div style="font-size:9px; color:#888; margin-top:5px">Cliques: ${g.cliques || 0}</div>
+                        <div style="margin-top:5px">Saldo: <b>${moedas}</b> | Cliques: ${g.cliques || 0}</div>
                     </div>
                     <div class="btns-acao-grid">
                         <button style="background:var(--blue)" onclick="abrirModal('${key}')">EDITAR</button>
@@ -225,67 +203,55 @@
             document.getElementById('count-vip').innerText = v;
             document.getElementById('count-visitas').innerText = data.visitas || 0;
 
-            // Renderizar Vídeos
-            const vLista = document.getElementById('lista-videos-shopee');
-            vLista.innerHTML = "";
-            const videos = data.videos_shopee || {};
-            for(let vid in videos) {
-                vLista.innerHTML += `<div class="codigo-item"><span style="font-size:10px">${videos[vid].link ? videos[vid].link.substring(0,30) : vid}...</span><i class="fa fa-trash" onclick="apagarVideo('${vid}')"></i></div>`;
-            }
-
-            // Renderizar Códigos VIP
-            const cLista = document.getElementById('lista-codigos-ativos');
-            cLista.innerHTML = "";
-            const codigos = data.codigos_vips || {};
-            for(let cod in codigos) {
-                cLista.innerHTML += `<div class="codigo-item"><span>${cod}</span><i class="fa fa-trash" onclick="apagarCod('${cod}')"></i></div>`;
-            }
+            // Renderizar Listas com limpeza automática
+            renderListaSimples('lista-videos-shopee', data.videos_shopee, 'apagarVideo', 'link');
+            renderListaSimples('lista-codigos-ativos', data.codigos_vips, 'apagarCod', null);
         });
+    }
+
+    function renderListaSimples(elementId, obj, funcName, field) {
+        const el = document.getElementById(elementId);
+        el.innerHTML = "";
+        if(!obj) { el.innerHTML = "<p style='font-size:10px; padding:10px;'>Nenhum item</p>"; return; }
+        for(let id in obj) {
+            const txt = field ? (obj[id][field] ? obj[id][field].substring(0,20) : id) : id;
+            el.innerHTML += `<div class="codigo-item"><span>${txt}</span><i class="fa fa-trash" onclick="${funcName}('${id}')"></i></div>`;
+        }
     }
 
     window.adicionarMoedasManual = async function() {
         const id = document.getElementById('moeda-user-id').value.trim();
         const qtd = parseInt(document.getElementById('moeda-qtd').value);
-        if(!id || isNaN(qtd)) return alert("Dados incompletos!");
+        if(!id || isNaN(qtd)) return alert("Preencha o ID e a Qtd");
         const uRef = ref(db, 'usuarios/' + id);
         const s = await get(uRef);
         let m = s.exists() ? (s.val().moedas || 0) : 0;
         await update(uRef, { moedas: m + qtd });
-        alert("Moedas entregues!");
+        alert("Moedas adicionadas!");
     }
 
     window.gerarCodigo = async () => {
-        const h = document.getElementById('tempo-vip').value;
-        const res = await fetch("https://x23wzp.onrender.com/gerar-vip", {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ senha: SENHA_MASTER, duracaoHoras: parseInt(h) })
-        });
-        const d = await res.json();
-        if(d.codigo) {
-            document.getElementById('btn-copiar').innerText = d.codigo;
-            document.getElementById('btn-copiar').style.display = "block";
-        }
+        const h = parseInt(document.getElementById('tempo-vip').value);
+        const cod = "VIP-" + Math.random().toString(36).substring(2, 8).toUpperCase();
+        await update(ref(db, 'codigos_vips/' + cod), { horas: h, usado: false });
+        document.getElementById('btn-copiar').innerText = cod;
+        document.getElementById('btn-copiar').style.display = "block";
     }
 
     window.copiarCodigo = () => { navigator.clipboard.writeText(document.getElementById('btn-copiar').innerText); alert("VIP Copiado!"); }
     window.abrirModal = (id) => { idSendoEditado = id; const g = gruposCache[id]; document.getElementById('edit-nome').value = g.nome; document.getElementById('edit-link').value = g.link; document.getElementById('edit-foto').value = g.foto||""; document.getElementById('modalEdicao').style.display='flex'; }
     window.salvarEdicao = async () => { await update(ref(db, 'grupos/'+idSendoEditado), { nome: document.getElementById('edit-nome').value, link: document.getElementById('edit-link').value, foto: document.getElementById('edit-foto').value }); fecharModal(); }
     window.fecharModal = () => document.getElementById('modalEdicao').style.display='none';
-    window.excluirGrp = (id) => confirm("Apagar este grupo?") && remove(ref(db, 'grupos/'+id));
-    window.apagarVideo = (id) => confirm("Apagar vídeo?") && remove(ref(db, 'videos_shopee/'+id));
-    window.apagarCod = (id) => confirm("Apagar código?") && remove(ref(db, 'codigos_vips/'+id));
+    window.excluirGrp = (id) => confirm("Apagar?") && remove(ref(db, 'grupos/'+id));
+    window.apagarVideo = (id) => remove(ref(db, 'videos_shopee/'+id));
+    window.apagarCod = (id) => remove(ref(db, 'codigos_vips/'+id));
     window.adicionarVideo = () => {
         const link = document.getElementById('novo-video-link').value;
-        if(link) push(ref(db, 'videos_shopee'), { link: link }).then(() => document.getElementById('novo-video-link').value = "");
+        if(link) push(ref(db, 'videos_shopee'), { link: link }).then(() => document.getElementById('novo-video-link').value="");
     };
-    
-    window.removerBoost = (id) => {
-        if(confirm("Deseja remover o status VIP deste grupo agora?")) {
-            update(ref(db, 'grupos/'+id), { vip: false, vipAte: 0 });
-        }
-    };
-
-    window.logout = () => { localStorage.removeItem('abareta_acesso'); location.reload(); };
+    window.removerBoost = (id) => confirm("Remover VIP?") && update(ref(db, 'grupos/'+id), { vip: false, vipAte: 0 });
+    window.copiarID = (id) => { document.getElementById('moeda-user-id').value = id; alert("ID pronto para moedas!"); }
+    window.logout = () => signOut(auth);
 </script>
 </body>
 </html>
