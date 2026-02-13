@@ -22,44 +22,16 @@ if (!admin.apps.length) {
 }
 
 const db = admin.database();
-const SENHA_MESTRE = "cavalo777_"; // <--- SUA SENHA AQUI
+const SENHA_MESTRE = "cavalo777_";
 
-// ROTA DE LOGIN (ATUALIZADA PARA O NOVO PAINEL ABARETA)
+// --- ROTAS QUE JÁ ESTAVAM PERFEITAS ---
+
 app.post('/login-abareta', (req, res) => {
     const { senha } = req.body;
-    if (senha === SENHA_MESTRE) {
-        return res.json({ autorizado: true });
-    } else {
-        res.status(401).json({ autorizado: false });
-    }
+    if (senha === SENHA_MESTRE) return res.json({ autorizado: true });
+    res.status(401).json({ autorizado: false });
 });
 
-// FAXINA AUTOMÁTICA
-async function limparVipsVencidos() {
-    console.log("🔍 Verificando validade dos VIPs...");
-    const agora = Date.now();
-    try {
-        const gruposRef = db.ref('grupos');
-        const snapshot = await gruposRef.once('value');
-        if (snapshot.exists()) {
-            snapshot.forEach((child) => {
-                const grupo = child.val();
-                if (grupo.vip === true) {
-                    const dataVencimento = Number(grupo.vipAte);
-                    if (dataVencimento && agora > dataVencimento) {
-                        db.ref(`grupos/${child.key}`).update({ vip: false, vipAte: null });
-                        console.log(`🚫 VIP removido: ${grupo.nome}`);
-                    }
-                }
-            });
-        }
-    } catch (error) {
-        console.error("❌ Erro na faxina:", error.message);
-    }
-}
-setInterval(limparVipsVencidos, 15 * 60 * 1000);
-
-// VALIDAR CÓDIGO VIP
 app.post('/validar-vip', async (req, res) => {
     const { codigo } = req.body;
     try {
@@ -71,12 +43,9 @@ app.post('/validar-vip', async (req, res) => {
         } else {
             res.json({ valido: false });
         }
-    } catch (error) {
-        res.status(500).json({ error: "Erro no servidor" });
-    }
+    } catch (error) { res.status(500).json({ error: "Erro no servidor" }); }
 });
 
-// GERAR NOVO CÓDIGO VIP
 app.post('/gerar-vip', async (req, res) => {
     const { senha, duracaoHoras } = req.body;
     if (senha !== SENHA_MESTRE) return res.status(403).json({ error: "Senha incorreta" });
@@ -88,12 +57,9 @@ app.post('/gerar-vip', async (req, res) => {
             criadoEm: new Date().toISOString()
         });
         res.json({ codigo: codigo });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+    } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
-// GERAR VIP GRÁTIS COM MOEDAS
 app.post('/gerar-vip-gratis', async (req, res) => {
     const { moedas } = req.body;
     if (!moedas || moedas < 20) return res.status(400).json({ sucesso: false, mensagem: "Moedas insuficientes" });
@@ -106,12 +72,72 @@ app.post('/gerar-vip-gratis', async (req, res) => {
             origem: "moedas_video"
         });
         res.json({ sucesso: true, codigo: codigoGerado });
-    } catch (error) {
-        res.status(500).json({ sucesso: false, error: "Erro no servidor" });
-    }
+    } catch (error) { res.status(500).json({ sucesso: false, error: "Erro no servidor" }); }
 });
 
-const PORT = process.env.PORT || 10000;
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Servidor rodando na porta ${PORT}`);
+// --- NOVAS ROTAS PARA CONTORNAR A REGRA DO E-MAIL ---
+
+// ROTA EDITAR: O Admin SDK ignora a trava de e-mail do Firebase JSON
+app.post('/editar-grupo', async (req, res) => {
+    const { key, donoLocal, nome, link, descricao, categoria, foto, codigoVip } = req.body;
+    try {
+        const grupoRef = db.ref(`grupos/${key}`);
+        const snapshot = await grupoRef.once('value');
+        if (!snapshot.exists()) return res.status(404).json({ success: false, message: "Grupo não existe" });
+
+        const grupoData = snapshot.val();
+        // Segurança: Só o dono do ID pode mexer
+        if (grupoData.dono !== donoLocal) return res.status(403).json({ success: false, message: "Acesso negado" });
+
+        let dadosUpdate = { nome, link, descricao, categoria, foto };
+
+        // Se enviou código VIP, valida e ativa
+        if (codigoVip && codigoVip !== grupoData.vipCodigo) {
+            const vipSnap = await db.ref(`codigos_vips/${codigoVip}`).once('value');
+            if (vipSnap.exists() && vipSnap.val().status === "disponivel") {
+                const infoVip = vipSnap.val();
+                await db.ref(`codigos_vips/${codigoVip}`).update({ status: "usado" });
+                dadosUpdate.vip = true;
+                dadosUpdate.vipCodigo = codigoVip;
+                dadosUpdate.vipAte = Date.now() + (infoVip.validadeHoras * 3600000);
+            }
+        }
+        await grupoRef.update(dadosUpdate);
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ success: false }); }
 });
+
+// ROTA EXCLUIR: O usuário comum não consegue deletar via site, mas o servidor sim
+app.post('/excluir-grupo', async (req, res) => {
+    const { key, donoLocal } = req.body;
+    try {
+        const grupoRef = db.ref(`grupos/${key}`);
+        const snapshot = await grupoRef.once('value');
+        if (snapshot.exists() && snapshot.val().dono === donoLocal) {
+            await grupoRef.remove();
+            return res.json({ success: true });
+        }
+        res.status(403).json({ success: false });
+    } catch (e) { res.status(500).json({ success: false }); }
+});
+
+// FAXINA AUTOMÁTICA
+async function limparVipsVencidos() {
+    const agora = Date.now();
+    try {
+        const gruposRef = db.ref('grupos');
+        const snapshot = await gruposRef.once('value');
+        if (snapshot.exists()) {
+            snapshot.forEach((child) => {
+                const grupo = child.val();
+                if (grupo.vip === true && grupo.vipAte && agora > grupo.vipAte) {
+                    db.ref(`grupos/${child.key}`).update({ vip: false, vipAte: null });
+                }
+            });
+        }
+    } catch (e) {}
+}
+setInterval(limparVipsVencidos, 15 * 60 * 1000);
+
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, '0.0.0.0', () => { console.log(`Rodando na porta ${PORT}`); });
