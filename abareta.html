@@ -6,7 +6,6 @@
     <title>🛡️ PAINEL abareta PRO - GESTÃO OFICIAL</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        /* MANTENDO SEU ESTILO ORIGINAL */
         :root { --primary: #b78cff; --vip: #ffd700; --danger: #ff4d4d; --success: #2ecc71; --blue: #3498db; --boost: #f1c40f; }
         body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; display: flex; flex-direction: column; align-items: center; margin: 0; }
         
@@ -20,11 +19,9 @@
         button { background: var(--primary); color: white; border: none; cursor: pointer; transition: 0.2s; }
         button:hover { opacity: 0.9; }
 
-        /* NOVOS ESTILOS PARA SOLICITAÇÕES */
         .card-solicitacao { border-top: 5px solid var(--boost); background: #fffcf0; }
         .btn-aprovar { background: var(--success) !important; flex: 1; }
         .btn-reprovar { background: var(--danger) !important; flex: 1; }
-        .badge-pendente { background: var(--boost); color: #000; padding: 3px 8px; border-radius: 5px; font-size: 10px; }
 
         #btn-copiar { background: #f0ebff; color: #7d5fff; border: 2px dashed var(--primary); margin-top: 15px; display: none; font-size: 18px; }
         #area-abareta { display: none; width: 100%; max-width: 500px; }
@@ -37,8 +34,6 @@
         .item-grupo.is-vip { border-left-color: var(--vip); background: #fffdf0; }
         
         .info-resumo { font-size: 11px; color: #555; margin-top: 8px; padding: 10px; background: #f1f4f9; border-radius: 8px; border: 1px solid #e0e6ed; }
-        .id-box { display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 5px 8px; border-radius: 6px; border: 1px solid #ddd; margin-top: 4px; }
-        .id-text { color: var(--blue); font-family: monospace; font-weight: bold; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 150px; }
 
         .btns-acao-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 10px; }
         .btns-acao-grid button { padding: 8px 0; font-size: 10px; margin-top: 0; }
@@ -119,7 +114,7 @@
             <h3>Editar Grupo</h3>
             <label>NOME</label><input type="text" id="edit-nome">
             <label>LINK WHATSAPP</label><input type="text" id="edit-link">
-            <label>LINK FOTO (Base64 ou URL)</label><input type="text" id="edit-foto">
+            <label>LINK FOTO</label><input type="text" id="edit-foto">
             <div style="display: flex; gap: 10px; margin-top: 20px;">
                 <button onclick="salvarEdicao()" style="background:var(--success)">SALVAR</button>
                 <button onclick="fecharModal()" style="background:#888">CANCELAR</button>
@@ -165,7 +160,8 @@
     });
 
     function carregarSolicitacoes() {
-        onValue(ref(db, 'solicitacoes'), (snapshot) => {
+        const sRef = ref(db, 'solicitacoes');
+        onValue(sRef, (snapshot) => {
             const lista = document.getElementById('lista-solicitacoes');
             lista.innerHTML = "";
             const dados = snapshot.val();
@@ -178,13 +174,14 @@
                 temPendente = true;
 
                 const div = document.createElement('div');
+                div.id = "solic-" + key; // ID para remoção forçada
                 div.className = "item-grupo card-solicitacao";
                 div.innerHTML = `
                     <div style="display:flex; align-items:center; gap:10px;">
                         <img src="${s.foto || 'https://via.placeholder.com/50'}" style="width:45px; height:45px; border-radius:8px; object-fit:cover;">
                         <div><b>${s.nome}</b> <br><small>${s.categoria}</small></div>
                     </div>
-                    <div class="info-resumo">ID Dono: ${s.dono} <br>Link: ${s.link}</div>
+                    <div class="info-resumo">Dono: ${s.dono} <br>Link: ${s.link}</div>
                     <div style="display:flex; gap:5px; margin-top:10px;">
                         <button class="btn-aprovar" onclick="gerenciarSolicitacao('${key}', 'aprovado')">APROVAR</button>
                         <button class="btn-reprovar" onclick="abrirModalReprovar('${key}')">REPROVAR</button>
@@ -195,26 +192,30 @@
         });
     }
 
-    // AQUI ESTÁ A MUDANÇA: AGORA ELE DELETA SEMPRE PARA SUMIR DA LISTA
     window.gerenciarSolicitacao = async (id, novoStatus, motivo = "") => {
         const sRef = ref(db, `solicitacoes/${id}`);
         const snap = await get(sRef);
+        
+        // REMOÇÃO FORÇADA DA TELA (Pra não te irritar mais)
+        const element = document.getElementById("solic-" + id);
+        if (element) element.style.display = "none";
+
         if (!snap.exists()) return;
         const dados = snap.val();
 
         if (novoStatus === 'aprovado') {
+            // Cria o grupo oficial
             await set(ref(db, `grupos/${id}`), {
                 ...dados,
                 status: "aprovado",
                 cliques: 0,
                 criadoEm: Date.now()
             });
-            await remove(sRef); // APAGA DA LISTA
-            alert("Aprovado e movido para grupos ativos!");
+            // DELETA A SOLICITAÇÃO DE VEZ
+            await remove(sRef);
         } else {
-            // SE REPROVAR, APAGA DIRETO PARA SUMIR DA TELA
-            await remove(sRef); 
-            alert("Grupo reprovado e removido da lista.");
+            // SE REPROVAR, DELETA TAMBÉM PRA SUMIR DO PAINEL
+            await remove(sRef);
         }
     };
 
@@ -301,6 +302,5 @@
     };
     window.logout = () => signOut(auth);
 </script>
-
 </body>
 </html>
