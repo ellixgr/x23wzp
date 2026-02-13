@@ -721,8 +721,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebas
 import { getDatabase, ref, onValue, runTransaction, set, remove, push, get } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
 
-
-
 // Credenciais do Firebase (MANTIDAS)
 const firebaseConfig = {
   apiKey: "AIzaSyDsrYjO2yVTemKqwmJRzNjh5sfaMalPqhE",
@@ -1047,7 +1045,6 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
   const container = document.getElementById('lista-grupos');
   container.innerHTML = '';
 
-  // --- BOTÃO QUE VOCÊ QUERIA ---
   if (modoMeusGrupos) {
       const btnConta = document.createElement('a');
       btnConta.href = "https://ellixgr.github.io/x23wzp/conta";
@@ -1055,7 +1052,6 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
       btnConta.innerHTML = "👤 ACESSAR MINHA CONTA";
       container.appendChild(btnConta);
   }
-  // ----------------------------
 
   if (lista.length === 0) {
     container.innerHTML += '<p style="color:#555; text-align:center;">Nenhum grupo encontrado.</p>';
@@ -1068,14 +1064,11 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
   listaOrdenada.forEach((g, index) => {
     const isOwner = g.dono === usuario;
     const agora = Date.now();
-    // Checa se é VIP e se o prazo (vipAte) é maior que o horário de agora
     const vipAtivo = g.vip && (g.vipAte ? agora < g.vipAte : true);
 
     const wrapper = document.createElement('div');
-
     wrapper.style.cssText = "display:flex; flex-direction:column; align-items:center; width:100%;";
 
-    // Criando o Card com a estrutura visual correta do seu CSS
     const card = document.createElement('div');
     card.className = vipAtivo ? 'grupo vip' : 'grupo';
     
@@ -1087,31 +1080,58 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
       </div>
       <div class="card-corpo">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-            <span class="nome" style="margin-bottom: 0; flex: 1; font-size: 18px; font-weight: bold; color: #000;">
-                ${g.nome}
-            </span>
-            <span style="font-size: 11px; font-weight: bold; color: #b78cff; background: #f0e6ff; padding: 4px 8px; border-radius: 6px; white-space: nowrap; margin-left: 10px; display: flex; align-items: center; gap: 4px;">
+            <span class="nome">${g.nome}</span>
+            <span style="font-size: 11px; font-weight: bold; color: #b78cff; background: #f0e6ff; padding: 4px 8px; border-radius: 6px;">
                🚀 ${g.cliques || 0} ACESSOS
             </span>
         </div>
-        <p class="descricao" style="font-size: 13px; color: #666; margin-bottom: 15px; line-height: 1.4;">
-            ${g.descricao || "Clique para entrar no grupo!"}
-        </p>
+        <p class="descricao">${g.descricao || "Clique para entrar no grupo!"}</p>
         <div class="btn-container-dinamico"></div>
       </div>
     `;
 
-
     const btnContainer = card.querySelector('.btn-container-dinamico');
 
+    // --- LÓGICA DO BOTÃO DE IMPULSO COM CONTADOR ---
     if (modoMeusGrupos && isOwner) {
-        const espera = 3600000; 
-        const tempoPassado = agora - (g.ultimoImpulso || 0);
-        
+        const espera = 3600000; // 1 hora
+        const ultimo = g.ultimoImpulso || 0;
+        const tempoPassado = Date.now() - ultimo;
+
         if (tempoPassado < espera) {
-            const restante = Math.ceil((espera - tempoPassado) / 60000);
-            btnContainer.innerHTML = `<div class="btn-falso-entrar" style="background:#95a5a6; cursor:not-allowed;">AGUARDE ${restante} MIN</div>`;
+            // Cria o botão cinza uma única vez
+            const btnTimer = document.createElement('div');
+            btnTimer.className = "btn-falso-entrar";
+            btnTimer.style.background = "#95a5a6";
+            btnTimer.style.cursor = "not-allowed";
+            btnContainer.appendChild(btnTimer);
+
+            // Função para formatar MM:SS
+            const format = (ms) => {
+                const s = Math.floor(ms / 1000);
+                return `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
+            };
+
+            // Inicia o contador
+            const interval = setInterval(() => {
+                const restante = espera - (Date.now() - ultimo);
+                if (restante <= 0) {
+                    clearInterval(interval);
+                    // Quando acaba, vira o botão de impulsionar
+                    btnTimer.innerHTML = "🚀 IMPULSIONAR AGORA";
+                    btnTimer.style.background = "#f1c40f";
+                    btnTimer.style.cursor = "pointer";
+                    btnTimer.onclick = () => impulsionarGrupo(g.key);
+                } else {
+                    btnTimer.innerHTML = `AGUARDE ${format(restante)}`;
+                }
+            }, 1000);
+            
+            // Texto inicial para não vir vazio
+            btnTimer.innerHTML = `AGUARDE ${format(espera - tempoPassado)}`;
+
         } else {
+            // Botão livre para clicar
             const btnImp = document.createElement('div');
             btnImp.className = "btn-falso-entrar";
             btnImp.style.background = "#f1c40f";
@@ -1121,71 +1141,50 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
             btnContainer.appendChild(btnImp);
         }
     } else {
+        // Botão padrão de ENTRAR (com a sua lógica de anúncio e contador de 5s)
         const btnEntrar = document.createElement('div');
         btnEntrar.className = "btn-falso-entrar";
         btnEntrar.innerHTML = "ENTRAR NO GRUPO";
-        
-btnEntrar.onclick = (e) => {
-    e.preventDefault();
-    const cliqueRef = ref(db, 'grupos/' + g.key + '/cliques');
-
-    if (vipAtivo) {
-        runTransaction(cliqueRef, (c) => (c || 0) + 1);
-        window.location.href = g.link;
-        return;
-    }
-
-    // Para usuários grátis: Abre anúncio e inicia contador
-    window.open('https://www.effectivegatecpm.com/afavj9a2y?key=5875f3c51a281666d53e659422973930', '_blank');
-    
-    let cont = 5;
-    btnEntrar.style.pointerEvents = "none";
-    btnEntrar.style.background = "#e74c3c";
-    
-    const timer = setInterval(() => {
-        cont--;
-        btnEntrar.textContent = `AGUARDE... ${cont}s`;
-        if (cont <= 0) {
-            clearInterval(timer);
-            btnEntrar.textContent = "✅ ENTRAR AGORA";
-            btnEntrar.style.background = "#2ecc71";
-            btnEntrar.style.pointerEvents = "auto";
-            btnEntrar.onclick = () => {
+        btnEntrar.onclick = (e) => {
+            e.preventDefault();
+            const cliqueRef = ref(db, 'grupos/' + g.key + '/cliques');
+            if (vipAtivo) {
                 runTransaction(cliqueRef, (c) => (c || 0) + 1);
                 window.location.href = g.link;
-            };
-        }
-    }, 1000);
-};
-
-btnContainer.appendChild(btnEntrar);
-}
-
+                return;
+            }
+            window.open('https://www.effectivegatecpm.com/afavj9a2y?key=5875f3c51a281666d53e659422973930', '_blank');
+            let cont = 5;
+            btnEntrar.style.pointerEvents = "none";
+            btnEntrar.style.background = "#e74c3c";
+            const timer = setInterval(() => {
+                cont--;
+                btnEntrar.textContent = `AGUARDE... ${cont}s`;
+                if (cont <= 0) {
+                    clearInterval(timer);
+                    btnEntrar.textContent = "✅ ENTRAR AGORA";
+                    btnEntrar.style.background = "#2ecc71";
+                    btnEntrar.style.pointerEvents = "auto";
+                    btnEntrar.onclick = () => {
+                        runTransaction(cliqueRef, (c) => (c || 0) + 1);
+                        window.location.href = g.link;
+                    };
+                }
+            }, 1000);
+        };
+        btnContainer.appendChild(btnEntrar);
+    }
 
     wrapper.appendChild(card);
 
     if (isOwner && modoMeusGrupos) {
       const box = document.createElement('div');
       box.className = 'grupo-acoes-wrapper';
-      
-      const edit = document.createElement('button');
-      edit.innerHTML = '✏️ Editar';
-      edit.className = 'edit-btn';
-      edit.onclick = () => abrirEdicao(g);
-
-      const vipAction = document.createElement('button');
-      vipAction.innerHTML = '🔥 Ser VIP';
-      vipAction.style.background = '#daa520';
-      vipAction.onclick = () => abrirEdicao(g);
-
-      const del = document.createElement('button');
-      del.innerHTML = '🗑️ Excluir';
-      del.className = 'delete-btn';
-      del.onclick = () => excluirGrupo(g);
-      
-      box.appendChild(edit);
-      box.appendChild(vipAction);
-      box.appendChild(del);
+      box.innerHTML = `
+        <button class="edit-btn" onclick="abrirEdicao(${JSON.stringify(g).replace(/"/g, '&quot;')})">✏️ Editar</button>
+        <button style="background:#daa520" onclick="abrirEdicao(${JSON.stringify(g).replace(/"/g, '&quot;')})">🔥 Ser VIP</button>
+        <button class="delete-btn" onclick="excluirGrupo(${JSON.stringify(g).replace(/"/g, '&quot;')})">🗑️ Excluir</button>
+      `;
       wrapper.appendChild(box);
     }
 
@@ -1200,10 +1199,11 @@ btnContainer.appendChild(btnEntrar);
   if (modoMeusGrupos) {
       const aviso = document.createElement('div');
       aviso.className = 'aviso-meus-grupos';
-      aviso.innerHTML = `💾 <b>Seus grupos ficam salvos neste dispositivo para sua segurança e privacidade. Acesse sempre do mesmo navegador para acessá-los.</b><br><br>💡 <b>Dica:</b> Se limpar os dados do navegador, basta reenviar seus grupos novamente.`;
+      aviso.innerHTML = `💾 <b>Seus grupos ficam salvos neste dispositivo.</b>`;
       container.appendChild(aviso);
   }
 }
+
 
 function ordenarGrupos(lista) {
     const agora = Date.now();
