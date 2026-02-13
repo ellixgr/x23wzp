@@ -720,6 +720,54 @@ footer a{color:#b78cff;text-decoration:none}
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getDatabase, ref, onValue, runTransaction, set, remove, push, get } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
+
+// Função para formatar o tempo restante (00:00)
+function formatarTempo(ms) {
+    const totalSegundos = Math.floor(ms / 1000);
+    const minutos = Math.floor(totalSegundos / 60);
+    const segundos = totalSegundos % 60;
+    return `${minutos}:${segundos < 10 ? '0' : ''}${segundos}`;
+}
+
+// Melhore a lógica de renderização do botão dentro do renderizarGrupos
+// Localize onde você cria o botão de impulsionar e substitua por isso:
+
+if (modoMeusGrupos && isOwner) {
+    const espera = 3600000; // 1 hora
+    const ultimoImpulso = g.ultimoImpulso || 0;
+    const tempoPassado = Date.now() - ultimoImpulso;
+
+    if (tempoPassado < espera) {
+        // Criar botão cinza com contagem regressiva viva
+        const btnTimer = document.createElement('div');
+        btnTimer.className = "btn-falso-entrar";
+        btnTimer.style.background = "#95a5a6"; // Cinza
+        btnTimer.style.cursor = "not-allowed";
+        btnContainer.appendChild(btnTimer);
+
+        // Inicia um contador interno para esse botão
+        const interval = setInterval(() => {
+            const restante = espera - (Date.now() - ultimoImpulso);
+            if (restante <= 0) {
+                clearInterval(interval);
+                renderizarGrupos(todosGrupos.filter(gx => gx.dono === usuario), true); // Recarrega a aba
+            } else {
+                btnTimer.innerHTML = `AGUARDE ${formatarTempo(restante)}`;
+            }
+        }, 1000);
+    } else {
+        // Botão Ativo
+        const btnImp = document.createElement('div');
+        btnImp.className = "btn-falso-entrar";
+        btnImp.style.background = "#f1c40f";
+        btnImp.style.color = "#000";
+        btnImp.innerHTML = "🚀 IMPULSIONAR AGORA";
+        btnImp.onclick = () => impulsionarGrupo(g.key);
+        btnContainer.appendChild(btnImp);
+    }
+}
+
+
 // Credenciais do Firebase (MANTIDAS)
 const firebaseConfig = {
   apiKey: "AIzaSyDsrYjO2yVTemKqwmJRzNjh5sfaMalPqhE",
