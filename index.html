@@ -789,11 +789,13 @@ fotoInput.addEventListener("change", (e) => {
   }
 });
 window.salvarNovoGrupo = async function() {
+    console.log("Botão Salvar acionado!");
+    
     const nome = document.getElementById('grupoNome').value.trim();
     const link = document.getElementById('grupoLink').value.trim();
     const categoria = document.getElementById('grupoCategoria').value;
     const descricao = document.getElementById('grupoDescricao').value.trim();
-    const fotoOriginal = document.getElementById('previewFoto').src;
+    const foto = document.getElementById('previewFoto').src;
     const codigoVip = document.getElementById('grupoVipCodigo').value.trim();
     
     if (!nome || !link || !categoria) {
@@ -801,43 +803,26 @@ window.salvarNovoGrupo = async function() {
         return;
     }
 
-    // --- FUNÇÃO PARA COMPACTAR A FOTO ---
-    async function comprimirFoto(base64Str) {
-        return new Promise((resolve) => {
-            const img = new Image();
-            img.src = base64Str;
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                const MAX_WIDTH = 400; // Tamanho pequeno para o servidor não sofrer
-                const scaleSize = MAX_WIDTH / img.width;
-                canvas.width = MAX_WIDTH;
-                canvas.height = img.height * scaleSize;
-
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                
-                // Exporta como JPEG com qualidade 0.7 (70%)
-                resolve(canvas.toDataURL('image/jpeg', 0.7));
-            };
-        });
+    // Validação de link ultra-flexível
+    if (!link.includes("chat.whatsapp.com/")) {
+        window.showAlert('❌ O link deve ser de um grupo do WhatsApp!');
+        return;
     }
 
-    window.showAlert('⏳ Seu grupo será aprovado em breve aguarde...');
+    let usuario = localStorage.getItem('usuarioID');
+    if(!usuario) {
+        usuario = crypto.randomUUID();
+        localStorage.setItem('usuarioID', usuario);
+    }
+
+    if (codigoVip !== "") {
+        const resultadoVip = await validarCodigoVip(codigoVip);
+        if (resultadoVip === "invalido") return;
+    }
+
+    const dados = { nome, link, categoria, descricao, foto, dono: usuario, codigoVip };
 
     try {
-        // Compacta a foto antes de enviar
-        const fotoCompacta = await comprimirFoto(fotoOriginal);
-
-        const dados = { 
-            nome, 
-            link, 
-            categoria, 
-            descricao, 
-            foto: fotoCompacta, // Envia a versão leve
-            dono: localStorage.getItem('usuarioID') || crypto.randomUUID(), 
-            codigoVip 
-        };
-
         const response = await fetch("https://x23wzp.onrender.com/salvar-grupo", {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -846,19 +831,18 @@ window.salvarNovoGrupo = async function() {
 
         const res = await response.json();
         if (res.success) {
-            window.showAlert('✅ Grupo enviado com sucesso!', () => {
-                document.getElementById('modalEnvioGrupo').style.display = 'none';
-                location.reload(); 
-            });
+            window.showAlert('✅ Grupo enviado com sucesso!');
+            document.getElementById('modalEnvioGrupo').style.display = 'none';
+            setTimeout(() => { location.reload(); }, 1200);
         } else {
-
-            window.showAlert('❌ Erro: ' + (res.error || 'Falha interna'));
+            window.showAlert('❌ Erro no servidor: ' + (res.error || 'Falha interna'));
         }
     } catch (error) {
-        window.showAlert('❌ O servidor demorou a responder. Tente novamente em alguns segundos.');
-        console.error("Erro no envio:", error);
+        window.showAlert('❌ Erro de conexão. Aguarde 30 segundos e tente de novo (o servidor está acordando).');
+        console.error("Erro no fetch:", error);
     }
 };
+
 
 
 // Agora as outras funções funcionam porque o script não quebra mais:
@@ -879,58 +863,28 @@ window.abrirEdicao = function(g) {
 };
 
 window.executarEdicao = async function(idDoGrupo) {
-    // Pega os valores dos campos do modal
+    // Pega os valores dos campos do modal de edição
     const nome = document.getElementById('grupoNome').value.trim();
     const link = document.getElementById('grupoLink').value.trim();
     const descricao = document.getElementById('grupoDescricao').value.trim();
     const categoria = document.getElementById('grupoCategoria').value;
-    const fotoOriginal = document.getElementById('previewFoto').src;
+    const foto = document.getElementById('previewFoto').src;
     const codigoVip = document.getElementById('grupoVipCodigo') ? document.getElementById('grupoVipCodigo').value.trim() : "";
     const donoLocal = localStorage.getItem('usuarioID');
 
-    if (!nome || !link || !categoria) {
-        window.showAlert('⚠️ Preencha nome, link e categoria!');
-        return;
-    }
-
-    // --- FUNÇÃO PARA COMPACTAR A FOTO (Repetida aqui para garantir o escopo) ---
-    async function comprimirFoto(base64Str) {
-        // Se a foto já for um link (não base64), não precisa comprimir
-        if (!base64Str.startsWith('data:image')) return base64Str;
-
-        return new Promise((resolve) => {
-            const img = new Image();
-            img.src = base64Str;
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                const MAX_WIDTH = 400; 
-                const scaleSize = MAX_WIDTH / img.width;
-                canvas.width = MAX_WIDTH;
-                canvas.height = img.height * scaleSize;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                resolve(canvas.toDataURL('image/jpeg', 0.7));
-            };
-        });
-    }
-
-    window.showAlert('⏳ Salvando alterações...');
+    // Monta o pacote de dados para o Render
+    const dados = { 
+        key: idDoGrupo, 
+        donoLocal, 
+        nome, 
+        link, 
+        descricao, 
+        categoria, 
+        foto,
+        codigoVip 
+    };
 
     try {
-        // Compacta a foto antes de enviar na edição
-        const fotoCompacta = await comprimirFoto(fotoOriginal);
-
-        const dados = { 
-            key: idDoGrupo, 
-            donoLocal, 
-            nome, 
-            link, 
-            descricao, 
-            categoria, 
-            foto: fotoCompacta, // Agora vai a foto leve!
-            codigoVip 
-        };
-
         const response = await fetch("https://x23wzp.onrender.com/editar-grupo", {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -942,13 +896,14 @@ window.executarEdicao = async function(idDoGrupo) {
         if (res.success) {
             window.showAlert('✅ Alterações salvas com sucesso!');
             document.getElementById('modalEnvioGrupo').style.display = 'none';
-            setTimeout(() => location.reload(), 1200);
+            // Opcional: recarregar a página ou a lista de grupos aqui
+            setTimeout(() => location.reload(), 1500);
         } else {
             window.showAlert('❌ Erro: ' + (res.message || 'Falha ao editar'));
         }
     } catch (error) {
         console.error("Erro na edição:", error);
-        window.showAlert('❌ Servidor ocupado. Tente novamente em instantes.');
+        window.showAlert('❌ Erro de conexão com o servidor Render.');
     }
 };
 
@@ -1110,97 +1065,120 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
 
     const btnContainer = card.querySelector('.btn-container-dinamico');
 
-    // --- LÓGICA DEFINITIVA: VIP BLOQUEIA IMPULSO ---
     if (modoMeusGrupos && isOwner) {
-        if (vipAtivo) {
-            // SE É VIP, SÓ MOSTRA O TEMPO VIP (IMPULSO FICA ESCONDIDO)
+        // Pega o tempo agora
+        const agora = Date.now();
+        const expira = g.vipExpiraEm || 0;
+        
+        // Se a data de expiração for maior que agora, ou se o VIP foi definido há menos de 30 segundos
+        // (Isso evita o erro de aparecer "expirado" assim que você ativa)
+        if (expira > agora) {
             const btnVipStatus = document.createElement('div');
             btnVipStatus.className = "btn-falso-entrar";
             btnVipStatus.style.background = "linear-gradient(90deg, #ffd700, #ffae00)";
             btnVipStatus.style.color = "#000";
-            btnVipStatus.style.cursor = "default";
+            btnVipStatus.style.fontWeight = "bold";
             btnContainer.appendChild(btnVipStatus);
 
-            const intervalVip = setInterval(() => {
-                const falta = (g.vipExpiraEm || 0) - Date.now();
-                if (falta <= 0) {
+            const atualizarVip = () => {
+                const tempoRestante = expira - Date.now();
+                if (tempoRestante <= 0) {
                     btnVipStatus.innerHTML = "⭐ VIP EXPIRADO";
-                    clearInterval(intervalVip);
+                    clearInterval(intervaloVip);
                 } else {
-                    const h = Math.floor(falta / 3600000);
-                    const m = Math.floor((falta % 3600000) / 60000);
-                    const s = Math.floor((falta % 60000) / 1000);
-                    btnVipStatus.innerHTML = `⭐ VIP: ${h}h ${m}m ${s}s`;
+                    const h = Math.floor(tempoRestante / 3600000);
+                    const m = Math.floor((tempoRestante % 3600000) / 60000);
+                    const s = Math.floor((tempoRestante % 60000) / 1000);
+                    btnVipStatus.innerHTML = `⭐ VIP ATIVO: ${h}h ${m}m ${s}s`;
                 }
-            }, 1000);
+            };
+            const intervaloVip = setInterval(atualizarVip, 1000);
+            atualizarVip();
+        } else if (expira > 0 && expira <= agora) {
+            // Se realmente expirou (tempo antigo no banco)
+            const btnExpirado = document.createElement('div');
+            btnExpirado.className = "btn-falso-entrar";
+            btnExpirado.style.background = "#e67e22";
+            btnExpirado.style.color = "#fff";
+            btnExpirado.innerHTML = "❌ VIP EXPIRADO (RENOVE)";
+            btnContainer.appendChild(btnExpirado);
         } else {
-            // SE NÃO É VIP, MOSTRA O IMPULSO NORMAL
-            const espera = 3600000; 
-            const ultimo = g.ultimoImpulso || 0;
-            const tempoPassado = Date.now() - ultimo;
+            // Se não tem VIP nenhum, mostra o IMPULSO normal
+            const esperaImpulso = 3600000;
+            const ultimoImp = g.ultimoImpulso || 0;
+            const passou = agora - ultimoImp;
 
-            if (tempoPassado < espera) {
+            if (passou < esperaImpulso) {
                 const btnTimer = document.createElement('div');
                 btnTimer.className = "btn-falso-entrar";
-                btnTimer.style.background = "#95a5a6";
+                btnTimer.style.background = "#bdc3c7";
                 btnContainer.appendChild(btnTimer);
-
-                const intervalImp = setInterval(() => {
-                    const r = espera - (Date.now() - ultimo);
+                const intImp = setInterval(() => {
+                    const r = esperaImpulso - (Date.now() - ultimoImp);
                     if (r <= 0) {
-                        clearInterval(intervalImp);
-                        btnTimer.innerHTML = "🚀 IMPULSIONAR AGORA";
-                        btnTimer.style.background = "#f1c40f";
-                        btnTimer.style.cursor = "pointer";
-                        btnTimer.onclick = () => impulsionarGrupo(g.key);
+                        clearInterval(intImp);
+                        renderizarGrupos();
                     } else {
-                        const min = Math.floor(r / 60000);
-                        const seg = Math.floor((r % 60000) / 1000);
-                        btnTimer.innerHTML = `AGUARDE ${min}:${seg.toString().padStart(2, '0')}`;
+                        const segs = Math.floor(r / 1000);
+                        btnTimer.innerHTML = `🚀 AGUARDE ${Math.floor(segs/60)}m ${segs%60}s`;
                     }
                 }, 1000);
             } else {
                 const btnImp = document.createElement('div');
                 btnImp.className = "btn-falso-entrar";
                 btnImp.style.background = "#f1c40f";
-                btnImp.style.color = "#000";
                 btnImp.innerHTML = "🚀 IMPULSIONAR AGORA";
                 btnImp.onclick = () => impulsionarGrupo(g.key);
                 btnContainer.appendChild(btnImp);
             }
         }
+    }
+ else {
+        // Dentro da função renderizarGrupos, onde cria o btnEntrar:
+const btnEntrar = document.createElement('div');
+btnEntrar.className = "btn-falso-entrar";
+btnEntrar.innerHTML = "ENTRAR NO GRUPO";
+// COLE ESTE BLOCO NO LUGAR:
+btnEntrar.onclick = async (e) => {
+    e.preventDefault();
+
+    const contabilizarEIr = async () => {
+        try {
+            // Manda pro Render em vez de tentar escrever direto no Firebase
+            fetch("https://x23wzp.onrender.com/contar-clique", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key: g.key })
+            });
+        } catch (err) { console.error(err); }
+        
+        // Redireciona independente de o fetch terminar ou não
+        window.location.href = g.link;
+    };
+
+    if (vipAtivo) {
+        contabilizarEIr();
     } else {
-        // BOTÃO ENTRAR (PARA QUEM NÃO É DONO OU NÃO ESTÁ EM MEUS GRUPOS)
-        const btnEntrar = document.createElement('div');
-        btnEntrar.className = "btn-falso-entrar";
-        btnEntrar.innerHTML = "ENTRAR NO GRUPO";
-        btnEntrar.onclick = (e) => {
-            e.preventDefault();
-            const cliqueRef = ref(db, 'grupos/' + g.key + '/cliques');
-            if (vipAtivo) {
-                runTransaction(cliqueRef, (c) => (c || 0) + 1);
-                window.location.href = g.link;
-                return;
+        // Protetor de link para não-vips
+        window.open('https://www.effectivegatecpm.com/afavj9a2y?key=5875f3c51a281666d53e659422973930', '_blank');
+        btnEntrar.style.pointerEvents = "none";
+        btnEntrar.style.background = "#e74c3c";
+        let cont = 5;
+        const timer = setInterval(() => {
+            cont--;
+            btnEntrar.textContent = `AGUARDE... ${cont}s`;
+            if (cont <= 0) {
+                clearInterval(timer);
+                btnEntrar.textContent = "✅ ENTRAR AGORA";
+                btnEntrar.style.background = "#2ecc71";
+                btnEntrar.style.pointerEvents = "auto";
+                btnEntrar.onclick = contabilizarEIr;
             }
-            window.open('https://www.effectivegatecpm.com/afavj9a2y?key=5875f3c51a281666d53e659422973930', '_blank');
-            let cont = 5;
-            btnEntrar.style.pointerEvents = "none";
-            btnEntrar.style.background = "linear-gradient(90deg, #e74c3c, #c0392b)";
-            const timer = setInterval(() => {
-                cont--;
-                btnEntrar.textContent = `AGUARDE... ${cont}s`;
-                if (cont <= 0) {
-                    clearInterval(timer);
-                    btnEntrar.textContent = "✅ ENTRAR AGORA";
-                    btnEntrar.style.background = "#2ecc71";
-                    btnEntrar.style.pointerEvents = "auto";
-                    btnEntrar.onclick = () => {
-                        runTransaction(cliqueRef, (c) => (c || 0) + 1);
-                        window.location.href = g.link;
-                    };
-                }
-            }, 1000);
-        };
+        }, 1000);
+    }
+};
+
+
         btnContainer.appendChild(btnEntrar);
     }
 
@@ -1211,11 +1189,12 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
       box.className = 'grupo-acoes-wrapper';
       box.innerHTML = `
         <button class="edit-btn" onclick="abrirEdicao(${JSON.stringify(g).replace(/"/g, '&quot;')})">✏️ Editar</button>
-        <button style="background:#daa520" onclick="abrirEdicao(${JSON.stringify(g).replace(/"/g, '&quot;')})">🔥 Ser VIP</button>
+        ${!vipAtivo ? `<button style="background:#daa520" onclick="abrirEdicao(${JSON.stringify(g).replace(/"/g, '&quot;')})">🔥 Ser VIP</button>` : ''}
         <button class="delete-btn" onclick="excluirGrupo(${JSON.stringify(g).replace(/"/g, '&quot;')})">🗑️ Excluir</button>
       `;
       wrapper.appendChild(box);
     }
+
 
     container.appendChild(wrapper);
 
@@ -1354,30 +1333,16 @@ comprarVipBtn.addEventListener("click", (e) => {
 });
 
 // Outros Eventos 
-// --- Lógica Corrigida para as 3 Barrinhas voltarem sempre ---
-const btnBarrinhas = document.getElementById('menuBtn');
-const menuLateral = document.getElementById('sideMenu');
-
-// Abre o menu e esconde as barrinhas
-btnBarrinhas.addEventListener('click', () => {
-    menuLateral.classList.add('open');
-    btnBarrinhas.style.display = 'none'; 
+document.getElementById('menuBtn').addEventListener('click', () => {
+    menu.classList.add('open');
+    document.getElementById('menuBtn').style.opacity = '0'; // Esconde o botão
+    document.getElementById('menuBtn').style.pointerEvents = 'none'; // Desativa o clique enquanto aberto
 });
 
-// Função para fechar o menu e fazer as barrinhas voltarem
-function fecharMenuTotalmente() {
-    menuLateral.classList.remove('open');
-    btnBarrinhas.style.display = 'block';
-}
-
-// Fecha no X
-document.getElementById('closeBtn').addEventListener('click', fecharMenuTotalmente);
-
-// Faz as 3 barrinhas voltarem ao clicar em QUALQUER link ou botão dentro do menu
-menuLateral.addEventListener('click', (e) => {
-    if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON') {
-        fecharMenuTotalmente();
-    }
+document.getElementById('closeBtn').addEventListener('click', () => {
+    menu.classList.remove('open');
+    document.getElementById('menuBtn').style.opacity = '1'; // Mostra o botão de volta
+    document.getElementById('menuBtn').style.pointerEvents = 'auto'; // Reativa o clique
 });
 
 document.querySelectorAll('.cat-btn').forEach(btn => {
@@ -1512,21 +1477,24 @@ document.addEventListener('DOMContentLoaded', () => {
 // ================== INICIAR ================== //
 
 // 1. Crie a função showAlert aqui dentro (no final do script)
-window.showAlert = function(mensagem, callback = null) {
-  const alertModal = document.getElementById('customAlert');
-  const alertBtn = document.getElementById('customAlertBtn');
-  
+window.showAlert = function(mensagem) {
   document.getElementById('customAlertMessage').textContent = mensagem;
-  alertModal.style.display = 'flex';
-
-  // Configura o que o botão OK vai fazer
-  alertBtn.onclick = function() {
-    alertModal.style.display = 'none';
-    if (callback && typeof callback === "function") {
-      callback(); // Executa o fechamento do formulário ou recarregamento
-    }
-  };
+  document.getElementById('customAlert').style.display = 'flex';
 };
+
+// Faz a barrinha de navegação do VIP deslizar
+const carrosselVip = document.getElementById('carrossel-pagamento');
+const indicadorVip = document.getElementById('indicador-scroll');
+
+if(carrosselVip && indicadorVip) {
+    carrosselVip.addEventListener('scroll', () => {
+        const larguraTotal = carrosselVip.scrollWidth - carrosselVip.clientWidth;
+        const posicaoAtual = carrosselVip.scrollLeft;
+        // Ajusta a posição do indicador amarelo proporcionalmente
+        const deslocamento = (posicaoAtual / larguraTotal) * 30;
+        indicadorVip.style.left = deslocamento + 'px';
+    });
+}
 
 carregarGrupos();
 </script>
@@ -1535,13 +1503,12 @@ carregarGrupos();
   <div class="modal-content" style="border: 2px solid #b78cff; padding: 30px;">
     <h3 style="color: #b78cff;">Aviso</h3>
     <p id="customAlertMessage" style="margin: 15px 0; color: #333; font-weight: 500;"></p>
-    <button id="customAlertBtn" 
+    <button onclick="document.getElementById('customAlert').style.display='none'" 
             style="background: #b78cff; border: none; padding: 10px 30px; color: white; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 16px;">
       OK
     </button>
   </div>
 </div>
-
 
 <script>
 function copiarECaminhar() {
