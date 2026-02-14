@@ -792,7 +792,7 @@ fotoInput.addEventListener("change", (e) => {
   }
 });
 window.salvarNovoGrupo = async function() {
-    console.log("Botão Salvar clicado!"); // ISSO APARECE NO F12 SE FUNCIONAR
+    console.log("Botão Salvar acionado!");
     
     const nome = document.getElementById('grupoNome').value.trim();
     const link = document.getElementById('grupoLink').value.trim();
@@ -801,24 +801,22 @@ window.salvarNovoGrupo = async function() {
     const foto = document.getElementById('previewFoto').src;
     const codigoVip = document.getElementById('grupoVipCodigo').value.trim();
     
+    if (!nome || !link || !categoria) {
+        window.showAlert('⚠️ Preencha nome, link e categoria!');
+        return;
+    }
+
+    // Validação de link ultra-flexível
+    if (!link.includes("chat.whatsapp.com/")) {
+        window.showAlert('❌ O link deve ser de um grupo do WhatsApp!');
+        return;
+    }
+
     let usuario = localStorage.getItem('usuarioID');
     if(!usuario) {
         usuario = crypto.randomUUID();
         localStorage.setItem('usuarioID', usuario);
     }
-
-    const whatsappRegex = /^(https?:\/\/)?(chat\.whatsapp\.com\/[A-Za-z0-9]{20,25})$/;
-
-if (!nome || !link || !categoria) {
-    window.showAlert('⚠️ Preencha os campos obrigatórios!');
-    return;
-}
-
-if (!whatsappRegex.test(link)) {
-    window.showAlert('❌ Link de WhatsApp inválido! Use o formato: chat.whatsapp.com/codigo');
-    return;
-}
-
 
     if (codigoVip !== "") {
         const resultadoVip = await validarCodigoVip(codigoVip);
@@ -838,11 +836,12 @@ if (!whatsappRegex.test(link)) {
         if (res.success) {
             window.showAlert('✅ Grupo enviado com sucesso!');
             document.getElementById('modalEnvioGrupo').style.display = 'none';
+            setTimeout(() => { location.reload(); }, 1200);
         } else {
-            window.showAlert('❌ Erro: ' + res.error);
+            window.showAlert('❌ Erro no servidor: ' + (res.error || 'Falha interna'));
         }
     } catch (error) {
-        window.showAlert('❌ Servidor Render fora do ar.');
+        window.showAlert('❌ Erro de conexão. Aguarde 30 segundos e tente de novo (o servidor está acordando).');
         console.error("Erro no fetch:", error);
     }
 };
