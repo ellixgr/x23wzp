@@ -203,6 +203,25 @@ app.post('/excluir-grupo', async (req, res) => {
     }
 });
 
+// --- NOVO: FUNÇÃO PARA CONTAR CLIQUES VIA SERVER (RENDER) ---
+
+app.post('/contar-clique', async (req, res) => {
+    const { key } = req.body;
+    if (!key) return res.status(400).json({ error: "Key ausente" });
+
+    try {
+        const cliqueRef = db.ref(`grupos/${key}/cliques`);
+        // Incremento atômico seguro feito pelo Admin SDK
+        await cliqueRef.transaction((valorAtual) => {
+            return (valorAtual || 0) + 1;
+        });
+        res.json({ success: true });
+    } catch (error) {
+        console.error("Erro ao contar clique:", error.message);
+        res.status(500).json({ error: "Erro interno ao processar clique" });
+    }
+});
+
 // --- SISTEMAS AUTOMÁTICOS ---
 
 async function limparVipsVencidos() {
