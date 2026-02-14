@@ -59,48 +59,39 @@ app.post('/gerar-vip', async (req, res) => {
     } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
-// --- GERENCIAMENTO DE GRUPOS (VITRINE DIRETA) ---
+// --- SOLICITAÇÕES (O QUE VOCÊ NÃO QUERIA QUE TIRASSE) ---
 
 app.post('/salvar-grupo', async (req, res) => {
     const { nome, link, categoria, descricao, foto, dono, codigoVip } = req.body;
     try {
-        let eVip = false;
-        let vipAte = null;
-
-        // SE TIVER CÓDIGO, JÁ ATIVA O VIP AQUI
-        if (codigoVip && codigoVip.trim() !== "") {
+        // Verifica se o código é VIP para já mandar o pedido com o selo
+        let e_vip = false;
+        let validade = null;
+        
+        if (codigoVip) {
             const vipSnap = await db.ref(`codigos_vips/${codigoVip}`).once('value');
             if (vipSnap.exists() && vipSnap.val().status === "disponivel") {
-                const infoVip = vipSnap.val();
-                eVip = true;
-                vipAte = Date.now() + (infoVip.validadeHoras * 3600000);
-                // Marca o código como usado para ninguém mais usar
-                await db.ref(`codigos_vips/${codigoVip}`).update({ status: "usado" });
+                e_vip = true;
+                validade = Date.now() + (vipSnap.val().validadeHoras * 3600000);
             }
         }
 
-        // SALVA DIRETO NA PASTA 'grupos' PARA APARECER NO SITE
-        const novoGrupoRef = db.ref('grupos').push();
-        await novoGrupoRef.set({
-            nome, 
-            link, 
-            categoria, 
-            descricao, 
-            foto, 
-            dono, 
-            vip: eVip,
-            vipAte: vipAte,
-            vipCodigo: eVip ? codigoVip : null,
-            cliques: 0,
-            ultimoImpulso: Date.now(),
+        const novaSolicitacaoRef = db.ref('solicitacoes').push();
+        await novaSolicitacaoRef.set({
+            nome, link, categoria, descricao, foto, dono, codigoVip,
+            vip: e_vip,         // Salva se é VIP
+            vipAte: validade,   // Salva até quando
+            status: "pendente", 
+            motivo: "",
             criadoEm: Date.now()
         });
-
-        res.json({ success: true, message: "Grupo publicado com sucesso!" });
+        res.json({ success: true, message: "Enviado para análise!" });
     } catch (e) {
         res.status(500).json({ success: false, error: e.message });
     }
 });
+
+// --- GERENCIAMENTO DE GRUPOS ---
 
 app.post('/impulsionar-grupo', async (req, res) => {
     const { key, donoLocal } = req.body;
@@ -137,7 +128,6 @@ app.post('/editar-grupo', async (req, res) => {
 
         let dadosUpdate = { nome, link, descricao, categoria, foto };
 
-        // ATIVAÇÃO DE VIP NA EDIÇÃO
         if (codigoVip && codigoVip !== grupoData.vipCodigo) {
             const vipSnap = await db.ref(`codigos_vips/${codigoVip}`).once('value');
             if (vipSnap.exists() && vipSnap.val().status === "disponivel") {
@@ -180,20 +170,15 @@ async function limparVipsVencidos() {
         if (snapshot.exists()) {
             snapshot.forEach((child) => {
                 const grupo = child.val();
-                // Se o VIP venceu, volta a ser grupo normal
                 if (grupo.vip === true && grupo.vipAte && agora > grupo.vipAte) {
-                    db.ref(`grupos/${child.key}`).update({ 
-                        vip: false, 
-                        vipAte: null, 
-                        vipCodigo: null 
-                    });
+                    db.ref(`grupos/${child.key}`).update({ vip: false, vipAte: null, vipCodigo: null });
                 }
             });
         }
-    } catch (e) { console.log("Erro na limpeza VIP:", e.message); }
+    } catch (e) { console.log("Erro na faxina VIP:", e.message); }
 }
 
-setInterval(limparVipsVencidos, 10 * 60 * 1000); // Limpa a cada 10 min
+setInterval(limparVipsVencidos, 15 * 60 * 1000);
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, '0.0.0.0', () => { console.log(`🚀 Servidor online na porta ${PORT}`); });
