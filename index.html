@@ -320,20 +320,17 @@ header p{margin-top:4px;text-shadow:none;}
 
 .estrela-vip {
     position: absolute;
-    top: -35px;
-    right: -25px;
+    top: 5px; /* Ajustado para ficar dentro da foto */
+    right: 5px; /* Ajustado para ficar dentro da foto */
     color: #ffd700;
-    font-size: 65px;
-    z-index: 1; /* Valor baixo para não furar anúncios e menus */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.9));
-    text-shadow: 3px 3px 0px #b8860b, 5px 5px 12px rgba(0,0,0,0.5);
-    transform: rotate(20deg);
+    font-size: 40px; /* Tamanho melhor para mobile */
+    z-index: 5; /* Garante que fica na frente da imagem */
+    filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.8));
+    text-shadow: 2px 2px 0px #b8860b;
     pointer-events: none;
     animation: estrelaBrilhando 1.5s infinite alternate ease-in-out;
 }
+
 
 @keyframes estrelaBrilhando {
     from { transform: rotate(20deg) scale(1); }
@@ -1037,13 +1034,15 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
 
   listaOrdenada.forEach((g, index) => {
     const isOwner = g.dono === usuario;
-    const agora = Date.now();
-    const vipAtivo = g.vip && (g.vipAte ? agora < g.vipAte : true);
+    
+    // CORREÇÃO AQUI: Se o campo vip for true no banco, ele É VIP. Ponto final.
+    const vipAtivo = (g.vip === true || g.vip === "true");
 
     const wrapper = document.createElement('div');
     wrapper.style.cssText = "display:flex; flex-direction:column; align-items:center; width:100%;";
 
     const card = document.createElement('div');
+    // Adiciona a classe 'vip' se for vip, para ativar a borda dourada do CSS
     card.className = vipAtivo ? 'grupo vip' : 'grupo';
     
     card.innerHTML = `
