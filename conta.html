@@ -5,92 +5,32 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Minha Conta - Ganhar Moedas</title>
     <style>
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background: #ebebeb;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
-        }
-        .container {
-            background: white;
-            padding: 25px;
-            border-radius: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 380px;
-            text-align: center;
-        }
-        .moedas-box {
-            background: #f0e6ff;
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            border: 2px solid #b78cff;
-        }
-        .moedas-count {
-            font-size: 32px;
-            font-weight: bold;
-            color: #b78cff;
-        }
-        .btn-video {
-            background: #25d366;
-            color: white;
-            border: none;
-            padding: 15px 20px;
-            border-radius: 12px;
-            font-weight: bold;
-            font-size: 16px;
-            cursor: pointer;
-            width: 100%;
-            transition: 0.3s;
-            text-transform: uppercase;
-        }
-        .btn-video:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-        .timer {
-            margin-top: 10px;
-            font-weight: bold;
-            color: #e74c3c;
-            display: none;
-        }
-        .aviso {
-            font-size: 12px;
-            color: #666;
-            margin-top: 15px;
-            line-height: 1.4;
-        }
-        #btn-voltar {
-            margin-top: 20px;
-            text-decoration: none;
-            color: #b78cff;
-            font-weight: bold;
-            font-size: 14px;
-        }
+        body { font-family: 'Segoe UI', sans-serif; background: #ebebeb; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .container { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 380px; text-align: center; }
+        .moedas-box { background: #f0e6ff; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 2px solid #b78cff; }
+        .moedas-count { font-size: 32px; font-weight: bold; color: #b78cff; }
+        .btn-video { background: #25d366; color: white; border: none; padding: 15px 20px; border-radius: 12px; font-weight: bold; font-size: 16px; cursor: pointer; width: 100%; transition: 0.3s; text-transform: uppercase; }
+        .btn-video:disabled { background: #ccc; cursor: not-allowed; }
+        .timer { margin-top: 10px; font-weight: bold; color: #e74c3c; display: none; }
+        .aviso { font-size: 12px; color: #666; margin-top: 15px; line-height: 1.4; }
+        #btn-voltar { margin-top: 20px; text-decoration: none; color: #b78cff; font-weight: bold; font-size: 14px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h2 style="margin-bottom: 10px;">Minhas Moedas</h2>
-    
     <div class="moedas-box">
         <div id="saldo" class="moedas-count">...</div>
         <p style="font-size: 12px; color: #666;">Moedas acumuladas hoje</p>
     </div>
-
     <button id="btn-video" class="btn-video" onclick="iniciarVideo()">🎬 VER VÍDEO (+1 MOEDA)</button>
     <div id="timer-text" class="timer">Aguarde <span id="segundos">15</span>s para ganhar...</div>
-
     <div class="aviso">
         ⚠️ Limite diário: <b>20 moedas</b>.<br>
         Ao completar 20 moedas, você pode trocar por um código VIP no menu principal.
     </div>
 </div>
-
 <a href="index.html" id="btn-voltar">⬅️ Voltar aos Grupos</a>
 
 <script type="module">
@@ -105,68 +45,73 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    const usuarioID = localStorage.getItem('usuarioID') || crypto.randomUUID();
-    localStorage.setItem('usuarioID', usuarioID);
 
-    // ESCUTA O SALDO (O Firebase deixa ler, só não deixa escrever)
+    // ID do usuário persistente
+    let usuarioID = localStorage.getItem('usuarioID');
+    if (!usuarioID) {
+        usuarioID = 'user_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('usuarioID', usuarioID);
+    }
+
+    // Escuta saldo em tempo real
     const saldoRef = ref(db, `usuarios/${usuarioID}/moedas`);
     onValue(saldoRef, (snapshot) => {
-        const moedas = snapshot.val() || 0;
-        document.getElementById('saldo').innerText = moedas;
+        document.getElementById('saldo').innerText = snapshot.val() || 0;
     });
 
     window.iniciarVideo = function() {
         const btn = document.getElementById('btn-video');
         const timerText = document.getElementById('timer-text');
         const segSpan = document.getElementById('segundos');
+        const linkShopee = 'https://br.shp.ee/ehaxr08?smtt=0.0.9';
+
+        // Tenta abrir o vídeo
+        const videoWindow = window.open(linkShopee, '_blank');
         
+        // Se o popup for bloqueado, abre na mesma aba (garante que funcione)
+        if (!videoWindow) {
+            alert("Redirecionando para o vídeo...");
+            setTimeout(() => { window.location.href = linkShopee; }, 2000);
+            return;
+        }
+
         btn.disabled = true;
         timerText.style.display = 'block';
         
-        // Simula o tempo do vídeo (15 segundos)
         let tempo = 15;
         const intervalo = setInterval(() => {
             tempo--;
             segSpan.innerText = tempo;
-            
             if (tempo <= 0) {
                 clearInterval(intervalo);
                 timerText.style.display = 'none';
-                btn.innerText = "⌛ VALIDANDO NO SERVIDOR...";
+                btn.innerText = "⌛ VALIDANDO...";
                 chamarRenderParaGanharMoeda();
             }
         }, 1000);
-
-        // Abre o vídeo da Shopee/Adsterra em outra aba
-        window.open('https://br.shp.ee/5q1d37e?smtt=0.0.9', '_blank');
     };
 
     async function chamarRenderParaGanharMoeda() {
         const btn = document.getElementById('btn-video');
-        
         try {
-            // AQUI É A CHAVE: O site pede pro Render, e o Render grava no Firebase
             const response = await fetch("https://x23wzp.onrender.com/ganhar-moeda", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ usuarioID: usuarioID })
             });
-
             const res = await response.json();
-
             if (res.success) {
-                alert("✅ +1 Moeda na conta!");
+                alert("✅ Moeda adicionada!");
             } else {
-                alert("❌ Erro: " + res.message);
+                alert("❌ Erro: " + (res.message || "Tente novamente"));
             }
         } catch (error) {
-            alert("❌ Servidor offline ou acordando. Tente de novo.");
+            alert("❌ Servidor acordando... Tente em instantes.");
         } finally {
             btn.disabled = false;
             btn.innerText = "🎬 VER VÍDEO (+1 MOEDA)";
         }
     }
 </script>
-
 </body>
 </html>
