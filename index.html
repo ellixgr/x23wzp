@@ -1110,86 +1110,62 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
 
     const btnContainer = card.querySelector('.btn-container-dinamico');
 
-// --- LÓGICA DO BOTÃO DE IMPULSO / VIP COM CONTAGEM REGRESSIVA ---
-if (modoMeusGrupos && isOwner) {
-    const btnContainer = card.querySelector('.btn-container-dinamico');
-    
-    // VERIFICA SE O GRUPO É VIP
-    if (vipAtivo && g.vipExpiraEm) {
-        const btnVipStatus = document.createElement('div');
-        btnVipStatus.className = "btn-falso-entrar";
-        btnVipStatus.style.background = "linear-gradient(90deg, #ffd700, #ffae00)";
-        btnVipStatus.style.color = "#000";
-        btnVipStatus.style.cursor = "default";
-        btnVipStatus.style.boxShadow = "0 0 10px rgba(255, 215, 0, 0.5)";
-        btnContainer.appendChild(btnVipStatus);
+    // --- LÓGICA CORRIGIDA (SEM ERRO DE RENDERIZAÇÃO) ---
+    if (modoMeusGrupos && isOwner) {
+        if (vipAtivo && g.vipExpiraEm) {
+            const btnVipStatus = document.createElement('div');
+            btnVipStatus.className = "btn-falso-entrar";
+            btnVipStatus.style.background = "linear-gradient(90deg, #ffd700, #ffae00)";
+            btnVipStatus.style.color = "#000";
+            btnVipStatus.style.cursor = "default";
+            btnContainer.appendChild(btnVipStatus);
 
-        // FUNÇÃO QUE ATUALIZA O TEXTO DO BOTÃO VIP
-        const atualizarContadorVip = () => {
-            const agora = Date.now();
-            const falta = g.vipExpiraEm - agora;
+            const intervalVip = setInterval(() => {
+                const falta = g.vipExpiraEm - Date.now();
+                if (falta <= 0) {
+                    btnVipStatus.innerHTML = "⭐ VIP EXPIRADO";
+                    clearInterval(intervalVip);
+                } else {
+                    const h = Math.floor(falta / 3600000);
+                    const m = Math.floor((falta % 3600000) / 60000);
+                    const s = Math.floor((falta % 60000) / 1000);
+                    btnVipStatus.innerHTML = `⭐ VIP: ${h}h ${m}m ${s}s`;
+                }
+            }, 1000);
+        } else {
+            const espera = 3600000; 
+            const ultimo = g.ultimoImpulso || 0;
+            const tempoPassado = Date.now() - ultimo;
 
-            if (falta <= 0) {
-                btnVipStatus.innerHTML = "⭐ VIP EXPIRADO";
-                clearInterval(intervalVip);
+            if (tempoPassado < espera) {
+                const btnTimer = document.createElement('div');
+                btnTimer.className = "btn-falso-entrar";
+                btnTimer.style.background = "#95a5a6";
+                btnContainer.appendChild(btnTimer);
+
+                const intervalImp = setInterval(() => {
+                    const r = espera - (Date.now() - ultimo);
+                    if (r <= 0) {
+                        clearInterval(intervalImp);
+                        btnTimer.innerHTML = "🚀 IMPULSIONAR AGORA";
+                        btnTimer.style.background = "#f1c40f";
+                        btnTimer.onclick = () => impulsionarGrupo(g.key);
+                    } else {
+                        const min = Math.floor(r / 60000);
+                        const seg = Math.floor((r % 60000) / 1000);
+                        btnTimer.innerHTML = `AGUARDE ${min}:${seg.toString().padStart(2, '0')}`;
+                    }
+                }, 1000);
             } else {
-                const horas = Math.floor(falta / 3600000);
-                const minutos = Math.floor((falta % 3600000) / 60000);
-                // Exibe horas e minutos dentro do botão
-                btnVipStatus.innerHTML = `⭐ VIP: ${horas}h ${minutos}m`;
+                const btnImp = document.createElement('div');
+                btnImp.className = "btn-falso-entrar";
+                btnImp.style.background = "#f1c40f";
+                btnImp.innerHTML = "🚀 IMPULSIONAR AGORA";
+                btnImp.onclick = () => impulsionarGrupo(g.key);
+                btnContainer.appendChild(btnImp);
             }
-        };
-
-        // Inicia o contador e roda a cada 1 minuto
-        const intervalVip = setInterval(atualizarContadorVip, 60000);
-        atualizarContadorVip(); // Roda uma vez imediato para não começar vazio
-        
-        return; // Sai da função para não mostrar o botão de impulsionar embaixo
-    }
-
-    // SE NÃO FOR VIP, MOSTRA A LOGICA NORMAL DO IMPULSO (1 HORA)
-    const espera = 3600000; 
-    const ultimo = g.ultimoImpulso || 0;
-    const tempoPassado = Date.now() - ultimo;
-
-    if (tempoPassado < espera) {
-        const btnTimer = document.createElement('div');
-        btnTimer.className = "btn-falso-entrar";
-        btnTimer.style.background = "#95a5a6";
-        btnTimer.style.cursor = "not-allowed";
-        btnContainer.appendChild(btnTimer);
-
-        const format = (ms) => {
-            const s = Math.floor(ms / 1000);
-            return `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
-        };
-
-        const interval = setInterval(() => {
-            const restante = espera - (Date.now() - ultimo);
-            if (restante <= 0) {
-                clearInterval(interval);
-                btnTimer.innerHTML = "🚀 IMPULSIONAR AGORA";
-                btnTimer.style.background = "#f1c40f";
-                btnTimer.style.cursor = "pointer";
-                btnTimer.onclick = () => impulsionarGrupo(g.key);
-            } else {
-                btnTimer.innerHTML = `AGUARDE ${format(restante)}`;
-            }
-        }, 1000);
-        
-        btnTimer.innerHTML = `AGUARDE ${format(espera - tempoPassado)}`;
+        }
     } else {
-        const btnImp = document.createElement('div');
-        btnImp.className = "btn-falso-entrar";
-        btnImp.style.background = "#f1c40f";
-        btnImp.style.color = "#000";
-        btnImp.innerHTML = "🚀 IMPULSIONAR AGORA";
-        btnImp.onclick = () => impulsionarGrupo(g.key);
-        btnContainer.appendChild(btnImp);
-    }
-}
- else {
-        // Botão padrão de ENTRAR (com a sua lógica de anúncio e contador de 5s)
         const btnEntrar = document.createElement('div');
         btnEntrar.className = "btn-falso-entrar";
         btnEntrar.innerHTML = "ENTRAR NO GRUPO";
@@ -1205,7 +1181,6 @@ if (modoMeusGrupos && isOwner) {
             let cont = 5;
             btnEntrar.style.pointerEvents = "none";
             btnEntrar.style.background = "linear-gradient(90deg, #e74c3c, #c0392b)";
-btnEntrar.style.boxShadow = "0 4px 15px rgba(231, 76, 60, 0.4)";
             const timer = setInterval(() => {
                 cont--;
                 btnEntrar.textContent = `AGUARDE... ${cont}s`;
@@ -1374,16 +1349,30 @@ comprarVipBtn.addEventListener("click", (e) => {
 });
 
 // Outros Eventos 
-document.getElementById('menuBtn').addEventListener('click', () => {
-    menu.classList.add('open');
-    document.getElementById('menuBtn').style.opacity = '0'; // Esconde o botão
-    document.getElementById('menuBtn').style.pointerEvents = 'none'; // Desativa o clique enquanto aberto
+// --- Lógica Corrigida para as 3 Barrinhas voltarem sempre ---
+const btnBarrinhas = document.getElementById('menuBtn');
+const menuLateral = document.getElementById('sideMenu');
+
+// Abre o menu e esconde as barrinhas
+btnBarrinhas.addEventListener('click', () => {
+    menuLateral.classList.add('open');
+    btnBarrinhas.style.display = 'none'; 
 });
 
-document.getElementById('closeBtn').addEventListener('click', () => {
-    menu.classList.remove('open');
-    document.getElementById('menuBtn').style.opacity = '1'; // Mostra o botão de volta
-    document.getElementById('menuBtn').style.pointerEvents = 'auto'; // Reativa o clique
+// Função para fechar o menu e fazer as barrinhas voltarem
+function fecharMenuTotalmente() {
+    menuLateral.classList.remove('open');
+    btnBarrinhas.style.display = 'block';
+}
+
+// Fecha no X
+document.getElementById('closeBtn').addEventListener('click', fecharMenuTotalmente);
+
+// Faz as 3 barrinhas voltarem ao clicar em QUALQUER link ou botão dentro do menu
+menuLateral.addEventListener('click', (e) => {
+    if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON') {
+        fecharMenuTotalmente();
+    }
 });
 
 document.querySelectorAll('.cat-btn').forEach(btn => {
