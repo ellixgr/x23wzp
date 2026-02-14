@@ -1110,9 +1110,10 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
 
     const btnContainer = card.querySelector('.btn-container-dinamico');
 
-    // --- LÓGICA CORRIGIDA (SEM ERRO DE RENDERIZAÇÃO) ---
+    // --- LÓGICA DEFINITIVA: VIP BLOQUEIA IMPULSO ---
     if (modoMeusGrupos && isOwner) {
-        if (vipAtivo && g.vipExpiraEm) {
+        if (vipAtivo) {
+            // SE É VIP, SÓ MOSTRA O TEMPO VIP (IMPULSO FICA ESCONDIDO)
             const btnVipStatus = document.createElement('div');
             btnVipStatus.className = "btn-falso-entrar";
             btnVipStatus.style.background = "linear-gradient(90deg, #ffd700, #ffae00)";
@@ -1121,7 +1122,7 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
             btnContainer.appendChild(btnVipStatus);
 
             const intervalVip = setInterval(() => {
-                const falta = g.vipExpiraEm - Date.now();
+                const falta = (g.vipExpiraEm || 0) - Date.now();
                 if (falta <= 0) {
                     btnVipStatus.innerHTML = "⭐ VIP EXPIRADO";
                     clearInterval(intervalVip);
@@ -1133,6 +1134,7 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
                 }
             }, 1000);
         } else {
+            // SE NÃO É VIP, MOSTRA O IMPULSO NORMAL
             const espera = 3600000; 
             const ultimo = g.ultimoImpulso || 0;
             const tempoPassado = Date.now() - ultimo;
@@ -1149,6 +1151,7 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
                         clearInterval(intervalImp);
                         btnTimer.innerHTML = "🚀 IMPULSIONAR AGORA";
                         btnTimer.style.background = "#f1c40f";
+                        btnTimer.style.cursor = "pointer";
                         btnTimer.onclick = () => impulsionarGrupo(g.key);
                     } else {
                         const min = Math.floor(r / 60000);
@@ -1160,12 +1163,14 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
                 const btnImp = document.createElement('div');
                 btnImp.className = "btn-falso-entrar";
                 btnImp.style.background = "#f1c40f";
+                btnImp.style.color = "#000";
                 btnImp.innerHTML = "🚀 IMPULSIONAR AGORA";
                 btnImp.onclick = () => impulsionarGrupo(g.key);
                 btnContainer.appendChild(btnImp);
             }
         }
     } else {
+        // BOTÃO ENTRAR (PARA QUEM NÃO É DONO OU NÃO ESTÁ EM MEUS GRUPOS)
         const btnEntrar = document.createElement('div');
         btnEntrar.className = "btn-falso-entrar";
         btnEntrar.innerHTML = "ENTRAR NO GRUPO";
