@@ -1065,55 +1065,85 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
 
     const btnContainer = card.querySelector('.btn-container-dinamico');
 
-    // --- LÓGICA DO BOTÃO DE IMPULSO COM CONTADOR ---
-    if (modoMeusGrupos && isOwner) {
-        const espera = 3600000; // 1 hora
-        const ultimo = g.ultimoImpulso || 0;
-        const tempoPassado = Date.now() - ultimo;
+// --- LÓGICA DO BOTÃO DE IMPULSO / VIP COM CONTAGEM REGRESSIVA ---
+if (modoMeusGrupos && isOwner) {
+    const btnContainer = card.querySelector('.btn-container-dinamico');
+    
+    // VERIFICA SE O GRUPO É VIP
+    if (vipAtivo && g.vipExpiraEm) {
+        const btnVipStatus = document.createElement('div');
+        btnVipStatus.className = "btn-falso-entrar";
+        btnVipStatus.style.background = "linear-gradient(90deg, #ffd700, #ffae00)";
+        btnVipStatus.style.color = "#000";
+        btnVipStatus.style.cursor = "default";
+        btnVipStatus.style.boxShadow = "0 0 10px rgba(255, 215, 0, 0.5)";
+        btnContainer.appendChild(btnVipStatus);
 
-        if (tempoPassado < espera) {
-            // Cria o botão cinza uma única vez
-            const btnTimer = document.createElement('div');
-            btnTimer.className = "btn-falso-entrar";
-            btnTimer.style.background = "#95a5a6";
-            btnTimer.style.cursor = "not-allowed";
-            btnContainer.appendChild(btnTimer);
+        // FUNÇÃO QUE ATUALIZA O TEXTO DO BOTÃO VIP
+        const atualizarContadorVip = () => {
+            const agora = Date.now();
+            const falta = g.vipExpiraEm - agora;
 
-            // Função para formatar MM:SS
-            const format = (ms) => {
-                const s = Math.floor(ms / 1000);
-                return `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
-            };
+            if (falta <= 0) {
+                btnVipStatus.innerHTML = "⭐ VIP EXPIRADO";
+                clearInterval(intervalVip);
+            } else {
+                const horas = Math.floor(falta / 3600000);
+                const minutos = Math.floor((falta % 3600000) / 60000);
+                // Exibe horas e minutos dentro do botão
+                btnVipStatus.innerHTML = `⭐ VIP: ${horas}h ${minutos}m`;
+            }
+        };
 
-            // Inicia o contador
-            const interval = setInterval(() => {
-                const restante = espera - (Date.now() - ultimo);
-                if (restante <= 0) {
-                    clearInterval(interval);
-                    // Quando acaba, vira o botão de impulsionar
-                    btnTimer.innerHTML = "🚀 IMPULSIONAR AGORA";
-                    btnTimer.style.background = "#f1c40f";
-                    btnTimer.style.cursor = "pointer";
-                    btnTimer.onclick = () => impulsionarGrupo(g.key);
-                } else {
-                    btnTimer.innerHTML = `AGUARDE ${format(restante)}`;
-                }
-            }, 1000);
-            
-            // Texto inicial para não vir vazio
-            btnTimer.innerHTML = `AGUARDE ${format(espera - tempoPassado)}`;
+        // Inicia o contador e roda a cada 1 minuto
+        const intervalVip = setInterval(atualizarContadorVip, 60000);
+        atualizarContadorVip(); // Roda uma vez imediato para não começar vazio
+        
+        return; // Sai da função para não mostrar o botão de impulsionar embaixo
+    }
 
-        } else {
-            // Botão livre para clicar
-            const btnImp = document.createElement('div');
-            btnImp.className = "btn-falso-entrar";
-            btnImp.style.background = "#f1c40f";
-            btnImp.style.color = "#000";
-            btnImp.innerHTML = "🚀 IMPULSIONAR AGORA";
-            btnImp.onclick = () => impulsionarGrupo(g.key);
-            btnContainer.appendChild(btnImp);
-        }
+    // SE NÃO FOR VIP, MOSTRA A LOGICA NORMAL DO IMPULSO (1 HORA)
+    const espera = 3600000; 
+    const ultimo = g.ultimoImpulso || 0;
+    const tempoPassado = Date.now() - ultimo;
+
+    if (tempoPassado < espera) {
+        const btnTimer = document.createElement('div');
+        btnTimer.className = "btn-falso-entrar";
+        btnTimer.style.background = "#95a5a6";
+        btnTimer.style.cursor = "not-allowed";
+        btnContainer.appendChild(btnTimer);
+
+        const format = (ms) => {
+            const s = Math.floor(ms / 1000);
+            return `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
+        };
+
+        const interval = setInterval(() => {
+            const restante = espera - (Date.now() - ultimo);
+            if (restante <= 0) {
+                clearInterval(interval);
+                btnTimer.innerHTML = "🚀 IMPULSIONAR AGORA";
+                btnTimer.style.background = "#f1c40f";
+                btnTimer.style.cursor = "pointer";
+                btnTimer.onclick = () => impulsionarGrupo(g.key);
+            } else {
+                btnTimer.innerHTML = `AGUARDE ${format(restante)}`;
+            }
+        }, 1000);
+        
+        btnTimer.innerHTML = `AGUARDE ${format(espera - tempoPassado)}`;
     } else {
+        const btnImp = document.createElement('div');
+        btnImp.className = "btn-falso-entrar";
+        btnImp.style.background = "#f1c40f";
+        btnImp.style.color = "#000";
+        btnImp.innerHTML = "🚀 IMPULSIONAR AGORA";
+        btnImp.onclick = () => impulsionarGrupo(g.key);
+        btnContainer.appendChild(btnImp);
+    }
+}
+ else {
         // Botão padrão de ENTRAR (com a sua lógica de anúncio e contador de 5s)
         const btnEntrar = document.createElement('div');
         btnEntrar.className = "btn-falso-entrar";
