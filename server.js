@@ -32,14 +32,12 @@ app.post('/login-abareta', (req, res) => {
     res.status(401).json({ autorizado: false });
 });
 
-// CORRIGIDO: Agora lê 'usado' e 'horas' como no seu print
 app.post('/validar-vip', async (req, res) => {
     const { codigo } = req.body;
     try {
         const snapshot = await db.ref(`codigos_vips/${codigo}`).once('value');
         if (snapshot.exists()) {
             const dados = snapshot.val();
-            // Verifica se usado é false (conforme seu print 1000024257.png)
             if (dados.usado === false) {
                 return res.json({ valido: true, duracaoHoras: dados.horas || 24 });
             }
@@ -48,7 +46,6 @@ app.post('/validar-vip', async (req, res) => {
     } catch (error) { res.status(500).json({ error: "Erro no servidor" }); }
 });
 
-// CORRIGIDO: Gera seguindo o padrão do seu banco (usado: false, horas: X)
 app.post('/gerar-vip', async (req, res) => {
     const { senha, duracaoHoras } = req.body;
     if (senha !== SENHA_MESTRE) return res.status(403).json({ error: "Senha incorreta" });
@@ -63,7 +60,7 @@ app.post('/gerar-vip', async (req, res) => {
     } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
-// --- SOLICITAÇÕES (MANTIDAS) ---
+// --- SOLICITAÇÕES CORRIGIDAS ---
 
 app.post('/salvar-grupo', async (req, res) => {
     const { nome, link, categoria, descricao, foto, dono, codigoVip } = req.body;
@@ -71,20 +68,28 @@ app.post('/salvar-grupo', async (req, res) => {
         let e_vip = false;
         let validade = null;
         
-        if (codigoVip) {
+        if (codigoVip && codigoVip.trim() !== "") {
             const vipSnap = await db.ref(`codigos_vips/${codigoVip}`).once('value');
             if (vipSnap.exists()) {
                 const vData = vipSnap.val();
                 if (vData.usado === false) {
+                    // QUEIMA O CÓDIGO NA HORA DO ENVIO
+                    await db.ref(`codigos_vips/${codigoVip}`).update({ usado: true });
                     e_vip = true;
-                    validade = Date.now() + (parseInt(vData.horas) * 3600000);
+                    // Define validade + 2 minutos de folga para não dar erro de fuso horário
+                    validade = Date.now() + (parseInt(vData.horas) * 3600000) + 120000;
+                } else {
+                    return res.status(400).json({ success: false, message: "Código já utilizado!" });
                 }
+            } else {
+                return res.status(400).json({ success: false, message: "Código inválido!" });
             }
         }
 
         const novaSolicitacaoRef = db.ref('solicitacoes').push();
         await novaSolicitacaoRef.set({
-            nome, link, categoria, descricao, foto, dono, codigoVip,
+            nome, link, categoria, descricao, foto, dono, 
+            codigoVip: e_vip ? codigoVip : null,
             vip: e_vip,
             vipAte: validade,
             status: "pendente", 
@@ -134,16 +139,17 @@ app.post('/editar-grupo', async (req, res) => {
 
         let dadosUpdate = { nome, link, descricao, categoria, foto };
 
-        // CORREÇÃO VIP NA EDIÇÃO: Bate com o padrão 'usado' e 'horas'
         if (codigoVip && codigoVip !== grupoData.vipCodigo) {
             const vipSnap = await db.ref(`codigos_vips/${codigoVip}`).once('value');
             if (vipSnap.exists()) {
                 const vData = vipSnap.val();
                 if (vData.usado === false) {
+                    // MARCA COMO USADO
                     await db.ref(`codigos_vips/${codigoVip}`).update({ usado: true });
                     dadosUpdate.vip = true;
                     dadosUpdate.vipCodigo = codigoVip;
-                    dadosUpdate.vipAte = Date.now() + (parseInt(vData.horas) * 3600000);
+                    // Validade + 2 minutos de folga
+                    dadosUpdate.vipAte = Date.now() + (parseInt(vData.horas) * 3600000) + 120000;
                 }
             }
         }
@@ -179,7 +185,8 @@ async function limparVipsVencidos() {
         if (snapshot.exists()) {
             snapshot.forEach((child) => {
                 const grupo = child.val();
-                if (grupo.vip === true && grupo.vipAte && agora > grupo.vipAte) {
+                // Só limpa se o tempo ATUAL for maior que a validade + uma margem de erro
+                if (grupo.vip === true && grupo.vipAte && agora > (grupo.vipAte + 5000)) {
                     db.ref(`grupos/${child.key}`).update({ vip: false, vipAte: null, vipCodigo: null });
                 }
             });
@@ -187,6 +194,7 @@ async function limparVipsVencidos() {
     } catch (e) { console.log("Erro na limpeza VIP:", e.message); }
 }
 
+// Limpa a cada 15 minutos
 setInterval(limparVipsVencidos, 15 * 60 * 1000);
 
 const PORT = process.env.PORT || 10000;
