@@ -3,115 +3,112 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🛡️ PAINEL abareta PRO - GESTÃO OFICIAL</title>
+    <title>🛡️ PAINEL abareta PRO - GESTÃO TOTAL</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --primary: #b78cff; --vip: #ffd700; --danger: #ff4d4d; --success: #2ecc71; --blue: #3498db; --boost: #f1c40f; }
+        :root { --primary: #b78cff; --vip: #ffd700; --danger: #ff4d4d; --success: #2ecc71; --blue: #3498db; --boost: #f1c40f; --dark: #2c3e50; }
         body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; display: flex; flex-direction: column; align-items: center; margin: 0; }
         
-        .stats-container { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; width: 100%; max-width: 500px; margin-bottom: 20px; }
-        .stat-card { background: white; padding: 12px; border-radius: 12px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        .stat-card h4 { margin: 0; font-size: 12px; color: #666; text-transform: uppercase; }
-        .stat-card p { margin: 5px 0 0; font-size: 18px; font-weight: bold; color: var(--primary); }
+        /* Dashboard Stats */
+        .stats-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; width: 100%; max-width: 600px; margin-bottom: 20px; }
+        .stat-card { background: white; padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-bottom: 4px solid var(--primary); }
+        .stat-card h4 { margin: 0; font-size: 11px; color: #888; text-transform: uppercase; }
+        .stat-card p { margin: 5px 0 0; font-size: 22px; font-weight: bold; color: var(--dark); }
 
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 500px; margin-bottom: 20px; box-sizing: border-box; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 600px; margin-bottom: 20px; box-sizing: border-box; }
         input, select, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; font-weight: bold; }
-        button { background: var(--primary); color: white; border: none; cursor: pointer; transition: 0.2s; }
-        button:hover { opacity: 0.9; }
-
-        .card-solicitacao { border-top: 5px solid var(--boost); background: #fffcf0; }
-        .btn-aprovar { background: var(--success) !important; flex: 1; }
-        .btn-reprovar { background: var(--danger) !important; flex: 1; }
-
-        #btn-copiar { background: #f0ebff; color: #7d5fff; border: 2px dashed var(--primary); margin-top: 15px; display: none; font-size: 18px; }
-        #area-abareta { display: none; width: 100%; max-width: 500px; }
         
-        .lista-codigos { background: #fdfdfd; border: 1px solid #eee; border-radius: 10px; margin-top: 10px; max-height: 150px; overflow-y: auto; }
-        .codigo-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #f5f5f5; font-size: 13px; }
-        .codigo-item i { color: var(--danger); cursor: pointer; }
+        button { background: var(--primary); color: white; border: none; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        button:hover { filter: brightness(0.9); }
 
-        .item-grupo { background: white; padding: 15px; margin-top: 12px; border-radius: 12px; border-left: 5px solid #ccc; position: relative; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .item-grupo.is-vip { border-left-color: var(--vip); background: #fffdf0; }
+        /* Estilo dos Itens de Lista */
+        .item-gestao { background: white; padding: 15px; margin-top: 12px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-left: 6px solid #ccc; }
+        .is-vip { border-left-color: var(--vip) !important; background: #fffdf0; }
+        .is-boosted { border-left-color: var(--success) !important; }
+
+        .badge { font-size: 10px; padding: 3px 7px; border-radius: 4px; font-weight: bold; text-transform: uppercase; margin-left: 5px; }
+        .badge-vip { background: var(--vip); color: #000; }
+        .badge-time { background: #eee; color: #666; }
+        .badge-moeda { background: #e8f5e9; color: #2e7d32; }
+
+        #area-abareta { display: none; width: 100%; max-width: 600px; }
+        .lista-scroll { max-height: 300px; overflow-y: auto; border: 1px solid #eee; border-radius: 10px; padding: 10px; background: #fafafa; }
         
-        .info-resumo { font-size: 11px; color: #555; margin-top: 8px; padding: 10px; background: #f1f4f9; border-radius: 8px; border: 1px solid #e0e6ed; }
-        .btns-acao-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px; margin-top: 10px; }
-        .btns-acao-grid button { padding: 8px 0; font-size: 10px; margin-top: 0; }
-
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 1000; }
-        .modal-content { background: white; padding: 20px; border-radius: 15px; width: 90%; max-width: 400px; }
-        label { font-size: 11px; font-weight: bold; color: #888; display: block; margin-top: 10px; }
+        .modal-content { background: white; padding: 25px; border-radius: 15px; width: 90%; max-width: 400px; }
+
+        .tag-info { font-size: 11px; color: #777; display: block; margin-top: 4px; }
     </style>
 </head>
 <body>
 
     <div id="login-box" class="card">
-        <h2 style="text-align:center; color:var(--primary)">Login abareta</h2>
-        <input type="email" id="user-input" placeholder="Seu E-mail Criado">
-        <input type="password" id="pass-input" placeholder="Sua Senha">
-        <button onclick="logar()">ENTRAR NO PAINEL</button>
+        <h2 style="text-align:center; color:var(--primary)">🛡️ Admin Login</h2>
+        <input type="email" id="user-input" placeholder="E-mail Admin">
+        <input type="password" id="pass-input" placeholder="Senha">
+        <button onclick="logar()"><i class="fa fa-shield-halved"></i> ACESSAR SISTEMA</button>
     </div>
 
     <div id="area-abareta">
-        <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 10px;">
-            <span id="label-user" style="font-size: 12px; color: #888;">Logado: <b>...</b></span>
-            <a href="#" onclick="logout()" style="color:red; font-size: 12px; text-decoration: none; font-weight: bold;">SAIR</a>
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 15px;">
+            <span id="label-user" style="font-size: 12px;">...</span>
+            <button onclick="logout()" style="width: auto; background: var(--danger); padding: 5px 15px; font-size: 11px;">SAIR</button>
         </div>
 
         <div class="stats-container">
-            <div class="stat-card"><h4>Grupos</h4><p id="count-total">0</p></div>
-            <div class="stat-card"><h4>VIPs</h4><p id="count-vip">0</p></div>
-            <div class="stat-card"><h4>Visitas</h4><p id="count-visitas">0</p></div>
+            <div class="stat-card"><h4>Visitas Totais</h4><p id="count-visitas">0</p></div>
+            <div class="stat-card"><h4>VIPs Ativos</h4><p id="count-vip">0</p></div>
+            <div class="stat-card"><h4>Grupos Ativos</h4><p id="count-total">0</p></div>
+            <div class="stat-card"><h4>Usuários</h4><p id="count-users">0</p></div>
         </div>
 
-        <h2 style="font-size: 16px; color: var(--boost); width: 100%; text-align: left;"><i class="fa fa-clock"></i> AGUARDANDO APROVAÇÃO</h2>
-        <div id="lista-solicitacoes" style="width: 100%; margin-bottom: 30px;"></div>
+        <h2 style="font-size: 16px; color: var(--dark);"><i class="fa fa-bell"></i> SOLICITAÇÕES PENDENTES</h2>
+        <div id="lista-solicitacoes" style="margin-bottom: 20px;"></div>
 
         <div class="card" style="border-top: 4px solid var(--success);">
-            <h3 style="margin:0; color: var(--success);"><i class="fa fa-coins"></i> Dar Moedas por ID</h3>
-            <input type="text" id="moeda-user-id" placeholder="ID do Usuário">
-            <input type="number" id="moeda-qtd" placeholder="Quantidade">
-            <button onclick="adicionarMoedasManual()" style="background:var(--success)">ENTREGAR MOEDAS</button>
+            <h3 style="margin:0;"><i class="fa fa-users"></i> Gestão de Usuários</h3>
+            <div id="lista-usuarios" class="lista-scroll" style="margin: 15px 0;">Carregando usuários...</div>
+            <div style="background: #f9f9f9; padding: 10px; border-radius: 10px;">
+                <label style="font-size:11px; font-weight:bold;">DAR MOEDAS POR ID:</label>
+                <input type="text" id="moeda-user-id" placeholder="ID do Usuário">
+                <input type="number" id="moeda-qtd" placeholder="Qtd Moedas">
+                <button onclick="adicionarMoedasManual()" style="background:var(--success)">ENTREGAR MOEDAS</button>
+            </div>
         </div>
 
-        <div class="card">
-            <h3 style="margin:0">⭐ Códigos VIP</h3>
+        <div class="card" style="border-top: 4px solid var(--vip);">
+            <h3><i class="fa fa-star"></i> Gerador VIP</h3>
             <select id="tempo-vip">
-                <option value="2">2 Horas</option>
-                <option value="24">24 Horas</option>
-                <option value="48">48 Horas</option>
+                <option value="24">24 Horas (1 Dia)</option>
+                <option value="48">48 Horas (2 Dias)</option>
+                <option value="168">168 Horas (7 Dias)</option>
             </select>
-            <button onclick="gerarCodigo()">GERAR NOVO CÓDIGO</button>
-            <button id="btn-copiar" onclick="copiarCodigo()"></button>
-            <div id="lista-codigos-ativos" class="lista-codigos">Carregando...</div>
+            <button onclick="gerarCodigo()" style="background: var(--dark)">GERAR CÓDIGO</button>
+            <button id="btn-copiar" onclick="copiarCodigo()" style="display:none; background:#fff; color:var(--dark); border: 2px dashed var(--vip);"></button>
+            <label style="display:block; margin-top:15px; font-size:11px;">CÓDIGOS NÃO USADOS:</label>
+            <div id="lista-codigos-ativos" class="lista-scroll"></div>
         </div>
 
-        <div class="card" style="border-top: 4px solid #ff4500;">
-            <h3 style="margin:0; color: #ff4500;"><i class="fa fa-video"></i> Vídeos Shopee</h3>
-            <input type="text" id="novo-video-link" placeholder="Link Shopee">
-            <button onclick="adicionarVideo()" style="background:#ff4500">ADICIONAR VÍDEO</button>
-            <div id="lista-videos-shopee" class="lista-codigos">Carregando...</div>
-        </div>
-
-        <h2 style="font-size: 16px; color: #555; width: 100%; text-align: left;">GRUPOS ATIVOS NO SITE</h2>
-        <div id="lista-grupos" style="width: 100%;"></div>
+        <h2 style="font-size: 16px; color: var(--dark);"><i class="fa fa-list"></i> GRUPOS NO SITE</h2>
+        <div id="lista-grupos"></div>
     </div>
 
     <div id="modalEdicao" class="modal">
         <div class="modal-content">
             <h3>Editar Grupo</h3>
-            <label>NOME</label><input type="text" id="edit-nome">
-            <label>LINK WHATSAPP</label><input type="text" id="edit-link">
-            <label>LINK FOTO</label><input type="text" id="edit-foto">
+            <input type="text" id="edit-nome" placeholder="Nome">
+            <input type="text" id="edit-link" placeholder="Link">
+            <input type="text" id="edit-foto" placeholder="URL Foto">
             <div style="display: flex; gap: 10px; margin-top: 20px;">
                 <button onclick="salvarEdicao()" style="background:var(--success)">SALVAR</button>
-                <button onclick="fecharModal()" style="background:#888">CANCELAR</button>
+                <button onclick="fecharModal()" style="background:#888">VOLTAR</button>
             </div>
         </div>
     </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getDatabase, ref, onValue, remove, update, get, push, set } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+    import { getDatabase, ref, onValue, remove, update, get, set, push } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
     const firebaseConfig = {
@@ -124,141 +121,203 @@
     const db = getDatabase(app);
     const auth = getAuth(app);
 
-    let gruposCache = {};
     let idSendoEditado = null;
 
-    window.logar = async function() {
-        const email = document.getElementById('user-input').value;
-        const pass = document.getElementById('pass-input').value;
-        try { await signInWithEmailAndPassword(auth, email, pass); } catch (e) { alert("Erro de login."); }
-    }
+    // Login
+    window.logar = async () => {
+        const e = document.getElementById('user-input').value;
+        const p = document.getElementById('pass-input').value;
+        try { await signInWithEmailAndPassword(auth, e, p); } catch { alert("Acesso Negado."); }
+    };
+    window.logout = () => signOut(auth);
 
     onAuthStateChanged(auth, (user) => {
         if (user) {
-            document.getElementById('label-user').innerHTML = `Logado: <b>${user.email}</b>`;
             document.getElementById('login-box').style.display = 'none';
             document.getElementById('area-abareta').style.display = 'block';
-            carregarTudo();
+            document.getElementById('label-user').innerText = `Admin: ${user.email}`;
+            iniciarMonitoramento();
         } else {
             document.getElementById('login-box').style.display = 'block';
             document.getElementById('area-abareta').style.display = 'none';
         }
     });
 
-    function carregarTudo() {
-        // Solicitações (Sem filtro de status para garantir que tudo apareça e possa ser apagado)
-        onValue(ref(db, 'solicitacoes'), (snapshot) => {
-            const lista = document.getElementById('lista-solicitacoes');
-            lista.innerHTML = "";
-            const dados = snapshot.val();
-            if (!dados) { lista.innerHTML = "<p style='font-size:12px; color:#999'>Vazio.</p>"; return; }
-
-            for (const key in dados) {
-                const s = dados[key];
-                const div = document.createElement('div');
-                div.className = "item-grupo card-solicitacao";
-                div.innerHTML = `
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        <img src="${s.foto || 'https://via.placeholder.com/50'}" style="width:45px; height:45px; border-radius:8px; object-fit:cover;">
-                        <div><b>${s.nome || 'Sem nome'}</b></div>
-                    </div>
-                    <div class="info-resumo">Dono: ${s.dono} <br> Link: ${s.link}</div>
-                    <div style="display:flex; gap:5px; margin-top:10px;">
-                        <button class="btn-aprovar" onclick="gerenciarSolicitacao('${key}', 'aprovado')">APROVAR</button>
-                        <button class="btn-reprovar" onclick="gerenciarSolicitacao('${key}', 'reprovar')">REPROVAR</button>
-                    </div>`;
-                lista.appendChild(div);
-            }
-        });
-
-        // Grupos Ativos e Stats
-        onValue(ref(db, '/'), (snapshot) => {
-            const data = snapshot.val() || {};
-            const lista = document.getElementById('lista-grupos');
-            lista.innerHTML = "";
-            gruposCache = data.grupos || {};
-            const agora = Date.now();
-            let total = 0, vips = 0;
-
-            for (const key in gruposCache) {
-                const g = gruposCache[key]; total++;
-                const isVip = g.vip === true && g.vipAte > agora;
-                if(isVip) vips++;
-                
-                const div = document.createElement('div');
-                div.className = `item-grupo ${isVip ? 'is-vip' : ''}`;
-                div.innerHTML = `
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        <img src="${g.foto || 'https://via.placeholder.com/50'}" style="width:40px; height:40px; border-radius:5px; object-fit:cover;">
-                        <b>${g.nome}</b>
-                    </div>
-                    <div class="btns-acao-grid">
-                        <button style="background:var(--blue)" onclick="abrirModal('${key}')">EDITAR</button>
-                        <button style="background:var(--danger)" onclick="excluirGrp('${key}')">APAGAR</button>
-                    </div>`;
-                lista.appendChild(div);
-            }
-            document.getElementById('count-total').innerText = total;
-            document.getElementById('count-vip').innerText = vips;
-            document.getElementById('count-visitas').innerText = data.visitas || 0;
-
-            renderListaSimples('lista-videos-shopee', data.videos_shopee, 'apagarVideo', 'link');
-            renderListaSimples('lista-codigos-ativos', data.codigos_vips, 'apagarCod', null);
+    function iniciarMonitoramento() {
+        // Stats e Grupos
+        onValue(ref(db, '/'), (snap) => {
+            const data = snap.val() || {};
+            renderStats(data);
+            renderSolicitacoes(data.solicitacoes);
+            renderGrupos(data.grupos);
+            renderUsuarios(data.usuarios);
+            renderCodigos(data.codigos_vips);
         });
     }
 
-    window.gerenciarSolicitacao = async (id, novoStatus) => {
-        const sRef = ref(db, `solicitacoes/${id}`);
-        const snap = await get(sRef);
-        if (!snap.exists()) return;
+    function renderStats(data) {
+        const grupos = data.grupos || {};
+        let vips = 0, total = 0;
+        const agora = Date.now();
+        
+        Object.values(grupos).forEach(g => {
+            total++;
+            if (g.vip && g.vipAte > agora) vips++;
+        });
 
-        if (novoStatus === 'aprovado') {
+        document.getElementById('count-total').innerText = total;
+        document.getElementById('count-vip').innerText = vips;
+        document.getElementById('count-visitas').innerText = data.visitas || 0;
+        document.getElementById('count-users').innerText = Object.keys(data.usuarios || {}).length;
+    }
+
+    function renderSolicitacoes(sol) {
+        const container = document.getElementById('lista-solicitacoes');
+        container.innerHTML = sol ? "" : "<p style='font-size:12px; color:#999'>Nenhuma pendência.</p>";
+        for (let key in sol) {
+            const s = sol[key];
+            const div = document.createElement('div');
+            div.className = "item-gestao";
+            div.style.borderLeftColor = "var(--boost)";
+            div.innerHTML = `
+                <div style="display:flex; gap:10px; align-items:center">
+                    <img src="${s.foto}" style="width:40px;height:40px;border-radius:50%">
+                    <div><b>${s.nome}</b><span class="tag-info">Dono: ${s.dono}</span></div>
+                </div>
+                <div style="display:flex; gap:5px; margin-top:10px">
+                    <button onclick="decidir('${key}', true)" style="background:var(--success); flex:1">APROVAR</button>
+                    <button onclick="decidir('${key}', false)" style="background:var(--danger); flex:1">REPROVAR</button>
+                </div>
+            `;
+            container.appendChild(div);
+        }
+    }
+
+    window.decidir = async (id, aprovar) => {
+        const sRef = ref(db, `solicitacoes/${id}`);
+        if (aprovar) {
+            const snap = await get(sRef);
             await set(ref(db, `grupos/${id}`), { ...snap.val(), status: "aprovado", cliques: 0, criadoEm: Date.now() });
         }
-        await remove(sRef); // Apaga da lista de solicitações sempre
+        await remove(sRef);
     };
 
-    function renderListaSimples(elementId, obj, funcName, field) {
-        const el = document.getElementById(elementId); el.innerHTML = "";
-        if(!obj) { el.innerHTML = "<p style='padding:10px; font-size:10px'>Vazio</p>"; return; }
-        for(let id in obj) {
-            const txt = field ? (obj[id][field] ? obj[id][field].substring(0,25) : id) : id;
-            el.innerHTML += `<div class="codigo-item"><span>${txt}</span><i class="fa fa-trash" onclick="${funcName}('${id}')"></i></div>`;
+    function renderGrupos(grupos) {
+        const container = document.getElementById('lista-grupos');
+        container.innerHTML = "";
+        const agora = Date.now();
+
+        for (let key in grupos) {
+            const g = grupos[key];
+            const isVip = g.vip && g.vipAte > agora;
+            const tempoVip = isVip ? Math.round((g.vipAte - agora) / 3600000) : 0;
+            
+            // Cálculo do Impulso (1 hora de recarga)
+            const prontoImpulso = (agora - (g.ultimoImpulso || 0)) > 3600000;
+            const tempoProxImpulso = prontoImpulso ? "LIBERADO" : Math.round((3600000 - (agora - g.ultimoImpulso)) / 60000) + " min";
+
+            const div = document.createElement('div');
+            div.className = `item-gestao ${isVip ? 'is-vip' : ''}`;
+            div.innerHTML = `
+                <div style="display:flex; justify-content:space-between">
+                    <b>${g.nome}</b>
+                    <div>
+                        ${isVip ? `<span class="badge badge-vip">VIP: ${tempoVip}h</span>` : ''}
+                        <span class="badge badge-time"><i class="fa fa-bolt"></i> ${tempoProxImpulso}</span>
+                    </div>
+                </div>
+                <span class="tag-info">ID: ${key} | Cliques: ${g.cliques || 0}</span>
+                <div style="display:flex; gap:5px; margin-top:10px">
+                    <button onclick="abrirModal('${key}')" style="background:var(--blue); font-size:10px; padding:5px">EDITAR</button>
+                    <button onclick="excluirGrp('${key}')" style="background:var(--danger); font-size:10px; padding:5px">APAGAR</button>
+                </div>
+            `;
+            container.appendChild(div);
         }
     }
 
-    // Funções de Ação
-    window.adicionarMoedasManual = async () => {
-        const id = document.getElementById('moeda-user-id').value.trim();
-        const qtd = parseInt(document.getElementById('moeda-qtd').value);
-        const uRef = ref(db, 'usuarios/' + id);
-        const s = await get(uRef);
-        let m = s.exists() ? (s.val().moedas || 0) : 0;
-        await update(uRef, { moedas: m + qtd });
-        alert("Moedas enviadas!");
-    };
+    function renderUsuarios(users) {
+        const container = document.getElementById('lista-usuarios');
+        container.innerHTML = "";
+        for (let id in users) {
+            const u = users[id];
+            container.innerHTML += `
+                <div style="font-size:11px; padding:8px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center">
+                    <span>ID: ...${id.slice(-6)}</span>
+                    <span class="badge badge-moeda">${u.moedas || 0} Moedas</span>
+                    <button onclick="copiarID('${id}')" style="width:auto; padding:2px 8px; font-size:9px">COPIAR ID</button>
+                </div>`;
+        }
+    }
 
+    function renderCodigos(cods) {
+        const el = document.getElementById('lista-codigos-ativos');
+        el.innerHTML = "";
+        for (let c in cods) {
+            if (!cods[c].usado) {
+                el.innerHTML += `<div style="font-size:11px; padding:5px; display:flex; justify-content:space-between">
+                    <span>${c} (${cods[c].horas}h)</span>
+                    <i class="fa fa-trash" style="color:red; cursor:pointer" onclick="apagarCod('${c}')"></i>
+                </div>`;
+            }
+        }
+    }
+
+    // Ações
+    window.copiarID = (id) => { navigator.clipboard.writeText(id); alert("ID Copiado!"); };
+    window.apagarCod = (id) => remove(ref(db, `codigos_vips/${id}`));
+    window.excluirGrp = (id) => confirm("Apagar este grupo?") && remove(ref(db, `grupos/${id}`));
+    
     window.gerarCodigo = async () => {
         const h = parseInt(document.getElementById('tempo-vip').value);
         const cod = "VIP-" + Math.random().toString(36).substring(2, 8).toUpperCase();
-        await update(ref(db, 'codigos_vips/' + cod), { horas: h, usado: false });
-        document.getElementById('btn-copiar').innerText = cod;
-        document.getElementById('btn-copiar').style.display = "block";
+        await set(ref(db, `codigos_vips/${cod}`), { horas: h, usado: false, criadoEm: Date.now() });
+        const btn = document.getElementById('btn-copiar');
+        btn.innerText = "COPIAR: " + cod;
+        btn.style.display = "block";
     };
 
-    window.copiarCodigo = () => { navigator.clipboard.writeText(document.getElementById('btn-copiar').innerText); alert("Copiado!"); };
-    window.adicionarVideo = () => {
-        const link = document.getElementById('novo-video-link').value;
-        if(link) push(ref(db, 'videos_shopee'), { link: link }).then(() => document.getElementById('novo-video-link').value="");
+    window.copiarCodigo = () => {
+        const txt = document.getElementById('btn-copiar').innerText.split(": ")[1];
+        navigator.clipboard.writeText(txt);
+        alert("Código VIP Copiado!");
     };
 
-    window.abrirModal = (id) => { idSendoEditado = id; const g = gruposCache[id]; document.getElementById('edit-nome').value = g.nome; document.getElementById('edit-link').value = g.link; document.getElementById('edit-foto').value = g.foto||""; document.getElementById('modalEdicao').style.display='flex'; };
-    window.salvarEdicao = async () => { await update(ref(db, 'grupos/'+idSendoEditado), { nome: document.getElementById('edit-nome').value, link: document.getElementById('edit-link').value, foto: document.getElementById('edit-foto').value }); fecharModal(); };
-    window.fecharModal = () => document.getElementById('modalEdicao').style.display='none';
-    window.excluirGrp = (id) => confirm("Apagar grupo?") && remove(ref(db, 'grupos/'+id));
-    window.apagarVideo = (id) => remove(ref(db, 'videos_shopee/'+id));
-    window.apagarCod = (id) => remove(ref(db, 'codigos_vips/'+id));
-    window.logout = () => signOut(auth);
+    window.adicionarMoedasManual = async () => {
+        const id = document.getElementById('moeda-user-id').value.trim();
+        const qtd = parseInt(document.getElementById('moeda-qtd').value);
+        if(!id || isNaN(qtd)) return alert("Preencha tudo!");
+        
+        const uRef = ref(db, `usuarios/${id}`);
+        const snap = await get(uRef);
+        let moedasAtuais = snap.exists() ? (snap.val().moedas || 0) : 0;
+        
+        await update(uRef, { moedas: moedasAtuais + qtd });
+        alert("Moedas entregues!");
+    };
+
+    // Modal
+    window.abrirModal = async (id) => {
+        idSendoEditado = id;
+        const snap = await get(ref(db, `grupos/${id}`));
+        const g = snap.val();
+        document.getElementById('edit-nome').value = g.nome;
+        document.getElementById('edit-link').value = g.link;
+        document.getElementById('edit-foto').value = g.foto;
+        document.getElementById('modalEdicao').style.display = 'flex';
+    };
+
+    window.fecharModal = () => document.getElementById('modalEdicao').style.display = 'none';
+
+    window.salvarEdicao = async () => {
+        await update(ref(db, `grupos/${idSendoEditado}`), {
+            nome: document.getElementById('edit-nome').value,
+            link: document.getElementById('edit-link').value,
+            foto: document.getElementById('edit-foto').value
+        });
+        fecharModal();
+    };
+
 </script>
 </body>
 </html>
