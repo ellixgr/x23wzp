@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Minha Conta - Ganhar Moedas</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #ebebeb; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .container { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 380px; text-align: center; position: relative; }
+        
+        /* Caixa de Moedas */
+        .moedas-box { background: #f0e6ff; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 2px solid #b78cff; }
+        .moedas-count { font-size: 32px; font-weight: bold; color: #b78cff; }
+        
+        /* Botão */
+        .btn-video { background: #25d366; color: white; border: none; padding: 15px 20px; border-radius: 12px; font-weight: bold; font-size: 16px; cursor: pointer; width: 100%; transition: 0.3s; text-transform: uppercase; box-shadow: 0 4px 0 #128c7e; }
+        .btn-video:active { box-shadow: none; transform: translateY(4px); }
+        .btn-video:disabled { background: #ccc; box-shadow: none; cursor: not-allowed; transform: none; }
+        
+        .timer { margin-top: 10px; font-weight: bold; color: #e74c3c; display: none; }
+        .aviso { font-size: 12px; color: #666; margin-top: 15px; line-height: 1.4; }
+        #btn-voltar { margin-top: 20px; text-decoration: none; color: #b78cff; font-weight: bold; font-size: 14px; }
+
+        /* MODAL PERSONALIZADO (A ALERTA BONITA) */
+        #custom-alert { 
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.6); z-index: 999; align-items: center; justify-content: center; 
+        }
+        .modal-content { 
+            background: white; padding: 20px; border-radius: 20px; width: 80%; max-width: 300px; 
+            text-align: center; animation: scaleUp 0.3s ease;
+        }
+        @keyframes scaleUp { from {transform: scale(0.8); opacity: 0;} to {transform: scale(1); opacity: 1;} }
+        .modal-content h3 { margin: 0 0 10px; color: #333; }
+        .modal-content p { color: #666; margin-bottom: 20px; }
+        .modal-btn { background: #b78cff; color: white; border: none; padding: 10px 25px; border-radius: 10px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div id="custom-alert">
+    <div class="modal-content">
+        <h3 id="modal-title">Aviso</h3>
+        <p id="modal-msg"></p>
+        <button class="modal-btn" onclick="closeModal()">OK</button>
+    </div>
+</div>
+
+<div class="container">
+    <h2 style="margin-bottom: 10px;">Minhas Moedas</h2>
+    <div class="moedas-box">
+        <div id="saldo" class="moedas-count">...</div>
+        <p style="font-size: 12px; color: #666;">Moedas acumuladas hoje</p>
+    </div>
+    <button id="btn-video" class="btn-video" onclick="iniciarVideo()">🎬 VER VÍDEO (+1 MOEDA)</button>
+    <div id="timer-text" class="timer">Aguarde <span id="segundos">15</span>s para ganhar...</div>
+    <div class="aviso">
+        ⚠️ Limite diário: <b>20 moedas</b>.<br>
+        Ao completar 20 moedas, troque por VIP no menu.
+    </div>
+</div>
+<a href="index.html" id="btn-voltar">⬅️ Voltar aos Grupos</a>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getDatabase, ref, onValue, get } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDsrYjO2yVTemKqwmJRzNjh5sfaMalPqhE",
+        databaseURL: "https://cliques-4a2c1-default-rtdb.firebaseio.com",
+        projectId: "cliques-4a2c1",
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    let usuarioID = localStorage.getItem('usuarioID') || 'user_' + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem('usuarioID', usuarioID);
+
+    // Saldo em tempo real
+    onValue(ref(db, `usuarios/${usuarioID}/moedas`), (snap) => {
+        document.getElementById('saldo').innerText = snap.val() || 0;
+    });
+
+    // Função para mostrar a Alerta Bonita
+    window.showAlert = function(titulo, msg) {
+        document.getElementById('modal-title').innerText = titulo;
+        document.getElementById('modal-msg').innerText = msg;
+        document.getElementById('custom-alert').style.display = 'flex';
+    };
+
+    window.closeModal = function() {
+        document.getElementById('custom-alert').style.display = 'none';
+    };
+
+    window.iniciarVideo = async function() {
+        const btn = document.getElementById('btn-video');
+        const timerText = document.getElementById('timer-text');
+        const segSpan = document.getElementById('segundos');
+
+        btn.disabled = true;
+        btn.innerText = "SORTEANDO VÍDEO...";
+
+        try {
+            // 1. BUSCA LISTA DE VÍDEOS ALEATÓRIOS DO FIREBASE
+            const snapshot = await get(ref(db, 'videos_shopee'));
+            let linkFinal = 'https://br.shp.ee/ehaxr08?smtt=0.0.9'; // Fallback
+
+            if (snapshot.exists()) {
+                const lista = [];
+                snapshot.forEach(child => {
+                    const data = child.val();
+                    // Aceita link direto ou objeto {link: "..."}
+                    const url = typeof data === 'string' ? data : data.link;
+                    if (url) lista.push(url);
+                });
+                if (lista.length > 0) {
+                    linkFinal = lista[Math.floor(Math.random() * lista.length)];
+                }
+            }
+
+            // 2. ABRE O VÍDEO
+            const win = window.open(linkFinal, '_blank');
+            if (!win) {
+                showAlert("⚠️ Bloqueio", "Libere pop-ups ou clique novamente para abrir o vídeo.");
+                window.location.href = linkFinal; // Fallback forçado
+                return;
+            }
+
+            // 3. TIMER
+            timerText.style.display = 'block';
+            let tempo = 15;
+            const intv = setInterval(() => {
+                tempo--;
+                segSpan.innerText = tempo;
+                if (tempo <= 0) {
+                    clearInterval(intv);
+                    timerText.style.display = 'none';
+                    btn.innerText = "⌛ VALIDANDO...";
+                    validarNoServidor();
+                }
+            }, 1000);
+
+        } catch (e) {
+            showAlert("❌ Erro", "Não foi possível carregar os vídeos.");
+            btn.disabled = false;
+        }
+    };
+
+    async function validarNoServidor() {
+        const btn = document.getElementById('btn-video');
+        try {
+            const res = await fetch("https://x23wzp.onrender.com/ganhar-moeda", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ usuarioID: usuarioID })
+            });
+            const data = await res.json();
+            
+            if (data.success) {
+                showAlert("✅ Sucesso", "Você ganhou +1 moeda!");
+            } else {
+                showAlert("⚠️ Limite", data.message || "Tente novamente amanhã.");
+            }
+        } catch (e) {
+            showAlert("😴Servidor", "Erro Tente de novo em 30 segundos.");
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "🎬 VER VÍDEO (+1 MOEDA)";
+        }
+    }
+</script>
+</body>
+</html>
