@@ -13,8 +13,8 @@
         
         .btn-video { background: #25d366; color: white; border: none; padding: 15px 20px; border-radius: 12px; font-weight: bold; font-size: 16px; cursor: pointer; width: 100%; transition: 0.3s; text-transform: uppercase; box-shadow: 0 4px 0 #128c7e; margin-bottom: 10px; }
         .btn-video:active { box-shadow: none; transform: translateY(4px); }
+        .btn-video:disabled { background: #ccc; box-shadow: none; cursor: not-allowed; }
         
-        /* BOTÃO VIP */
         .btn-vip { background: #b78cff; color: white; border: none; padding: 15px 20px; border-radius: 12px; font-weight: bold; font-size: 16px; cursor: pointer; width: 100%; transition: 0.3s; text-transform: uppercase; box-shadow: 0 4px 0 #7a56c2; display: none; }
         .btn-vip:active { box-shadow: none; transform: translateY(4px); }
 
@@ -31,11 +31,10 @@
             text-align: center; animation: scaleUp 0.3s ease;
         }
         @keyframes scaleUp { from {transform: scale(0.8); opacity: 0;} to {transform: scale(1); opacity: 1;} }
-        .modal-btn { background: #b78cff; color: white; border: none; padding: 10px 25px; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        .modal-btn { background: #b78cff; color: white; border: none; padding: 10px 25px; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 15px; }
 
-        /* ID NO FUNDO DO SITE PORRA */
-        .footer-spacer { flex-grow: 1; }
         .user-id-footer { margin-top: 50px; padding: 20px; font-size: 10px; color: #aaa; font-family: monospace; text-align: center; width: 100%; }
+        .footer-spacer { flex-grow: 1; }
     </style>
 </head>
 <body>
@@ -43,7 +42,7 @@
 <div id="custom-alert">
     <div class="modal-content">
         <h3 id="modal-title">Aviso</h3>
-        <p id="modal-msg"></p>
+        <p id="modal-msg" style="white-space: pre-line;"></p>
         <button class="modal-btn" onclick="closeModal()">OK</button>
     </div>
 </div>
@@ -51,12 +50,11 @@
 <div class="container">
     <h2 style="margin-bottom: 10px;">Minhas Moedas</h2>
     <div class="moedas-box">
-        <div id="saldo" class="moedas-count">0</div>
+        <div id="saldo" class="moedas-count">...</div>
         <p style="font-size: 12px; color: #666;">Moedas acumuladas hoje</p>
     </div>
     
     <button id="btn-video" class="btn-video" onclick="iniciarVideo()">🎬 VER VÍDEO (+1 MOEDA)</button>
-    
     <button id="btn-resgatar" class="btn-vip" onclick="resgatarVip()">💎 RESGATAR VIP (30 MOEDAS)</button>
     
     <div id="timer-text" class="timer">Aguarde <span id="segundos">15</span>s para ganhar...</div>
@@ -69,41 +67,39 @@
 
 <a href="index.html" id="btn-voltar">⬅️ Voltar aos Grupos</a>
 
-<div class="footer-spacer"></div> <div class="user-id-footer">
+<div class="footer-spacer"></div> 
+<div class="user-id-footer">
     ID da Conta: <span id="display-id">carregando...</span>
 </div>
 
 <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getDatabase, ref, onValue, get, set, update } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
-
-    const firebaseConfig = {
-        apiKey: "AIzaSyDsrYjO2yVTemKqwmJRzNjh5sfaMalPqhE",
-        databaseURL: "https://cliques-4a2c1-default-rtdb.firebaseio.com",
-        projectId: "cliques-4a2c1",
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-
+    const API_URL = "https://x23wzp.onrender.com";
+    
     let usuarioID = localStorage.getItem('usuarioID') || 'user_' + Math.random().toString(36).substr(2, 9);
     localStorage.setItem('usuarioID', usuarioID);
     document.getElementById('display-id').innerText = usuarioID;
 
     let moedasAtuais = 0;
 
-    // Escutar moedas e mostrar botão VIP
-    onValue(ref(db, `usuarios/${usuarioID}/moedas`), (snap) => {
-        moedasAtuais = snap.val() || 0;
-        document.getElementById('saldo').innerText = moedasAtuais;
-        
-        const btnVip = document.getElementById('btn-resgatar');
-        if (moedasAtuais >= 30) {
-            btnVip.style.display = 'block';
-        } else {
-            btnVip.style.display = 'none';
+    // --- FUNÇÃO PARA BUSCAR STATUS ATUALIZADO ---
+    async function atualizarStatus() {
+        try {
+            const res = await fetch(`${API_URL}/status-usuario/${usuarioID}`);
+            const data = await res.json();
+            if (data.success) {
+                moedasAtuais = data.moedas;
+                document.getElementById('saldo').innerText = moedasAtuais;
+                
+                // Mostrar/Esconder botão VIP
+                document.getElementById('btn-resgatar').style.display = (moedasAtuais >= 30) ? 'block' : 'none';
+            }
+        } catch (e) {
+            console.error("Erro ao buscar moedas");
         }
-    });
+    }
+
+    // Inicializa o saldo
+    atualizarStatus();
 
     window.showAlert = function(titulo, msg) {
         document.getElementById('modal-title').innerText = titulo;
@@ -119,94 +115,83 @@
         if(moedasAtuais >= 30) {
             return showAlert("⚠️ Limite", "Você já atingiu o limite de 30 moedas!");
         }
+
         const btn = document.getElementById('btn-video');
         const timerText = document.getElementById('timer-text');
         const segSpan = document.getElementById('segundos');
 
         btn.disabled = true;
-        btn.innerText = "SORTEANDO VÍDEO...";
+        btn.innerText = "ABRINDO VÍDEO...";
 
-        try {
-            const snapshot = await get(ref(db, 'videos_shopee'));
-            let linkFinal = 'https://br.shp.ee/ehaxr08?smtt=0.0.9';
+        // Link padrão (já que o Firebase está blindado)
+        window.open('https://br.shp.ee/ehaxr08?smtt=0.0.9', '_blank');
 
-            if (snapshot.exists()) {
-                const lista = [];
-                snapshot.forEach(child => {
-                    const data = child.val();
-                    const url = typeof data === 'string' ? data : data.link;
-                    if (url) lista.push(url);
-                });
-                if (lista.length > 0) linkFinal = lista[Math.floor(Math.random() * lista.length)];
+        timerText.style.display = 'block';
+        let tempo = 15;
+        const intv = setInterval(() => {
+            tempo--;
+            segSpan.innerText = tempo;
+            if (tempo <= 0) {
+                clearInterval(intv);
+                timerText.style.display = 'none';
+                btn.innerText = "⌛ VALIDANDO...";
+                validarNoServidor();
             }
-
-            window.open(linkFinal, '_blank');
-
-            timerText.style.display = 'block';
-            let tempo = 15;
-            const intv = setInterval(() => {
-                tempo--;
-                segSpan.innerText = tempo;
-                if (tempo <= 0) {
-                    clearInterval(intv);
-                    timerText.style.display = 'none';
-                    btn.innerText = "⌛ VALIDANDO...";
-                    validarNoServidor();
-                }
-            }, 1000);
-        } catch (e) {
-            btn.disabled = false;
-        }
+        }, 1000);
     };
 
     async function validarNoServidor() {
         const btn = document.getElementById('btn-video');
         try {
-            const res = await fetch("https://x23wzp.onrender.com/ganhar-moeda", {
+            const res = await fetch(`${API_URL}/ganhar-moeda`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ usuarioID: usuarioID })
             });
             const data = await res.json();
-            if (data.success) showAlert("✅ Sucesso", "Você ganhou +1 moeda!");
+            if (data.success) {
+                showAlert("✅ Sucesso", "Você ganhou +1 moeda!");
+                atualizarStatus(); // Atualiza o contador
+            } else {
+                showAlert("⚠️ Calma", data.message || "Tente novamente em breve.");
+            }
         } catch (e) {
-            showAlert("😴 Servidor", "Erro. Tente de novo.");
+            showAlert("❌ Erro", "Servidor fora do ar.");
         } finally {
             btn.disabled = false;
             btn.innerText = "🎬 VER VÍDEO (+1 MOEDA)";
         }
     }
 
-window.resgatarVip = async function() {
-    if (moedasAtuais < 30) return;
-    
-    const btn = document.getElementById('btn-resgatar');
-    btn.disabled = true;
-    btn.innerText = "GERANDO PELO SERVIDOR...";
+    window.resgatarVip = async function() {
+        if (moedasAtuais < 30) return;
+        
+        const btn = document.getElementById('btn-resgatar');
+        btn.disabled = true;
+        btn.innerText = "GERANDO CÓDIGO...";
 
-    try {
-        const res = await fetch("https://x23wzp.onrender.com/resgatar-vip-server", {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ usuarioID: usuarioID })
-        });
-        
-        const data = await res.json();
-        
-        if (data.success) {
-            showAlert("💎 VIP GERADO!", `CÓDIGO: ${data.codigo}\nCopie e use no seu grupo!`);
-        } else {
-            showAlert("❌ Erro", data.message || "Falha no resgate.");
+        try {
+            const res = await fetch(`${API_URL}/resgatar-vip-server`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ usuarioID: usuarioID })
+            });
+            
+            const data = await res.json();
+            
+            if (data.success) {
+                showAlert("💎 VIP GERADO!", `CÓDIGO: ${data.codigo}\n\nCopie este código agora e use no seu grupo!`);
+                atualizarStatus(); // Zera o contador na tela
+            } else {
+                showAlert("❌ Erro", data.message || "Falha no resgate.");
+            }
+        } catch (e) {
+            showAlert("❌ Erro", "Servidor offline.");
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "💎 RESGATAR VIP (30 MOEDAS)";
         }
-    } catch (e) {
-        showAlert("❌ Erro", "Servidor offline.");
-    } finally {
-        btn.disabled = false;
-        btn.innerText = "💎 RESGATAR VIP (30 MOEDAS)";
-    }
-};
-
-
+    };
 </script>
 </body>
 </html>
