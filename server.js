@@ -253,5 +253,39 @@ setInterval(async () => {
     });
 }, 60000);
 
+// Rota para o usuário trocar moedas por um código VIP
+app.post('/resgatar-vip-server', async (req, res) => {
+    const { usuarioID } = req.body;
+    try {
+        const userRef = db.ref(`usuarios/${usuarioID}`);
+        const snap = await userRef.once('value');
+        const moedas = snap.val()?.moedas || 0;
+
+        if (moedas >= 30) {
+            // 1. Gera o código
+            const cod = "VIP-" + crypto.randomBytes(3).toString('hex').toUpperCase();
+            
+            // 2. Salva o código no banco
+            await db.ref(`codigos_vips/${cod}`).set({
+                status: "disponivel",
+                validadeHoras: 5, // VIP de 5 horas
+                usado: false,
+                criadoEm: Date.now()
+            });
+
+            // 3. Subtrai as 30 moedas do usuário
+            await userRef.update({ moedas: moedas - 30 });
+
+            return res.json({ success: true, codigo: cod });
+        } else {
+            return res.status(400).json({ success: false, message: "Moedas insuficientes!" });
+        }
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ success: false, message: "Erro interno no servidor." });
+    }
+});
+
+
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Servidor Rodando na Porta ${PORT}`));
