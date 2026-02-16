@@ -998,7 +998,7 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
 
   listaOrdenada.forEach((g, index) => {
     const meuID = localStorage.getItem('usuarioID');
-const isOwner = (g.dono === meuID || g.uid === meuID || g.usuarioID === meuID);
+const isOwner = (String(g.dono) === String(meuID) || String(g.uid) === String(meuID) || String(g.usuarioID) === String(meuID));
 
     
     // CORREÇÃO AQUI: Se o campo vip for true no banco, ele É VIP. Ponto final.
@@ -1243,17 +1243,24 @@ function renderAnuncioPopular(container) {
 }
 meusBtn.onclick = (e) => {
   e.preventDefault();
-  const meuID = localStorage.getItem('usuarioID');
+  const meuID = String(localStorage.getItem('usuarioID') || "");
   
-  // Aqui a gente garante que ele vai achar mesmo que o campo tenha nomes diferentes
-  const meus = todosGrupos.filter(g => 
-      String(g.dono) === String(meuID) || 
-      String(g.uid) === String(meuID) || 
-      String(g.usuarioID) === String(meuID)
-  );
+  if (!meuID) {
+      window.showAlert('Erro: Seu ID de usuário não foi encontrado.');
+      return;
+  }
+
+  const meus = todosGrupos.filter(g => {
+      // Forçamos tudo para String para evitar erro de tipo (undefined vs string)
+      const dono = String(g.dono || "");
+      const uid = String(g.uid || "");
+      const user = String(g.usuarioID || "");
+      
+      return (dono === meuID || uid === meuID || user === meuID) && meuID !== "";
+  });
 
   if (meus.length === 0) {
-      window.showAlert('Nada encontrado! Se você trocou de celular ou limpou o histórico, o site te deu um novo ID e não vai achar os grupos antigos.');
+      window.showAlert('Nenhum grupo encontrado. Se você trocou de celular ou limpou o histórico, seu ID mudou.');
   } else {
     document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
     renderizarGrupos(meus, true); 
@@ -1261,6 +1268,7 @@ meusBtn.onclick = (e) => {
     window.scrollTo({top: 0, behavior: 'smooth'});
   }
 };
+
 
 
 window.copiarPixManual = async function(codigo, botao) {
