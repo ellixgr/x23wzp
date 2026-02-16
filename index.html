@@ -922,9 +922,10 @@ window.excluirGrupo = function(grupo){
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
-              key: grupo.key, 
-              donoLocal: localStorage.getItem('usuarioID') 
-          })
+    key: grupo.key, 
+    donoLocal: String(localStorage.getItem('usuarioID')).trim()
+})
+
       });
       const res = await response.json();
       if (res.success) window.showAlert('✅ Grupo excluído!');
@@ -989,12 +990,14 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
 const agora = Date.now();
 
 // Verifica se é dono (checa todos os campos possíveis que o banco pode ter)
-const isOwner = (String(g.dono || "") === String(meuID) || String(g.uid || "") === String(meuID) || String(g.usuarioID || "") === String(meuID));
+// Verifica dono limpando espaços e forçando string
+const idDonoNoBanco = String(g.dono || g.uid || g.usuarioID || "").trim();
+const isOwner = idDonoNoBanco === String(meuID).trim();
 
-// Validação Real do VIP: checa se o campo é true E se o tempo não acabou
-const expiraEm = Number(g.vipExpiraEm) || 0;
-// Se expiraEm for 0, significa que é um VIP eterno ou bugado, então checamos apenas o campo vip
-const vipAtivo = (g.vip == true || g.vip == "true") && (expiraEm > agora || (g.vip == true && expiraEm === 0));
+// Pega expiração de qualquer campo possível
+const expiraEm = Number(g.vipExpiraEm || g.vipAte || 0);
+// VIP é ativo se o campo vip for true (qualquer tipo) E (o tempo não acabou OU é vip infinito/0)
+const vipAtivo = (g.vip == true || g.vip == "true") && (expiraEm > agora || expiraEm === 0);
 
     const wrapper = document.createElement('div');
     wrapper.style.cssText = "display:flex; flex-direction:column; align-items:center; width:100%;";
@@ -1238,7 +1241,8 @@ meusBtn.onclick = (e) => {
   
   // Filtra comparando EXATAMENTE com o campo 'dono' do seu banco
   const meusAprovados = todosGrupos.filter(g => {
-    return String(g.dono || g.uid || g.usuarioID).trim() === String(meuID).trim();
+    const idDoGrupo = String(g.dono || g.uid || g.usuarioID || "").trim();
+    return idDoGrupo === String(meuID).trim() && idDoGrupo !== "";
 });
 
 
