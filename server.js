@@ -59,6 +59,21 @@ app.get('/admin/dados', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// Rota para o site buscar a lista de grupos aprovados
+app.get('/listar-grupos', async (req, res) => {
+    try {
+        const snap = await db.ref('grupos').once('value');
+        const grupos = [];
+        snap.forEach(child => {
+            grupos.push({ key: child.key, ...child.val() });
+        });
+        res.json(grupos);
+    } catch (e) {
+        res.status(500).json([]);
+    }
+});
+
+
 // Aprovar ou Recusar solicitações
 app.post('/admin/decidir', async (req, res) => {
     const { id, aprovar } = req.body;
@@ -68,10 +83,13 @@ app.post('/admin/decidir', async (req, res) => {
             const snap = await refSol.once('value');
             const dados = snap.val();
             if(dados) {
+                // Aqui garantimos que se era VIP na solicitação, continua VIP no grupo oficial
                 await db.ref(`grupos/${id}`).set({ 
                     ...dados, 
                     status: 'aprovado', 
                     cliques: 0,
+                    vip: dados.vip || false, // GARANTE O VIP
+                    vipExpiraEm: dados.vipExpiraEm || 0, // GARANTE O TEMPO
                     criadoEm: Date.now() 
                 });
             }
@@ -80,6 +98,7 @@ app.post('/admin/decidir', async (req, res) => {
         res.json({ success: true });
     } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
+
 
 // Adicionar Moedas via Painel
 app.post('/admin/moedas/add', async (req, res) => {
