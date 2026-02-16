@@ -34,6 +34,9 @@
         .modal-content h3 { margin: 0 0 10px; color: #333; }
         .modal-content p { color: #666; margin-bottom: 20px; }
         .modal-btn { background: #b78cff; color: white; border: none; padding: 10px 25px; border-radius: 10px; font-weight: bold; cursor: pointer; }
+
+        /* ESTILO DO ID NO RODAPÉ */
+        .user-id-footer { margin-top: 30px; font-size: 10px; color: #aaa; font-family: monospace; text-align: center; }
     </style>
 </head>
 <body>
@@ -61,6 +64,10 @@
 </div>
 <a href="index.html" id="btn-voltar">⬅️ Voltar aos Grupos</a>
 
+<div class="user-id-footer">
+    ID da Conta: <span id="display-id">carregando...</span>
+</div>
+
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getDatabase, ref, onValue, get } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
@@ -76,6 +83,9 @@
 
     let usuarioID = localStorage.getItem('usuarioID') || 'user_' + Math.random().toString(36).substr(2, 9);
     localStorage.setItem('usuarioID', usuarioID);
+
+    // ADICIONADO: MOSTRAR O ID NO FINAL DO SITE
+    document.getElementById('display-id').innerText = usuarioID;
 
     // Saldo em tempo real
     onValue(ref(db, `usuarios/${usuarioID}/moedas`), (snap) => {
@@ -110,7 +120,6 @@
                 const lista = [];
                 snapshot.forEach(child => {
                     const data = child.val();
-                    // Aceita link direto ou objeto {link: "..."}
                     const url = typeof data === 'string' ? data : data.link;
                     if (url) lista.push(url);
                 });
