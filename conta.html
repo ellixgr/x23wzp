@@ -177,35 +177,23 @@
         }
     }
 
-    // FUNÇÃO PARA GERAR O VIP DE 5 HORAS
-    window.resgatarVip = async function() {
-        if (moedasAtuais < 30) return;
+window.resgatarVip = async function() {
+    if (moedasAtuais < 30) return;
+    const novoCodigo = "VIP-" + Math.random().toString(36).substr(2, 6).toUpperCase();
+    
+    // Salva o código na pasta 'codigos_vips' para o outro arquivo conseguir ler
+    await set(ref(db, `codigos_vips/${novoCodigo}`), {
+        status: "disponivel",
+        validadeHoras: 5,
+        criadoEm: new Date().toISOString()
+    });
 
-        const btnVip = document.getElementById('btn-resgatar');
-        btnVip.disabled = true;
-        btnVip.innerText = "GERANDO CÓDIGO...";
+    // Zera as moedas
+    await update(ref(db, `usuarios/${usuarioID}`), { moedas: 0 });
 
-        try {
-            const novoCodigo = "VIP-" + Math.random().toString(36).substr(2, 6).toUpperCase();
-            
-            // Salva o código VIP no Firebase (Validade 5 horas)
-            await set(ref(db, `codigos_vips/${novoCodigo}`), {
-                status: "disponivel",
-                validadeHoras: 5,
-                criadoEm: new Date().toISOString()
-            });
+    showAlert("💎 VIP GERADO!", `CÓDIGO: ${novoCodigo}\nCopie e use no seu grupo!`);
+};
 
-            // Zera as moedas do usuário após resgate
-            await update(ref(db, `usuarios/${usuarioID}`), { moedas: 0 });
-
-            showAlert("💎 VIP GERADO!", `Seu código é: ${novoCodigo}\n\nCopie e use agora para destacar seu grupo!`);
-        } catch (e) {
-            showAlert("❌ Erro", "Erro ao gerar VIP. Tente de novo.");
-        } finally {
-            btnVip.disabled = false;
-            btnVip.innerText = "💎 RESGATAR VIP (30 MOEDAS)";
-        }
-    };
 </script>
 </body>
 </html>
