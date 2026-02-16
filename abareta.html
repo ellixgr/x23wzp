@@ -87,6 +87,7 @@
             <h3><i class="fa fa-star"></i> Gerar Código VIP</h3>
             <select id="tempo-vip">
                 <option value="2">2 Horas</option>
+                <option value="5">5 Horas (Padrão Moedas)</option>
                 <option value="24">24 Horas</option>
                 <option value="48">48 Horas</option>
                 <option value="168">7 Dias</option>
@@ -103,8 +104,11 @@
     <div id="modalEdicao" class="modal">
         <div class="modal-content">
             <h3>Editar Grupo</h3>
+            <label class="tag-info">Nome do Grupo:</label>
             <input type="text" id="edit-nome">
+            <label class="tag-info">Link do WhatsApp:</label>
             <input type="text" id="edit-link">
+            <label class="tag-info">URL da Foto:</label>
             <input type="text" id="edit-foto">
             <div style="display: flex; gap: 10px; margin-top: 20px;">
                 <button onclick="salvarEdicao()" style="background:var(--success)">SALVAR</button>
@@ -130,11 +134,17 @@
 
     let idSendoEditado = null;
 
+    // --- FUNÇÕES DE AUTENTICAÇÃO ---
     window.logar = async () => {
         const e = document.getElementById('user-input').value;
         const p = document.getElementById('pass-input').value;
-        try { await signInWithEmailAndPassword(auth, e, p); } catch { alert("Erro ao entrar."); }
+        try { 
+            await signInWithEmailAndPassword(auth, e, p); 
+        } catch (error) { 
+            alert("Erro ao entrar: Verifique suas credenciais."); 
+        }
     };
+
     window.logout = () => signOut(auth);
 
     onAuthStateChanged(auth, (user) => {
@@ -149,6 +159,7 @@
         }
     });
 
+    // --- FORMATAÇÃO DE TEMPO ---
     function fmtTempo(ms) {
         if (ms <= 0) return "00:00:00";
         const s = Math.floor(ms / 1000);
@@ -158,19 +169,22 @@
         return `${h.toString().padStart(2,'0')}h ${m.toString().padStart(2,'0')}m ${seg.toString().padStart(2,'0')}s`;
     }
 
+    // --- CARREGAMENTO GLOBAL ---
     function carregarDados() {
         onValue(ref(db, '/'), (snap) => {
             const data = snap.val() || {};
             const grupos = data.grupos || {};
             const usuarios = data.usuarios || {};
             const agora = Date.now();
-            let vipsAtivos = 0;
             
+            // Contador de VIPs Ativos
+            let vipsAtivos = 0;
             Object.values(grupos).forEach(g => { 
                 const expira = g.vipExpiraEm || g.vipAte || 0;
                 if(g.vip && expira > agora) vipsAtivos++; 
             });
             
+            // Atualiza Stats Card
             document.getElementById('count-visitas').innerText = data.visitas || 0;
             document.getElementById('count-vip').innerText = vipsAtivos;
             document.getElementById('count-total').innerText = Object.keys(grupos).length;
@@ -183,6 +197,7 @@
         });
     }
 
+    // --- RENDERIZAR VÍDEOS ---
     function renderVideosShopee(videos) {
         const container = document.getElementById('lista-videos-shopee');
         container.innerHTML = videos ? "" : "<p style='font-size:11px;color:#999'>Nenhum vídeo cadastrado.</p>";
@@ -197,26 +212,31 @@
 
     window.adicionarVideoLink = async () => {
         const link = document.getElementById('video-link-input').value.trim();
-        if(!link) return alert("Cole um link!");
+        if(!link) return alert("Cole um link válido da Shopee!");
         try {
             const novoRef = ref(db, 'videos_shopee/' + Date.now());
             await set(novoRef, { link: link });
             document.getElementById('video-link-input').value = "";
-        } catch (e) { alert("Erro ao salvar"); }
+        } catch (e) { alert("Erro ao salvar no banco."); }
     };
 
-    window.excluirVideo = (id) => confirm("Excluir vídeo?") && remove(ref(db, `videos_shopee/${id}`));
+    window.excluirVideo = (id) => {
+        if(confirm("Deseja remover este vídeo das missões?")) {
+            remove(ref(db, `videos_shopee/${id}`));
+        }
+    };
 
+    // --- RENDERIZAR SOLICITAÇÕES ---
     function renderSolicitacoes(sol) {
         const container = document.getElementById('lista-solicitacoes');
-        container.innerHTML = sol ? "" : "<p style='font-size:11px;color:#999'>Nenhuma solicitação.</p>";
+        container.innerHTML = sol ? "" : "<p style='font-size:11px;color:#999'>Nenhuma solicitação pendente.</p>";
         for (let key in sol) {
             const s = sol[key];
             container.innerHTML += `
                 <div class="item-gestao" style="border-left-color:var(--boost)">
                     <div style="display:flex; gap:10px; align-items:center">
-                        <img src="${s.foto}" style="width:35px;height:35px;border-radius:5px">
-                        <div><b>${s.nome}</b><br><span style="font-size:9px;color:#999">ID: ${s.uid || '---'}</span></div>
+                        <img src="${s.foto}" style="width:35px;height:35px;border-radius:5px; object-fit:cover">
+                        <div><b>${s.nome}</b><br><span style="font-size:9px;color:#999">ID Dono: ${s.dono || s.uid || '---'}</span></div>
                     </div>
                     <div style="display:flex; gap:5px; margin-top:10px">
                         <button onclick="decidir('${key}', true)" style="background:var(--success); flex:1">ACEITAR</button>
@@ -226,6 +246,23 @@
         }
     }
 
+    window.decidir = async (id, aprovar) => {
+        const sRef = ref(db, `solicitacoes/${id}`);
+        if (aprovar) {
+            const snap = await get(sRef);
+            const dados = snap.val();
+            await set(ref(db, `grupos/${id}`), { 
+                ...dados, 
+                status: "aprovado", 
+                cliques: 0, 
+                criadoEm: Date.now(),
+                vip: false 
+            });
+        }
+        await remove(sRef);
+    };
+
+    // --- RENDERIZAR GRUPOS ---
     function renderGrupos(grupos, usuarios) {
         const container = document.getElementById('lista-grupos');
         container.innerHTML = "";
@@ -246,36 +283,43 @@
                     <div style="display:flex; justify-content:space-between; align-items:flex-start">
                         <div>
                             <b style="font-size:14px">${g.nome}</b>
-                            <span class="tag-info">Cliques: ${g.cliques || 0}</span>
+                            <span class="tag-info">Cliques Totais: ${g.cliques || 0}</span>
                         </div>
                         <div style="text-align:right">
-                            ${isVip ? `<span class="badge badge-vip" id="${idVip}">VIP: ...</span>` : '<span class="badge" style="background:#eee">GRÁTIS</span>'}
+                            ${isVip ? `<span class="badge badge-vip" id="${idVip}">VIP: ...</span>` : '<span class="badge" style="background:#eee">PLANO GRÁTIS</span>'}
                             <br><span class="badge badge-time" id="${idImp}">IMPULSO: ...</span>
                         </div>
                     </div>
                     
                     <div class="user-info-box">
-                        <i class="fa fa-user"></i> ID: <b>${idDoDono}</b> | 
-                        <i class="fa fa-coins" style="color:#2ecc71"></i> <b>${userMoedas}</b> moedas
+                        <i class="fa fa-user"></i> Dono ID: <b>${idDoDono}</b> | 
+                        <i class="fa fa-coins" style="color:#2ecc71"></i> <b>${userMoedas}</b> moedas no saldo
                     </div>
 
                     <div style="display:flex; gap:5px; margin-top:10px">
-                        <button onclick="abrirModal('${key}')" style="background:var(--blue); font-size:10px; flex:1">EDITAR</button>
-                        <button onclick="excluirGrp('${key}')" style="background:var(--danger); font-size:10px; flex:1">APAGAR</button>
+                        <button onclick="abrirModal('${key}')" style="background:var(--blue); font-size:10px; flex:1"><i class="fa fa-edit"></i> EDITAR</button>
+                        <button onclick="excluirGrp('${key}')" style="background:var(--danger); font-size:10px; flex:1"><i class="fa fa-trash"></i> APAGAR</button>
                     </div>
                 </div>`;
 
+            // Timers Individuais
             setInterval(() => {
                 const agoraLoop = Date.now();
-                const elV = document.getElementById(idVip);
-                if(elV && tempoVip > 0) elV.innerText = "VIP: " + fmtTempo(tempoVip - agoraLoop);
                 
+                // Timer VIP
+                const elV = document.getElementById(idVip);
+                if(elV && tempoVip > 0) {
+                    const restante = tempoVip - agoraLoop;
+                    elV.innerText = restante > 0 ? "VIP: " + fmtTempo(restante) : "EXPIRADO";
+                }
+                
+                // Timer Impulso
                 const elI = document.getElementById(idImp);
                 if(elI) {
-                    const cooldown = 3600000;
+                    const cooldown = 3600000; // 1 hora
                     const falta = cooldown - (agoraLoop - (g.ultimoImpulso || 0));
                     if(falta <= 0) {
-                        elI.innerText = "🚀 IMPULSO LIBERADO";
+                        elI.innerText = "🚀 LIBERADO";
                         elI.style.background = "var(--success)";
                     } else {
                         elI.innerText = "⏳ " + fmtTempo(falta);
@@ -286,55 +330,65 @@
         }
     }
 
-    function renderCodigos(cods) {
-        const container = document.getElementById('lista-codigos-ativos');
-        container.innerHTML = "";
-        for (let c in cods) {
-            if(!cods[c].usado) {
-                container.innerHTML += `
-                    <div style="font-size:11px; display:flex; justify-content:space-between; margin-bottom:5px">
-                        <span>${c} (${cods[c].validadeHoras || cods[c].horas}h)</span>
-                        <i class="fa fa-trash" style="color:red; cursor:pointer" onclick="apagarCod('${c}')"></i>
-                    </div>`;
-            }
-        }
-    }
-
+    // --- GESTÃO DE MOEDAS ---
     window.adicionarMoedasManual = async () => {
         const id = document.getElementById('moeda-user-id').value.trim();
         const qtd = parseInt(document.getElementById('moeda-qtd').value);
-        if(!id || isNaN(qtd)) return alert("Preencha ID e valor!");
+        if(!id || isNaN(qtd)) return alert("Preencha o ID do usuário e a quantidade!");
+        
         try {
             const userRef = ref(db, `usuarios/${id}/moedas`);
             const snap = await get(userRef);
             let atual = snap.exists() ? (snap.val() || 0) : 0;
             await set(userRef, atual + qtd);
-            alert("Moedas atualizadas!");
-        } catch(e) { alert("Erro ao atualizar moedas."); }
+            alert(`Sucesso! Foram adicionadas ${qtd} moedas ao usuário.`);
+            document.getElementById('moeda-qtd').value = "";
+        } catch(e) { alert("Erro ao acessar banco de dados."); }
     };
 
-    window.decidir = async (id, aprovar) => {
-        const sRef = ref(db, `solicitacoes/${id}`);
-        if (aprovar) {
-            const snap = await get(sRef);
-            await set(ref(db, `grupos/${id}`), { ...snap.val(), status: "aprovado", cliques: 0, criadoEm: Date.now() });
-        }
-        await remove(sRef);
-    };
-
+    // --- CÓDIGOS VIP ---
     window.gerarCodigo = async () => {
         const h = parseInt(document.getElementById('tempo-vip').value);
         const cod = "VIP-" + Math.random().toString(36).substring(2, 8).toUpperCase();
-        await set(ref(db, `codigos_vips/${cod}`), { status: "disponivel", validadeHoras: h, usado: false });
+        await set(ref(db, `codigos_vips/${cod}`), { 
+            status: "disponivel", 
+            validadeHoras: h, 
+            usado: false,
+            criadoEm: Date.now()
+        });
         document.getElementById('btn-copiar').innerText = "COPIAR: " + cod;
         document.getElementById('btn-copiar').style.display = "block";
     };
 
     window.copiarCodigo = () => {
         const cod = document.getElementById('btn-copiar').innerText.replace("COPIAR: ", "");
-        navigator.clipboard.writeText(cod); alert("Código copiado!");
+        navigator.clipboard.writeText(cod); 
+        alert("Código copiado para a área de transferência!");
     };
 
+    function renderCodigos(cods) {
+        const container = document.getElementById('lista-codigos-ativos');
+        container.innerHTML = "";
+        if(!cods) {
+            container.innerHTML = "<p style='font-size:11px;color:#999'>Nenhum código disponível.</p>";
+            return;
+        }
+        for (let c in cods) {
+            if(!cods[c].usado) {
+                container.innerHTML += `
+                    <div style="font-size:11px; display:flex; justify-content:space-between; margin-bottom:5px; background:#fff; padding:5px; border-radius:5px">
+                        <span><b>${c}</b> (${cods[c].validadeHoras || cods[c].horas}h)</span>
+                        <i class="fa fa-trash" style="color:red; cursor:pointer" onclick="apagarCod('${c}')"></i>
+                    </div>`;
+            }
+        }
+    }
+
+    window.apagarCod = (id) => {
+        if(confirm("Excluir este código VIP?")) remove(ref(db, `codigos_vips/${id}`));
+    };
+
+    // --- MODAL E EDIÇÃO ---
     window.abrirModal = async (id) => {
         idSendoEditado = id;
         const snap = await get(ref(db, `grupos/${id}`));
@@ -345,18 +399,28 @@
         document.getElementById('modalEdicao').style.display = 'flex';
     };
 
-    window.fecharModal = () => document.getElementById('modalEdicao').style.display='none';
+    window.fecharModal = () => {
+        document.getElementById('modalEdicao').style.display = 'none';
+        idSendoEditado = null;
+    };
+
     window.salvarEdicao = async () => {
-        await update(ref(db, `grupos/${idSendoEditado}`), {
+        if(!idSendoEditado) return;
+        const updates = {
             nome: document.getElementById('edit-nome').value,
             link: document.getElementById('edit-link').value,
             foto: document.getElementById('edit-foto').value
-        });
+        };
+        await update(ref(db, `grupos/${idSendoEditado}`), updates);
+        alert("Dados do grupo atualizados!");
         fecharModal();
     };
 
-    window.excluirGrp = (id) => confirm("Apagar grupo?") && remove(ref(db, `grupos/${id}`));
-    window.apagarCod = (id) => remove(ref(db, `codigos_vips/${id}`));
+    window.excluirGrp = (id) => {
+        if(confirm("TEM CERTEZA? Isso apagará o grupo permanentemente!")) {
+            remove(ref(db, `grupos/${id}`));
+        }
+    };
 
 </script>
 </body>
