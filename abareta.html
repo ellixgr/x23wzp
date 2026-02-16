@@ -169,33 +169,26 @@
         return `${h.toString().padStart(2,'0')}h ${m.toString().padStart(2,'0')}m ${seg.toString().padStart(2,'0')}s`;
     }
 
-    // --- CARREGAMENTO GLOBAL ---
-    function carregarDados() {
-        onValue(ref(db, '/'), (snap) => {
-            const data = snap.val() || {};
-            const grupos = data.grupos || {};
-            const usuarios = data.usuarios || {};
-            const agora = Date.now();
-            
-            // Contador de VIPs Ativos
-            let vipsAtivos = 0;
-            Object.values(grupos).forEach(g => { 
-                const expira = g.vipExpiraEm || g.vipAte || 0;
-                if(g.vip && expira > agora) vipsAtivos++; 
-            });
-            
-            // Atualiza Stats Card
-            document.getElementById('count-visitas').innerText = data.visitas || 0;
-            document.getElementById('count-vip').innerText = vipsAtivos;
-            document.getElementById('count-total').innerText = Object.keys(grupos).length;
-            document.getElementById('count-users').innerText = Object.keys(usuarios).length;
+function carregarDados() {
+    // Escuta o banco inteiro para estatísticas
+    onValue(ref(db, '/'), (snap) => {
+        const data = snap.val() || {};
+        
+        // Atualiza os Stats
+        document.getElementById('count-visitas').innerText = data.visitas || 0;
+        document.getElementById('count-vip').innerText = Object.values(data.grupos || {}).filter(g => g.vip).length;
+        document.getElementById('count-total').innerText = Object.keys(data.grupos || {}).length;
+        document.getElementById('count-users').innerText = Object.keys(data.usuarios || {}).length;
 
-            renderSolicitacoes(data.solicitacoes);
-            renderGrupos(grupos, usuarios);
-            renderCodigos(data.codigos_vips);
-            renderVideosShopee(data.videos_shopee);
-        });
-    }
+        // RENDERIZA AS SOLICITAÇÕES (AQUI ESTÁ O SEGREDO)
+        renderSolicitacoes(data.solicitacoes); // Garanta que passe data.solicitacoes
+        
+        renderGrupos(data.grupos || {}, data.usuarios || {});
+        renderCodigos(data.codigos_vips);
+        renderVideosShopee(data.videos_shopee);
+    });
+}
+
 
     // --- RENDERIZAR VÍDEOS ---
     function renderVideosShopee(videos) {
@@ -226,25 +219,34 @@
         }
     };
 
-    // --- RENDERIZAR SOLICITAÇÕES ---
-    function renderSolicitacoes(sol) {
-        const container = document.getElementById('lista-solicitacoes');
-        container.innerHTML = sol ? "" : "<p style='font-size:11px;color:#999'>Nenhuma solicitação pendente.</p>";
-        for (let key in sol) {
-            const s = sol[key];
-            container.innerHTML += `
-                <div class="item-gestao" style="border-left-color:var(--boost)">
-                    <div style="display:flex; gap:10px; align-items:center">
-                        <img src="${s.foto}" style="width:35px;height:35px;border-radius:5px; object-fit:cover">
-                        <div><b>${s.nome}</b><br><span style="font-size:9px;color:#999">ID Dono: ${s.dono || s.uid || '---'}</span></div>
-                    </div>
-                    <div style="display:flex; gap:5px; margin-top:10px">
-                        <button onclick="decidir('${key}', true)" style="background:var(--success); flex:1">ACEITAR</button>
-                        <button onclick="decidir('${key}', false)" style="background:var(--danger); flex:1">RECUSAR</button>
-                    </div>
-                </div>`;
-        }
+function renderSolicitacoes(sol) {
+    const container = document.getElementById('lista-solicitacoes');
+    if (!sol || Object.keys(sol).length === 0) {
+        container.innerHTML = "<p style='font-size:11px;color:#999'>Nenhuma solicitação pendente.</p>";
+        return;
     }
+    
+    container.innerHTML = "";
+    for (let key in sol) {
+        const s = sol[key];
+        container.innerHTML += `
+            <div class="item-gestao" style="border-left-color:var(--boost); padding: 10px; margin-bottom: 5px;">
+                <div style="display:flex; gap:10px; align-items:center">
+                    <img src="${s.foto || 'https://files.catbox.moe/9qdwuz.webp'}" style="width:45px;height:45px;border-radius:50%; object-fit:cover; border: 1px solid #ddd">
+                    <div>
+                        <b style="font-size: 13px;">${s.nome}</b><br>
+                        <span style="font-size:10px;color:#666">Cat: ${s.categoria}</span><br>
+                        <span style="font-size:9px;color:blue">${s.vip ? '⭐ SOLICITOU VIP' : 'Plano Grátis'}</span>
+                    </div>
+                </div>
+                <div style="display:flex; gap:5px; margin-top:10px">
+                    <button onclick="decidir('${key}', true)" style="background:var(--success); flex:1; padding: 8px; font-size: 11px;">APROVAR</button>
+                    <button onclick="decidir('${key}', false)" style="background:var(--danger); flex:1; padding: 8px; font-size: 11px;">APAGAR</button>
+                </div>
+            </div>`;
+    }
+}
+
 
     window.decidir = async (id, aprovar) => {
         const sRef = ref(db, `solicitacoes/${id}`);
