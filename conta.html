@@ -5,23 +5,23 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Minha Conta - Ganhar Moedas</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #ebebeb; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #ebebeb; display: flex; flex-direction: column; align-items: center; padding: 20px; min-height: 100vh; }
         .container { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 380px; text-align: center; position: relative; }
         
-        /* Caixa de Moedas */
         .moedas-box { background: #f0e6ff; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 2px solid #b78cff; }
         .moedas-count { font-size: 32px; font-weight: bold; color: #b78cff; }
         
-        /* Botão */
-        .btn-video { background: #25d366; color: white; border: none; padding: 15px 20px; border-radius: 12px; font-weight: bold; font-size: 16px; cursor: pointer; width: 100%; transition: 0.3s; text-transform: uppercase; box-shadow: 0 4px 0 #128c7e; }
+        .btn-video { background: #25d366; color: white; border: none; padding: 15px 20px; border-radius: 12px; font-weight: bold; font-size: 16px; cursor: pointer; width: 100%; transition: 0.3s; text-transform: uppercase; box-shadow: 0 4px 0 #128c7e; margin-bottom: 10px; }
         .btn-video:active { box-shadow: none; transform: translateY(4px); }
-        .btn-video:disabled { background: #ccc; box-shadow: none; cursor: not-allowed; transform: none; }
         
+        /* BOTÃO VIP */
+        .btn-vip { background: #b78cff; color: white; border: none; padding: 15px 20px; border-radius: 12px; font-weight: bold; font-size: 16px; cursor: pointer; width: 100%; transition: 0.3s; text-transform: uppercase; box-shadow: 0 4px 0 #7a56c2; display: none; }
+        .btn-vip:active { box-shadow: none; transform: translateY(4px); }
+
         .timer { margin-top: 10px; font-weight: bold; color: #e74c3c; display: none; }
         .aviso { font-size: 12px; color: #666; margin-top: 15px; line-height: 1.4; }
-        #btn-voltar { margin-top: 20px; text-decoration: none; color: #b78cff; font-weight: bold; font-size: 14px; }
+        #btn-voltar { margin-top: 20px; text-decoration: none; color: #b78cff; font-weight: bold; font-size: 14px; display: inline-block; }
 
-        /* MODAL PERSONALIZADO (A ALERTA BONITA) */
         #custom-alert { 
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: rgba(0,0,0,0.6); z-index: 999; align-items: center; justify-content: center; 
@@ -31,12 +31,11 @@
             text-align: center; animation: scaleUp 0.3s ease;
         }
         @keyframes scaleUp { from {transform: scale(0.8); opacity: 0;} to {transform: scale(1); opacity: 1;} }
-        .modal-content h3 { margin: 0 0 10px; color: #333; }
-        .modal-content p { color: #666; margin-bottom: 20px; }
         .modal-btn { background: #b78cff; color: white; border: none; padding: 10px 25px; border-radius: 10px; font-weight: bold; cursor: pointer; }
 
-        /* ESTILO DO ID NO RODAPÉ */
-        .user-id-footer { margin-top: 30px; font-size: 10px; color: #aaa; font-family: monospace; text-align: center; }
+        /* ID NO FUNDO DO SITE PORRA */
+        .footer-spacer { flex-grow: 1; }
+        .user-id-footer { margin-top: 50px; padding: 20px; font-size: 10px; color: #aaa; font-family: monospace; text-align: center; width: 100%; }
     </style>
 </head>
 <body>
@@ -52,25 +51,31 @@
 <div class="container">
     <h2 style="margin-bottom: 10px;">Minhas Moedas</h2>
     <div class="moedas-box">
-        <div id="saldo" class="moedas-count">...</div>
+        <div id="saldo" class="moedas-count">0</div>
         <p style="font-size: 12px; color: #666;">Moedas acumuladas hoje</p>
     </div>
+    
     <button id="btn-video" class="btn-video" onclick="iniciarVideo()">🎬 VER VÍDEO (+1 MOEDA)</button>
+    
+    <button id="btn-resgatar" class="btn-vip" onclick="resgatarVip()">💎 RESGATAR VIP (30 MOEDAS)</button>
+    
     <div id="timer-text" class="timer">Aguarde <span id="segundos">15</span>s para ganhar...</div>
+    
     <div class="aviso">
-        ⚠️ Limite diário: <b>20 moedas</b>.<br>
-        Ao completar 20 moedas, troque por VIP no menu.
+        ⚠️ Limite diário: <b>30 moedas</b>.<br>
+        Junte 30 moedas e resgate seu código VIP de 5 horas!
     </div>
 </div>
+
 <a href="index.html" id="btn-voltar">⬅️ Voltar aos Grupos</a>
 
-<div class="user-id-footer">
+<div class="footer-spacer"></div> <div class="user-id-footer">
     ID da Conta: <span id="display-id">carregando...</span>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getDatabase, ref, onValue, get } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+    import { getDatabase, ref, onValue, get, set, update } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDsrYjO2yVTemKqwmJRzNjh5sfaMalPqhE",
@@ -83,16 +88,23 @@
 
     let usuarioID = localStorage.getItem('usuarioID') || 'user_' + Math.random().toString(36).substr(2, 9);
     localStorage.setItem('usuarioID', usuarioID);
-
-    // ADICIONADO: MOSTRAR O ID NO FINAL DO SITE
     document.getElementById('display-id').innerText = usuarioID;
 
-    // Saldo em tempo real
+    let moedasAtuais = 0;
+
+    // Escutar moedas e mostrar botão VIP
     onValue(ref(db, `usuarios/${usuarioID}/moedas`), (snap) => {
-        document.getElementById('saldo').innerText = snap.val() || 0;
+        moedasAtuais = snap.val() || 0;
+        document.getElementById('saldo').innerText = moedasAtuais;
+        
+        const btnVip = document.getElementById('btn-resgatar');
+        if (moedasAtuais >= 30) {
+            btnVip.style.display = 'block';
+        } else {
+            btnVip.style.display = 'none';
+        }
     });
 
-    // Função para mostrar a Alerta Bonita
     window.showAlert = function(titulo, msg) {
         document.getElementById('modal-title').innerText = titulo;
         document.getElementById('modal-msg').innerText = msg;
@@ -104,6 +116,9 @@
     };
 
     window.iniciarVideo = async function() {
+        if(moedasAtuais >= 30) {
+            return showAlert("⚠️ Limite", "Você já atingiu o limite de 30 moedas!");
+        }
         const btn = document.getElementById('btn-video');
         const timerText = document.getElementById('timer-text');
         const segSpan = document.getElementById('segundos');
@@ -112,9 +127,8 @@
         btn.innerText = "SORTEANDO VÍDEO...";
 
         try {
-            // 1. BUSCA LISTA DE VÍDEOS ALEATÓRIOS DO FIREBASE
             const snapshot = await get(ref(db, 'videos_shopee'));
-            let linkFinal = 'https://br.shp.ee/ehaxr08?smtt=0.0.9'; // Fallback
+            let linkFinal = 'https://br.shp.ee/ehaxr08?smtt=0.0.9';
 
             if (snapshot.exists()) {
                 const lista = [];
@@ -123,20 +137,11 @@
                     const url = typeof data === 'string' ? data : data.link;
                     if (url) lista.push(url);
                 });
-                if (lista.length > 0) {
-                    linkFinal = lista[Math.floor(Math.random() * lista.length)];
-                }
+                if (lista.length > 0) linkFinal = lista[Math.floor(Math.random() * lista.length)];
             }
 
-            // 2. ABRE O VÍDEO
-            const win = window.open(linkFinal, '_blank');
-            if (!win) {
-                showAlert("⚠️ Bloqueio", "Libere pop-ups ou clique novamente para abrir o vídeo.");
-                window.location.href = linkFinal; // Fallback forçado
-                return;
-            }
+            window.open(linkFinal, '_blank');
 
-            // 3. TIMER
             timerText.style.display = 'block';
             let tempo = 15;
             const intv = setInterval(() => {
@@ -149,9 +154,7 @@
                     validarNoServidor();
                 }
             }, 1000);
-
         } catch (e) {
-            showAlert("❌ Erro", "Não foi possível carregar os vídeos.");
             btn.disabled = false;
         }
     };
@@ -165,19 +168,44 @@
                 body: JSON.stringify({ usuarioID: usuarioID })
             });
             const data = await res.json();
-            
-            if (data.success) {
-                showAlert("✅ Sucesso", "Você ganhou +1 moeda!");
-            } else {
-                showAlert("⚠️ Limite", data.message || "Tente novamente amanhã.");
-            }
+            if (data.success) showAlert("✅ Sucesso", "Você ganhou +1 moeda!");
         } catch (e) {
-            showAlert("😴Servidor", "Erro Tente de novo em 30 segundos.");
+            showAlert("😴 Servidor", "Erro. Tente de novo.");
         } finally {
             btn.disabled = false;
             btn.innerText = "🎬 VER VÍDEO (+1 MOEDA)";
         }
     }
+
+    // FUNÇÃO PARA GERAR O VIP DE 5 HORAS
+    window.resgatarVip = async function() {
+        if (moedasAtuais < 30) return;
+
+        const btnVip = document.getElementById('btn-resgatar');
+        btnVip.disabled = true;
+        btnVip.innerText = "GERANDO CÓDIGO...";
+
+        try {
+            const novoCodigo = "VIP-" + Math.random().toString(36).substr(2, 6).toUpperCase();
+            
+            // Salva o código VIP no Firebase (Validade 5 horas)
+            await set(ref(db, `codigos_vips/${novoCodigo}`), {
+                status: "disponivel",
+                validadeHoras: 5,
+                criadoEm: new Date().toISOString()
+            });
+
+            // Zera as moedas do usuário após resgate
+            await update(ref(db, `usuarios/${usuarioID}`), { moedas: 0 });
+
+            showAlert("💎 VIP GERADO!", `Seu código é: ${novoCodigo}\n\nCopie e use agora para destacar seu grupo!`);
+        } catch (e) {
+            showAlert("❌ Erro", "Erro ao gerar VIP. Tente de novo.");
+        } finally {
+            btnVip.disabled = false;
+            btnVip.innerText = "💎 RESGATAR VIP (30 MOEDAS)";
+        }
+    };
 </script>
 </body>
 </html>
