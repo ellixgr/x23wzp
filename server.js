@@ -208,7 +208,7 @@ const limparVips = async () => {
         });
     } catch (e) { }
 };
-setInterval(limparVips, 30 * 60 * 1000);
+setInterval(limparVips, 1 * 60 * 1000); (1 minuto)
 
 process.on('uncaughtException', (err) => console.error('⚠️ Erro Grave:', err.message));
 process.on('unhandledRejection', (reason) => console.error('⚠️ Rejeição Silenciosa:', reason));
