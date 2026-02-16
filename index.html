@@ -986,18 +986,22 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
 
   listaOrdenada.forEach((g, index) => {
     const meuID = localStorage.getItem('usuarioID');
-const isOwner = (String(g.dono) === String(meuID) || String(g.uid) === String(meuID) || String(g.usuarioID) === String(meuID));
+const agora = Date.now();
 
-    
-    // CORREÇÃO AQUI: Se o campo vip for true no banco, ele É VIP. Ponto final.
-    const vipAtivo = (g.vip === true || g.vip === "true");
+// Verifica se é dono (checa todos os campos possíveis que o banco pode ter)
+const isOwner = (String(g.dono || "") === String(meuID) || String(g.uid || "") === String(meuID) || String(g.usuarioID || "") === String(meuID));
+
+// Validação Real do VIP: checa se o campo é true E se o tempo não acabou
+const expiraEm = Number(g.vipExpiraEm) || 0;
+const vipAtivo = (g.vip === true || g.vip === "true") && (expiraEm === 0 || expiraEm > agora);
 
     const wrapper = document.createElement('div');
     wrapper.style.cssText = "display:flex; flex-direction:column; align-items:center; width:100%;";
 
     const card = document.createElement('div');
     // Adiciona a classe 'vip' se for vip, para ativar a borda dourada do CSS
-    card.className = vipAtivo ? 'grupo vip' : 'grupo';
+    // Isso garante que se for VIP, a classe "vip" seja aplicada para ativar a borda dourada do CSS
+card.className = 'grupo' + (vipAtivo ? ' vip' : '');
     
     card.innerHTML = `
       <div class="card-topo">
