@@ -75,6 +75,7 @@ app.get('/listar-grupos', async (req, res) => {
 
 
 // Aprovar ou Recusar solicitações
+// No seu arquivo do servidor Render
 app.post('/admin/decidir', async (req, res) => {
     const { id, aprovar } = req.body;
     try {
@@ -83,22 +84,25 @@ app.post('/admin/decidir', async (req, res) => {
             const snap = await refSol.once('value');
             const dados = snap.val();
             if(dados) {
-// Forçamos o sistema a entender que vip é um booleano (true/false) real
-await db.ref(`grupos/${id}`).set({ 
-    ...dados, 
-    status: 'aprovado', 
-    cliques: 0,
-    vip: (dados.vip === true || dados.vip === "true"), 
-    vipExpiraEm: Number(dados.vipExpiraEm) || 0, 
-    criadoEm: Date.now() 
-});
+                // Forçamos a conversão exata aqui
+                const expira = Number(dados.vipExpiraEm) || 0;
+                const ehVip = (dados.vip === true || dados.vip === "true");
 
+                await db.ref(`grupos/${id}`).set({ 
+                    ...dados, 
+                    status: 'aprovado', 
+                    cliques: 0,
+                    vip: ehVip, // Salva como booleano puro
+                    vipExpiraEm: expira, 
+                    criadoEm: Date.now() 
+                });
             }
         }
         await refSol.remove();
         res.json({ success: true });
     } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
+
 
 
 // Adicionar Moedas via Painel
