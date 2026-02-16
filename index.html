@@ -1030,7 +1030,7 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
     if (modoMeusGrupos && isOwner) {
         // Pega o tempo agora
         const agora = Date.now();
-        const expira = g.vipExpiraEm || 0;
+const vipAtivo = (g.vip === true || g.vip === "true") && (g.vipExpiraEm && g.vipExpiraEm > agora);
         
         // Se a data de expiração for maior que agora, ou se o VIP foi definido há menos de 30 segundos
         // (Isso evita o erro de aparecer "expirado" assim que você ativa)
