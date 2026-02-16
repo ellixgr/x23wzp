@@ -91,18 +91,30 @@ app.post('/contar-clique', async (req, res) => {
 });
 
 app.post('/editar-grupo', async (req, res) => {
-    const { key, donoLocal, nome, link, descricao, categoria, foto } = req.body;
+    const { key, donoLocal, nome, link, descricao, categoria, foto, codigoVip } = req.body;
     try {
         const refGrupo = db.ref(`grupos/${key}`);
         const snapshot = await refGrupo.once('value');
         const dados = snapshot.val();
+
         if (dados && dados.dono === donoLocal) {
-            await refGrupo.update({ nome, link, descricao, categoria, foto });
-            return res.json({ success: true });
+            let updateDados = { nome, link, descricao, categoria, foto };
+            if (codigoVip) {
+                const vipSnap = await db.ref(`codigos_vips/${codigoVip}`).once('value');
+                if (vipSnap.exists() && vipSnap.val().status === "disponivel") {
+                    updateDados.vip = true;
+                    updateDados.vipExpiraEm = Date.now() + (parseInt(vipSnap.val().validadeHoras) * 3600000);
+                    await db.ref(`codigos_vips/${codigoVip}`).update({ status: "usado" });
+                }
+            }
+
+            await refGrupo.update(updateDados);
+            return res.json({ success: true, isVip: updateDados.vip || dados.vip });
         }
         res.json({ success: false, message: "Acesso Negado" });
     } catch (e) { res.status(500).json({ success: false }); }
 });
+
 
 app.post('/excluir-grupo', async (req, res) => {
     const { key, donoLocal } = req.body;
@@ -155,16 +167,19 @@ app.post('/salvar-grupo', async (req, res) => {
     const { nome, link, categoria, descricao, foto, dono, codigoVip } = req.body;
     try {
         let e_vip = false;
-        let validade = null;
+        let validade = 0; // Inicia com 0 em vez de null para evitar erros no Firebase
+
         if (codigoVip) {
             const vipSnap = await db.ref(`codigos_vips/${codigoVip}`).once('value');
             if (vipSnap.exists() && vipSnap.val().status === "disponivel") {
                 e_vip = true;
-                validade = Date.now() + (vipSnap.val().validadeHoras * 3600000);
+                validade = Date.now() + (parseInt(vipSnap.val().validadeHoras) * 3600000);
                 await db.ref(`codigos_vips/${codigoVip}`).update({ status: "usado" });
             }
         }
-        await db.ref('grupos').push().set({
+
+        const novoRef = db.ref('grupos').push();
+        await novoRef.set({
             nome, link, categoria, descricao, foto, dono,
             vip: e_vip, 
             vipExpiraEm: validade,
@@ -172,9 +187,13 @@ app.post('/salvar-grupo', async (req, res) => {
             criadoEm: Date.now(), 
             cliques: 0
         });
-        res.json({ success: true });
-    } catch (e) { res.status(500).json({ error: "Erro" }); }
+        res.json({ success: true, isVip: e_vip }); 
+    } catch (e) { 
+        console.error(e);
+        res.status(500).json({ error: "Erro ao salvar" }); 
+    }
 });
+
 
 const limparVips = async () => {
     const agora = Date.now();
