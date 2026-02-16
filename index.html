@@ -975,35 +975,23 @@ window.excluirGrupo = function(grupo){
 
 async function validarCodigoVip(codigo) {
     if (!codigo) return null;
-    
-    const msgStatus = document.getElementById('msg-acordando');
-    msgStatus.style.display = 'block';
-    msgStatus.textContent = '🔍 Validando código VIP...';
-
     try {
-        // A regra permite ler (read: true), então o 'get' vai funcionar
         const vipRef = ref(db, `codigos_vips/${codigo}`);
         const snapshot = await get(vipRef);
 
-        if (snapshot.exists()) {
-            const dadosVip = snapshot.val();
-            if (dadosVip.usado === true) {
-                window.showAlert('❌ Este código VIP já foi utilizado.');
-                msgStatus.style.display = 'none';
-                return "invalido";
-            }
-            msgStatus.textContent = '✅ Código VIP válido!';
-            return dadosVip; 
+        if (snapshot.exists() && snapshot.val().status === "disponivel") {
+            // Se o código for válido, avisamos que ele foi usado
+            await update(vipRef, { status: "usado" });
+            return true; // Retorna verdadeiro para o sistema liberar o VIP
         } else {
-            window.showAlert('❌ Código VIP inválido ou inexistente.');
-            msgStatus.style.display = 'none';
+            window.showAlert('❌ Código VIP inválido ou já usado.');
             return "invalido";
         }
     } catch (error) {
-        window.showAlert('❌ Erro ao validar código.');
         return "invalido";
     }
 }
+
 
 
 // *** FUNÇÃO CARREGAR GRUPOS (CORRIGIDA E SIMPLIFICADA) ***
