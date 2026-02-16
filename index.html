@@ -800,7 +800,7 @@ window.salvarNovoGrupo = async function() {
     const descricao = document.getElementById('grupoDescricao').value.trim();
     const codigoVip = document.getElementById('grupoVipCodigo').value.trim(); 
     const foto = document.getElementById('previewFoto').src;
-    const dono = localStorage.getItem('usuarioID');
+    const meuID = localStorage.getItem('usuarioID'); // Pega o ID local
 
     if (!nome || !link || !categoria) {
         window.showAlert('❌ Preencha os campos obrigatórios!');
@@ -821,9 +821,7 @@ window.salvarNovoGrupo = async function() {
                 categoria, 
                 descricao, 
                 foto, 
-                dono: localStorage.getItem('usuarioID'),
-                usuarioID: localStorage.getItem('usuarioID'),
-                uid: localStorage.getItem('usuarioID'),
+                dono: meuID, // Importante: usar o mesmo nome que o filtro
                 codigoVip: codigoVip
             })
         });
@@ -831,18 +829,19 @@ window.salvarNovoGrupo = async function() {
         const res = await response.json();
 
         if (res.success) {
-            window.showAlert('✅ Grupo enviado! VIP: ' + (res.isVip ? 'ATIVADO ⭐' : 'NÃO'));
+            window.showAlert('✅ Grupo enviado para análise do ADM!');
             document.getElementById('modalEnvioGrupo').style.display = 'none';
         } else {
-            window.showAlert('❌ Erro: ' + res.message);
+            window.showAlert('❌ ' + res.message);
         }
     } catch (error) {
-        window.showAlert('❌ Erro de conexão com o servidor.');
+        window.showAlert('❌ Erro ao conectar com o servidor.');
     } finally {
         btn.disabled = false;
         btn.textContent = "ENVIAR GRUPO";
     }
 };
+
 
 
 window.abrirEdicao = function(g) {
@@ -1243,31 +1242,34 @@ function renderAnuncioPopular(container) {
 }
 meusBtn.onclick = (e) => {
   e.preventDefault();
-  const meuID = String(localStorage.getItem('usuarioID') || "");
+  const meuID = localStorage.getItem('usuarioID');
   
   if (!meuID) {
-      window.showAlert('Erro: Seu ID de usuário não foi encontrado.');
+      window.showAlert('Erro: Identificação não encontrada.');
       return;
   }
 
-  // Filtra os grupos que já estão no site (aprovados)
+  // Filtra de forma mais segura convertendo tudo para String
   const meusAprovados = todosGrupos.filter(g => {
-      const dono = String(g.dono || "");
-      const uid = String(g.uid || "");
-      const user = String(g.usuarioID || "");
-      return (dono === meuID || uid === meuID || user === meuID) && meuID !== "";
+      const idDono = String(g.dono || "");
+      const idUser = String(g.usuarioID || "");
+      const idUid = String(g.uid || "");
+      const idBusca = String(meuID);
+
+      return (idDono === idBusca || idUser === idBusca || idUid === idBusca);
   });
 
   if (meusAprovados.length === 0) {
-      // MUDANÇA AQUI: Mensagem mais clara para o usuário não achar que deu erro
-      window.showAlert('Ainda não há grupos aprovados aqui. Se você enviou agora, aguarde a aprovação do ADM!');
+      window.showAlert('Você não tem grupos aprovados ainda. Se enviou agora, aguarde o ADM aprovar!');
   } else {
-    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-    renderizarGrupos(meusAprovados, true); 
-    if(menu) menu.classList.remove('open');
-    window.scrollTo({top: 0, behavior: 'smooth'});
+      // Remove a classe active de todas as categorias para mostrar que é um filtro especial
+      document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+      renderizarGrupos(meusAprovados, true); 
+      if(menu) menu.classList.remove('open');
+      window.scrollTo({top: 0, behavior: 'smooth'});
   }
 };
+
 
 window.copiarPixManual = async function(codigo, botao) {
     try {
