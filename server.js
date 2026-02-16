@@ -187,6 +187,61 @@ app.post('/contar-clique', async (req, res) => {
     } catch (e) { res.status(500).send(); }
 });
 
+// ==========================================
+//    ROTAS DE GERENCIAMENTO DO USUÁRIO
+// ==========================================
+
+// Rota para o usuário editar o próprio grupo
+app.post('/editar-grupo', async (req, res) => {
+    const { key, donoLocal, nome, link, descricao, categoria, foto } = req.body;
+    try {
+        const refGrupo = db.ref(`grupos/${key}`);
+        const snap = await refGrupo.once('value');
+        const grupo = snap.val();
+
+        // Verifica se o grupo existe e se quem está editando é o dono
+        if (grupo && (grupo.dono === donoLocal || grupo.usuarioID === donoLocal)) {
+            await refGrupo.update({ nome, link, descricao, categoria, foto });
+            return res.json({ success: true });
+        }
+        res.status(403).json({ success: false, message: "Acesso negado ou grupo inexistente" });
+    } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+});
+
+// Rota para o usuário excluir o próprio grupo
+app.post('/excluir-grupo', async (req, res) => {
+    const { key, donoLocal } = req.body;
+    try {
+        const refGrupo = db.ref(`grupos/${key}`);
+        const snap = await refGrupo.once('value');
+        const grupo = snap.val();
+
+        if (grupo && (grupo.dono === donoLocal || grupo.usuarioID === donoLocal)) {
+            await refGrupo.remove();
+            return res.json({ success: true });
+        }
+        res.status(403).json({ success: false });
+    } catch (e) { res.status(500).json({ success: false }); }
+});
+
+// Rota para Impulsionar (Sobe o grupo para o topo)
+app.post('/impulsionar-grupo', async (req, res) => {
+    const { key, donoLocal } = req.body;
+    try {
+        const refGrupo = db.ref(`grupos/${key}`);
+        const snap = await refGrupo.once('value');
+        const grupo = snap.val();
+
+        if (grupo && (grupo.dono === donoLocal || grupo.usuarioID === donoLocal)) {
+            // Atualiza o timestamp do último impulso
+            await refGrupo.update({ ultimoImpulso: Date.now() });
+            return res.json({ success: true });
+        }
+        res.status(403).json({ success: false });
+    } catch (e) { res.status(500).json({ success: false }); }
+});
+
+
 // Limpeza de VIPs Expirados
 setInterval(async () => {
     const agora = Date.now();
