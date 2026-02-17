@@ -1250,7 +1250,7 @@ meusBtn.onclick = (e) => {
   } else {
       document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
       renderizarGrupos(meusAprovados, true); 
-      if(menu) menu.classList.remove('open');
+      fecharMenu();
       window.scrollTo({top: 0, behavior: 'smooth'});
   }
 };
@@ -1308,21 +1308,26 @@ const comprarVipBtn = document.getElementById('comprarVipBtn');
 comprarVipBtn.addEventListener("click", (e) => {
   e.preventDefault();
   vipModal.style.display = "flex";
-  menu.classList.remove("open");
+  fecharMenu(); // <-- AGORA ELE FECHA O MENU E MOSTRA O BOTÃO ☰
 });
 
 // Outros Eventos 
-document.getElementById('menuBtn').addEventListener('click', () => {
+// Função única para abrir
+window.abrirMenu = function() {
     menu.classList.add('open');
-    document.getElementById('menuBtn').style.opacity = '0'; // Esconde o botão
-    document.getElementById('menuBtn').style.pointerEvents = 'none'; // Desativa o clique enquanto aberto
-});
+    document.getElementById('menuBtn').style.opacity = '0';
+    document.getElementById('menuBtn').style.pointerEvents = 'none';
+};
 
-document.getElementById('closeBtn').addEventListener('click', () => {
+// Função única para fechar (ESSA É A QUE RESOLVE O PROBLEMA)
+window.fecharMenu = function() {
     menu.classList.remove('open');
-    document.getElementById('menuBtn').style.opacity = '1'; // Mostra o botão de volta
-    document.getElementById('menuBtn').style.pointerEvents = 'auto'; // Reativa o clique
-});
+    document.getElementById('menuBtn').style.opacity = '1';
+    document.getElementById('menuBtn').style.pointerEvents = 'auto';
+};
+
+document.getElementById('menuBtn').onclick = abrirMenu;
+document.getElementById('closeBtn').onclick = fecharMenu;
 
 document.querySelectorAll('.cat-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -1364,7 +1369,7 @@ window.abrirModalEnvio = function() {
   // Define a função de salvar como sendo a de NOVO grupo
   btnSalvar.onclick = () => window.salvarNovoGrupo();
   
-  if(typeof menu !== 'undefined') menu.classList.remove('open');
+  fecharMenu();
 };
 
 // Vincula o botão antigo do menu lateral também
