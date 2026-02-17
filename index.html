@@ -842,8 +842,6 @@ window.salvarNovoGrupo = async function() {
     }
 };
 
-
-
 window.abrirEdicao = function(g) {
     const modal = document.getElementById('modalEnvioGrupo');
     modal.style.display = 'flex';
@@ -852,6 +850,9 @@ window.abrirEdicao = function(g) {
     document.getElementById('grupoDescricao').value = g.descricao;
     document.getElementById('grupoCategoria').value = g.categoria;
     document.getElementById('previewFoto').src = g.foto;
+    
+    // ADICIONE ESSA LINHA PARA LIMPAR O CAMPO DE CÓDIGO AO ABRIR
+    document.getElementById('grupoVipCodigo').value = ''; 
 
     modal.querySelector('h3').textContent = "Editar Grupo";
     const btnSalvar = document.getElementById('salvarGrupo');
@@ -859,22 +860,29 @@ window.abrirEdicao = function(g) {
     btnSalvar.onclick = () => window.executarEdicao(g.key);
 };
 
+
 window.executarEdicao = async function(idDoGrupo) {
     const nome = document.getElementById('grupoNome').value.trim();
     const link = document.getElementById('grupoLink').value.trim();
     const descricao = document.getElementById('grupoDescricao').value.trim();
     const categoria = document.getElementById('grupoCategoria').value;
     const foto = document.getElementById('previewFoto').src;
+    
+    // 1. PEGA O CÓDIGO QUE VOCÊ DIGITOU NO CAMPO
+    const codigoVip = document.getElementById('grupoVipCodigo').value.trim(); 
+    
     const donoLocal = localStorage.getItem('usuarioID');
 
+    // 2. ADICIONA O 'codigoVip' NA LISTA DE DADOS QUE VÃO PRO SERVIDOR
     const dados = { 
         key: idDoGrupo, 
-        donoLocal: donoLocal, // O servidor checa se esse ID é o dono real
+        donoLocal: donoLocal,
         nome, 
         link, 
         descricao, 
         categoria, 
-        foto 
+        foto,
+        codigoVip: codigoVip // <--- ISSO AQUI ESTAVA FALTANDO!
     };
 
     try {
@@ -887,9 +895,9 @@ window.executarEdicao = async function(idDoGrupo) {
         const res = await response.json();
 
         if (res.success) {
-            window.showAlert('✅ Alterações salvas!');
+            window.showAlert('✅ Alterações salvas! Se o código for válido, o VIP já está ativo.');
             document.getElementById('modalEnvioGrupo').style.display = 'none';
-            setTimeout(() => location.reload(), 1000); // Recarrega para ver a mudança
+            setTimeout(() => location.reload(), 1500); 
         } else {
             window.showAlert('❌ Erro: ' + res.message);
         }
@@ -898,9 +906,6 @@ window.executarEdicao = async function(idDoGrupo) {
     }
 };
 
-
-
-// *** FUNÇÃO EXCLUIR GRUPO PERSONALIZADA (SEM CAIXA FEIA) ***
 window.excluirGrupo = function(grupo){
   const modalConfirm = document.getElementById('confirmDeleteModal');
   const btnSim = document.getElementById('confirmBtnSim');
