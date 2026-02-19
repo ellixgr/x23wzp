@@ -8,25 +8,39 @@
     <style>
         :root { --primary: #b78cff; --vip: #ffd700; --danger: #ff4d4d; --success: #2ecc71; --blue: #3498db; --boost: #f1c40f; --dark: #2c3e50; }
         body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; display: flex; flex-direction: column; align-items: center; margin: 0; }
+        
+        /* Stats */
         .stats-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; width: 100%; max-width: 600px; margin-bottom: 20px; }
         .stat-card { background: white; padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-bottom: 4px solid var(--primary); }
         .stat-card h4 { margin: 0; font-size: 11px; color: #888; text-transform: uppercase; }
         .stat-card p { margin: 5px 0 0; font-size: 22px; font-weight: bold; color: var(--dark); }
+
+        /* Cards */
         .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 600px; margin-bottom: 20px; box-sizing: border-box; }
         input, select, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; font-weight: bold; }
         button { background: var(--primary); color: white; border: none; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
         button:hover { filter: brightness(0.9); }
+
+        /* Gestão de Grupos */
         .item-gestao { background: white; padding: 15px; margin-top: 12px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-left: 6px solid #ccc; position: relative; }
         .is-vip { border-left-color: var(--vip) !important; background: #fffdf0; }
-        .badge { font-size: 10px; padding: 4px 8px; border-radius: 4px; font-weight: bold; text-transform: uppercase; display: inline-block; }
-        .badge-vip { background: var(--vip); color: #000; margin-bottom: 4px; }
-        .badge-time { background: #3498db; color: white; }
+        .is-boosted { border-left-color: var(--boost) !important; }
+
+        /* Badges */
+        .badge { font-size: 10px; padding: 3px 7px; border-radius: 4px; font-weight: bold; text-transform: uppercase; display: inline-block; margin-right: 5px; margin-top: 5px; }
+        .badge-vip { background: var(--vip); color: #000; }
+        .badge-boost { background: var(--boost); color: #000; }
+        .badge-id { background: #eee; color: #666; }
+        .badge-moeda { background: var(--success); color: #fff; }
+
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 11px; background: #f9f9f9; padding: 8px; border-radius: 8px; }
+        .info-label { color: #888; display: block; font-size: 9px; }
+
         #area-abareta { display: none; width: 100%; max-width: 600px; }
         .lista-scroll { max-height: 250px; overflow-y: auto; border: 1px solid #eee; border-radius: 10px; padding: 10px; background: #fafafa; }
+        
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 1000; }
         .modal-content { background: white; padding: 25px; border-radius: 15px; width: 90%; max-width: 400px; }
-        .tag-info { font-size: 11px; color: #777; display: block; margin-top: 4px; }
-        .user-info-box { font-size: 10px; color: #555; background: #f8f9fa; padding: 5px 8px; border-radius: 6px; margin-top: 8px; border: 1px solid #eee; }
     </style>
 </head>
 <body>
@@ -40,50 +54,25 @@
 
     <div id="area-abareta">
         <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 15px;">
-            <span id="label-user" style="font-size: 12px; font-weight: bold; color: var(--primary);">MODO SERVIDOR ATIVO</span>
+            <span id="label-user" style="font-size: 12px; font-weight: bold; color: var(--primary);">SISTEMA DE GESTÃO ATIVO</span>
             <button onclick="logout()" style="width: auto; background: var(--danger); padding: 5px 15px; font-size: 11px;">SAIR</button>
         </div>
 
         <div class="stats-container">
-            <div class="stat-card"><h4>Visitas Site</h4><p id="count-visitas">0</p></div>
+            <div class="stat-card"><h4>Acessos Site</h4><p id="count-visitas">0</p></div>
             <div class="stat-card"><h4>VIPs Ativos</h4><p id="count-vip">0</p></div>
             <div class="stat-card"><h4>Grupos Ativos</h4><p id="count-total">0</p></div>
-            <div class="stat-card"><h4>Usuários</h4><p id="count-users">0</p></div>
-        </div>
-
-        <h2 style="font-size: 16px; color: var(--dark);"><i class="fa fa-clock"></i> AGUARDANDO APROVAÇÃO</h2>
-        <div id="lista-solicitacoes" style="margin-bottom: 20px;"></div>
-
-        <div class="card" style="border-top: 4px solid var(--blue);">
-            <h3 style="margin:0;"><i class="fa fa-video"></i> Missões: Vídeos Shopee</h3>
-            <div id="lista-videos-shopee" class="lista-scroll" style="margin: 15px 0; max-height: 150px;"></div>
-            <div style="display: flex; gap: 5px;">
-                <input type="text" id="video-link-input" placeholder="Link do vídeo Shopee..." style="margin-top:0">
-                <button onclick="apiCall('/admin/video/add', {link: document.getElementById('video-link-input').value})" style="width: auto; margin-top:0; background: var(--blue)">
-                    <i class="fa fa-plus"></i>
-                </button>
-            </div>
+            <div class="stat-card"><h4>Usuários Totais</h4><p id="count-users">0</p></div>
         </div>
 
         <div class="card" style="border-top: 4px solid var(--success);">
-            <h3 style="margin:0;"><i class="fa fa-coins"></i> Adicionar Moedas</h3>
-            <input type="text" id="moeda-user-id" placeholder="ID do Usuário">
-            <input type="number" id="moeda-qtd" placeholder="Quantidade">
-            <button onclick="adicionarMoedas()" style="background:var(--success)">ADICIONAR MOEDAS</button>
+            <h3 style="margin:0;"><i class="fa fa-plus-circle"></i> Controle de Moedas</h3>
+            <input type="text" id="moeda-user-id" placeholder="Cole o ID do Usuário aqui">
+            <input type="number" id="moeda-qtd" placeholder="Qtd Moedas (Ex: 100)">
+            <button onclick="adicionarMoedas()" style="background:var(--success)">CONCEDER MOEDAS</button>
         </div>
 
-        <div class="card" style="border-top: 4px solid var(--vip);">
-            <h3><i class="fa fa-star"></i> Gerar Código VIP</h3>
-            <select id="tempo-vip">
-                <option value="2">2 Horas</option>
-                <option value="24">24 Horas</option>
-                <option value="168">7 Dias</option>
-            </select>
-            <button onclick="gerarVip()" style="background: var(--dark)">GERAR NOVO CÓDIGO</button>
-            <div id="lista-codigos-ativos" class="lista-scroll" style="margin-top: 15px;"></div>
-        </div>
-
-        <h2 style="font-size: 16px; color: var(--dark);"><i class="fa fa-list-check"></i> MONITORAMENTO</h2>
+        <h2 style="font-size: 16px; color: var(--dark); margin-top: 30px;"><i class="fa fa-desktop"></i> MONITORAMENTO DE GRUPOS</h2>
         <div id="lista-grupos"></div>
     </div>
 
@@ -95,7 +84,7 @@
             <input type="text" id="edit-foto">
             <div style="display: flex; gap: 10px; margin-top: 20px;">
                 <button onclick="salvarEdicao()" style="background:var(--success)">SALVAR</button>
-                <button onclick="fecharModal()" style="background:#888">CANCELAR</button>
+                <button onclick="fecharModal()" style="background:#888">FECHAR</button>
             </div>
         </div>
     </div>
@@ -104,20 +93,111 @@
     const API_BASE = "https://x23wzp.onrender.com";
     let idSendoEditado = null;
 
-    // Login fake apenas para liberar a UI do painel (O controle real é no Servidor)
     function logar() {
         const pass = document.getElementById('pass-input').value;
-        if(pass) { // Aqui você pode por uma senha simples se quiser
+        if(pass === "123") { // Altere sua senha aqui
             document.getElementById('login-box').style.display = 'none';
             document.getElementById('area-abareta').style.display = 'block';
             carregarDados();
-            setInterval(carregarDados, 10000); // Auto-update a cada 10s
-        }
+            setInterval(carregarDados, 15000); 
+        } else { alert("Senha incorreta"); }
     }
 
     function logout() { location.reload(); }
 
-    // FUNÇÃO MESTRE PARA CHAMAR O RENDER
+    // Converte timestamp em "Faltam Xh Ym"
+    function formatarTempo(ms) {
+        if (!ms || ms < Date.now()) return "Expirado";
+        const diff = ms - Date.now();
+        const h = Math.floor(diff / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        return `${h}h ${m}m`;
+    }
+
+    async function carregarDados() {
+        try {
+            const res = await fetch(`${API_BASE}/admin/dados`);
+            const d = await res.json();
+
+            document.getElementById('count-visitas').innerText = d.stats.visitas || 0;
+            document.getElementById('count-vip').innerText = d.stats.vips || 0;
+            document.getElementById('count-total').innerText = d.stats.grupos || 0;
+            document.getElementById('count-users').innerText = d.stats.users || 0;
+
+            renderGrupos(d.grupos, d.usuarios);
+        } catch (e) { console.error("Erro ao carregar dados"); }
+    }
+
+    function renderGrupos(grupos, usuarios) {
+        const div = document.getElementById('lista-grupos');
+        div.innerHTML = "";
+        
+        Object.keys(grupos).forEach(id => {
+            const g = grupos[id];
+            const donoId = g.dono || g.uid || "N/A";
+            
+            // Busca dados do usuário (moedas) na lista de usuários recebida
+            const dadosUsuario = usuarios ? usuarios[donoId] : null;
+            const moedasUsuario = dadosUsuario ? (dadosUsuario.moedas || 0) : 0;
+
+            const agora = Date.now();
+            const isVip = g.vip === true || g.vip === "true";
+            const expiraVip = g.vipExpiraEm || 0;
+            const isVipAtivo = isVip && expiraVip > agora;
+
+            const ultimoImpulso = g.ultimoImpulso || 0;
+            const tempoEsperaImpulso = 3600000; // 1 hora
+            const isImpulsionado = (agora - ultimoImpulso) < tempoEsperaImpulso;
+            const tempoFaltaImpulso = formatarTempo(ultimoImpulso + tempoEsperaImpulso);
+
+            div.innerHTML += `
+                <div class="item-gestao ${isVipAtivo ? 'is-vip' : ''} ${isImpulsionado ? 'is-boosted' : ''}">
+                    <div style="display:flex; justify-content: space-between; align-items: flex-start;">
+                        <div>
+                            <b style="font-size:14px">${g.nome}</b><br>
+                            <span class="badge badge-id">ID DONO: ${donoId}</span>
+                            <span class="badge badge-moeda"><i class="fa fa-coins"></i> ${moedasUsuario}</span>
+                        </div>
+                        <div style="text-align:right">
+                            ${isVipAtivo ? `<span class="badge badge-vip">⭐ VIP ATIVO</span>` : ''}
+                            ${isImpulsionado ? `<span class="badge badge-boost">🚀 IMPULSIONADO</span>` : ''}
+                        </div>
+                    </div>
+
+                    <div class="info-grid">
+                        <div>
+                            <span class="info-label">STATUS VIP</span>
+                            <b>${isVipAtivo ? formatarTempo(expiraVip) : 'Inativo'}</b>
+                        </div>
+                        <div>
+                            <span class="info-label">PRÓXIMO IMPULSO</span>
+                            <b>${isImpulsionado ? tempoFaltaImpulso : 'Disponível'}</b>
+                        </div>
+                        <div>
+                            <span class="info-label">CLIQUES NO GRUPO</span>
+                            <b><i class="fa fa-eye"></i> ${g.cliques || 0}</b>
+                        </div>
+                        <div>
+                            <span class="info-label">CATEGORIA</span>
+                            <b>${g.categoria || 'Geral'}</b>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 5px; margin-top: 10px;">
+                        <button onclick="abrirModal('${id}', '${g.nome}', '${g.link}', '${g.foto}')" style="background:var(--blue); padding:7px; font-size:11px">EDITAR</button>
+                        <button onclick="apiCall('/admin/grupo/delete', {id:'${id}'})" style="background:var(--danger); padding:7px; font-size:11px">EXCLUIR</button>
+                        <button onclick="copiarId('${donoId}')" style="background:var(--dark); padding:7px; font-size:11px">COPIAR ID</button>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function copiarId(id) {
+        navigator.clipboard.writeText(id);
+        alert("ID Copiado: " + id);
+    }
+
     async function apiCall(endpoint, data = {}) {
         try {
             const res = await fetch(`${API_BASE}${endpoint}`, {
@@ -127,82 +207,17 @@
             });
             const result = await res.json();
             if(result.success) {
-                alert("Sucesso!");
+                alert("Operação realizada!");
                 carregarDados();
             } else { alert("Erro: " + result.message); }
-        } catch (e) { alert("Servidor Render Offline ou Erro na Rota"); }
+        } catch (e) { alert("Erro na API"); }
     }
 
-    async function carregarDados() {
-        try {
-            const res = await fetch(`${API_BASE}/admin/dados`);
-            const d = await res.json();
-
-            document.getElementById('count-visitas').innerText = d.stats.visitas;
-            document.getElementById('count-vip').innerText = d.stats.vips;
-            document.getElementById('count-total').innerText = d.stats.grupos;
-            document.getElementById('count-users').innerText = d.stats.users;
-
-            renderSolicitacoes(d.solicitacoes);
-            renderGrupos(d.grupos, d.usuarios);
-            renderCodigos(d.codigos);
-            renderVideos(d.videos);
-        } catch (e) { console.log("Aguardando servidor..."); }
-    }
-
-    function renderSolicitacoes(sol) {
-        const div = document.getElementById('lista-solicitacoes');
-        div.innerHTML = "";
-        Object.keys(sol).forEach(id => {
-            const s = sol[id];
-            div.innerHTML += `<div class="item-gestao">
-                <b>${s.nome}</b><br>
-                <button onclick="apiCall('/admin/decidir', {id:'${id}', aprovar:true})">APROVAR</button>
-                <button onclick="apiCall('/admin/decidir', {id:'${id}', aprovar:false})" style="background:red">APAGAR</button>
-            </div>`;
-        });
-    }
-
-    function renderGrupos(grupos, users) {
-        const div = document.getElementById('lista-grupos');
-        div.innerHTML = "";
-        Object.keys(grupos).forEach(id => {
-            const g = grupos[id];
-            div.innerHTML += `<div class="item-gestao">
-                <b>${g.nome}</b> | Cliques: ${g.cliques || 0}<br>
-                <span style="font-size:10px">Dono: ${g.dono || 'Desconhecido'}</span><br>
-                <button onclick="abrirModal('${id}', '${g.nome}', '${g.link}', '${g.foto}')" style="background:blue; padding:5px">EDITAR</button>
-                <button onclick="apiCall('/admin/grupo/delete', {id:'${id}'})" style="background:red; padding:5px">EXCLUIR</button>
-            </div>`;
-        });
-    }
-
-    function renderCodigos(cods) {
-        const div = document.getElementById('lista-codigos-ativos');
-        div.innerHTML = "";
-        Object.keys(cods).forEach(c => {
-            if(!cods[c].usado) div.innerHTML += `<div style="font-size:12px">${c} (${cods[c].validadeHoras}h)</div>`;
-        });
-    }
-
-    function renderVideos(vids) {
-        const div = document.getElementById('lista-videos-shopee');
-        div.innerHTML = "";
-        Object.keys(vids).forEach(id => {
-            div.innerHTML += `<div style="font-size:10px">${vids[id].link} <button onclick="apiCall('/admin/video/delete', {id:'${id}'})">X</button></div>`;
-        });
-    }
-
-    // Ações de Botões
     function adicionarMoedas() {
-        const id = document.getElementById('moeda-user-id').value;
+        const id = document.getElementById('moeda-user-id').value.trim();
         const qtd = document.getElementById('moeda-qtd').value;
+        if(!id || !qtd) return alert("Preencha o ID e a Qtd");
         apiCall('/admin/moedas/add', { uid: id, qtd: parseInt(qtd) });
-    }
-
-    function gerarVip() {
-        const h = document.getElementById('tempo-vip').value;
-        apiCall('/admin/vip/gerar', { horas: parseInt(h) });
     }
 
     function abrirModal(id, n, l, f) {
