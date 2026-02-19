@@ -1185,19 +1185,31 @@ btnEntrar.onclick = async (e) => {
   }
 }
 
-
 function ordenarGrupos(lista) {
     const agora = Date.now();
     return lista.sort((a, b) => {
-        if (a.vip && !b.vip) return -1;
-        if (!a.vip && b.vip) return 1;
-        const impulsoA = (agora - (a.ultimoImpulso || 0)) < 3600000;
-        const impulsoB = (agora - (b.ultimoImpulso || 0)) < 3600000;
-        if (impulsoA && !impulsoB) return -1;
-        if (!impulsoA && impulsoB) return 1;
+        // 1. Prioridade absoluta para VIPs ativos
+        const expiraA = Number(a.vipExpiraEm || 0);
+        const expiraB = Number(b.vipExpiraEm || 0);
+        const vipA = (a.vip == true || a.vip == "true") && (expiraA > agora || expiraA === 0);
+        const vipB = (b.vip == true || b.vip == "true") && (expiraB > agora || expiraB === 0);
+
+        if (vipA && !vipB) return -1;
+        if (!vipA && vipB) return 1;
+
+        // 2. Se ambos forem comuns (ou ambos VIP), quem impulsionou por último fica no topo
+        const impA = a.ultimoImpulso || 0;
+        const impB = b.ultimoImpulso || 0;
+        
+        if (impA !== impB) {
+            return impB - impA; // O timestamp maior (mais recente) sobe
+        }
+
+        // 3. Desempate final por cliques
         return (b.cliques || 0) - (a.cliques || 0);
     });
 }
+
 
 window.impulsionarGrupo = async function(key) {
     try {
@@ -1212,15 +1224,15 @@ window.impulsionarGrupo = async function(key) {
         const res = await response.json();
         if (res.success) {
             window.showAlert("🚀 Grupo Impulsionado para o topo!");
-            // Não precisa recarregar, o onValue do Firebase atualizará a tela
+            // ADICIONE ESTA LINHA ABAIXO:
+            carregarGrupos(); 
         } else {
-            window.showAlert("❌ Erro ao impulsionar.");
+            window.showAlert("❌ Erro ao impulsionar: " + (res.message || "Tente novamente."));
         }
     } catch (e) {
         window.showAlert("❌ Erro de conexão com o servidor.");
     }
 };
-
 
 function renderAnuncioTikTok(container) {
     const ad1 = document.createElement('div');
@@ -1228,7 +1240,6 @@ function renderAnuncioTikTok(container) {
     ad1.innerHTML = `<div style="cursor: pointer; border-radius: 15px; overflow: hidden; border: 2px solid #b78cff;" onclick="copiarECaminhar()"><img src="https://i.postimg.cc/dQjhrMsK/1769968251192-(1).jpg" style="width: 100%; display: block;"></div>`;
     container.appendChild(ad1);
 }
-
 function renderAnuncioPopular(container) {
     const ad2 = document.createElement('div');
     ad2.style.cssText = "width:100%; max-width:380px; margin-bottom: 20px;";
@@ -1244,7 +1255,6 @@ meusBtn.onclick = (e) => {
     const idDonoNoBanco = String(g.dono || g.uid || "").trim();
     return idDonoNoBanco === String(meuID).trim();
   });
-
   if (meusAprovados.length === 0) {
       window.showAlert('Nenhum grupo aprovado encontrado para você ainda.');
   } else {
@@ -1254,8 +1264,6 @@ meusBtn.onclick = (e) => {
       window.scrollTo({top: 0, behavior: 'smooth'});
   }
 };
-
-
 window.copiarPixManual = async function(codigo, botao) {
     try {
         await navigator.clipboard.writeText(codigo);
@@ -1270,13 +1278,10 @@ window.copiarPixManual = async function(codigo, botao) {
         showAlert('Erro ao copiar. Tente selecionar o código manualmente.');
     }
 };
-
-// ===== LÓGICA DE ANÚNCIO ALEATÓRIO (50% CHANCE) ===== //
 const popupAnuncio = document.getElementById('popup-anuncio');
 const closePopupBtn = document.getElementById('close-popup-btn');
 const popupLink = document.getElementById('popup-link-dinamico');
 const popupImg = document.getElementById('popup-img-dinamica');
-
 const meusAnuncios = [
     {
         link: "https://br.shp.ee/5q1d37e?smtt=0.0.9",
@@ -1299,64 +1304,43 @@ function gerenciarAnuncio() {
 
 closePopupBtn.addEventListener('click', () => { popupAnuncio.style.display = 'none'; });
 window.addEventListener('load', gerenciarAnuncio);
-
-// ================== INICIALIZAÇÃO DE EVENTOS (MANTIDO) ================== //
-
 const comprarVipBtn = document.getElementById('comprarVipBtn');
-
-// O evento agora só abre o modal de Pix
 comprarVipBtn.addEventListener("click", (e) => {
   e.preventDefault();
   vipModal.style.display = "flex";
   fecharMenu(); // <-- AGORA ELE FECHA O MENU E MOSTRA O BOTÃO ☰
 });
-
-// Outros Eventos 
-// Função única para abrir
 window.abrirMenu = function() {
     menu.classList.add('open');
     document.getElementById('menuBtn').style.opacity = '0';
     document.getElementById('menuBtn').style.pointerEvents = 'none';
 };
-
-// Função única para fechar (ESSA É A QUE RESOLVE O PROBLEMA)
 window.fecharMenu = function() {
     menu.classList.remove('open');
     document.getElementById('menuBtn').style.opacity = '1';
     document.getElementById('menuBtn').style.pointerEvents = 'auto';
 };
-
 document.getElementById('menuBtn').onclick = abrirMenu;
 document.getElementById('closeBtn').onclick = fecharMenu;
-
 document.querySelectorAll('.cat-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     const cat = btn.dataset.cat.toLowerCase();
-    
     let listaFiltrada = (cat === 'todos') 
         ? todosGrupos 
         : todosGrupos.filter(g => g.categoria?.toLowerCase() === cat);
-
     renderizarGrupos(ordenarGrupos(listaFiltrada), false);
   });
 });
-
 fecharVipIcon.onclick = () => { vipModal.style.display = 'none'; };
 fecharVipBtn.onclick = () => { vipModal.style.display = 'none'; };
-
-// ABRIR MODAL ENVIAR GRUPO (RESTAURA O SALVAR POR PADRÃO)
 window.abrirModalEnvio = function() {
   const modal = document.getElementById('modalEnvioGrupo');
   const btnSalvar = document.getElementById('salvarGrupo');
-  
-  // Reseta o Modal para modo de ENVIO
   modal.style.display = 'flex';
   modal.querySelector('h3').textContent = "Enviar Grupo";
   btnSalvar.textContent = "ENVIAR GRUPO";
-  
-  // Limpa os campos
   document.getElementById('grupoNome').value = '';
   document.getElementById('grupoLink').value = '';
   document.getElementById('grupoDescricao').value = ''; 
@@ -1365,18 +1349,10 @@ window.abrirModalEnvio = function() {
   document.getElementById('previewFoto').src = 'https://files.catbox.moe/9qdwuz.webp';
   document.getElementById('msg-acordando').style.display = 'none';
   document.getElementById('mensagemEnvio').style.display = 'none';
-
-  // Define a função de salvar como sendo a de NOVO grupo
-  btnSalvar.onclick = () => window.salvarNovoGrupo();
-  
+  btnSalvar.onclick = () => window.salvarNovoGrupo();  
   fecharMenu();
 };
-
-// Vincula o botão antigo do menu lateral também
 if(enviarBtn) enviarBtn.onclick = (e) => { e.preventDefault(); abrirModalEnvio(); };
-
-
-// Função para carregar o Adsterra apenas sob demanda
 function carregarAdsterra() {
   if (!document.getElementById('adsterra-script')) {
     const adScript = document.createElement('script');
@@ -1385,14 +1361,9 @@ function carregarAdsterra() {
     document.body.appendChild(adScript);
   }
 }
-
-// TERMOS DE USO
 document.getElementById('termosLink').onclick = (e) => {
   e.preventDefault();
-  
-  // Chama o anúncio do Adsterra apenas ao clicar aqui
   carregarAdsterra();
-
   modalTitulo.textContent = "Termos de Uso";
   modalTexto.innerHTML = `
     <p>Bem-vindo ao nosso site de grupos WhatsApp. Ao utilizar este site, você concorda com os seguintes termos:</p>
@@ -1405,14 +1376,9 @@ document.getElementById('termosLink').onclick = (e) => {
   `; 
   modalTermos.style.display = "flex";
 };
-
-// POLÍTICA DE PRIVACIDADE
 document.getElementById('privacidadeLink').onclick = (e) => {
   e.preventDefault();
-
-  // Chama o anúncio do Adsterra apenas ao clicar aqui
-  carregarAdsterra();
-  
+  carregarAdsterra();  
   modalTitulo.textContent = "Política de Privacidade";
   modalTexto.innerHTML = `
     <p>Esta Política de Privacidade explica como coletamos e usamos os dados dos usuários em nosso site.</p>
@@ -1427,49 +1393,31 @@ document.getElementById('privacidadeLink').onclick = (e) => {
   `;
   modalTermos.style.display = "flex";
 };
-
 closeModalTermos.onclick = () => modalTermos.style.display = "none";
-
-// === LÓGICA DO HEADER (MOSTRAR/ESCONDER) ===
 let lastScrollTop = 0;
 const meuHeader = document.querySelector('header');
-
 window.addEventListener("scroll", function() {
    let st = window.pageYOffset || document.documentElement.scrollTop;
-   
-   // Se estiver no topo da página
    if (st <= 10) {
        meuHeader.classList.add('header-visible');
    } 
-   // Se rolar para baixo, esconde
    else if (st > lastScrollTop) {
        meuHeader.classList.remove('header-visible');
    } 
-   // Se rolar para cima, mostra
    else {
        meuHeader.classList.add('header-visible');
    }
    lastScrollTop = st <= 0 ? 0 : st;
 }, false);
-
-// Forçar aparecer ao carregar
 document.addEventListener('DOMContentLoaded', () => {
     meuHeader.classList.add('header-visible');
 });
-
-
-// ================== INICIAR ================== //
-
-// 1. Crie a função showAlert aqui dentro (no final do script)
 window.showAlert = function(mensagem) {
   document.getElementById('customAlertMessage').textContent = mensagem;
   document.getElementById('customAlert').style.display = 'flex';
 };
-
-// Faz a barrinha de navegação do VIP deslizar
 const carrosselVip = document.getElementById('carrossel-pagamento');
 const indicadorVip = document.getElementById('indicador-scroll');
-
 if(carrosselVip && indicadorVip) {
     carrosselVip.addEventListener('scroll', () => {
         const larguraTotal = carrosselVip.scrollWidth - carrosselVip.clientWidth;
@@ -1479,10 +1427,8 @@ if(carrosselVip && indicadorVip) {
         indicadorVip.style.left = deslocamento + 'px';
     });
 }
-
 carregarGrupos();
 </script>
-
 <div id="customAlert" class="modal" style="display:none; z-index: 10000;">
   <div class="modal-content" style="border: 2px solid #b78cff; padding: 30px;">
     <h3 style="color: #b78cff;">Aviso</h3>
@@ -1493,22 +1439,16 @@ carregarGrupos();
     </button>
   </div>
 </div>
-
 <script>
 function copiarECaminhar() {
     const codigo = "DLN60488006165";
     const linkConvite = "https://www.tiktok.com/d/4/ZS91q1HKdapRv-ki0E3/";
-
-    // Copia o código para o celular do usuário
     navigator.clipboard.writeText(codigo).then(() => {
-        // Usa o seu sistema de alerta roxo
         if(window.showAlert) {
             window.showAlert("✅ Código Copiado! Baixe o app e cole o código para ganhar seu bônus.");
         } else {
             alert("✅ Código Copiado!");
         }
-        
-        // Abre o link do TikTok após 1.5 segundos
         setTimeout(() => {
             window.open(linkConvite, '_blank');
         }, 1500);
@@ -1517,7 +1457,6 @@ function copiarECaminhar() {
     });
 }
 </script>
-
 <div id="confirmDeleteModal" class="modal" style="display:none; z-index: 11000;">
   <div class="modal-content" style="border: 2px solid #e74c3c; padding: 30px;">
     <h3 style="color: #e74c3c;">Aviso</h3>
@@ -1528,6 +1467,5 @@ function copiarECaminhar() {
     </div>
   </div>
 </div>
-
 </body>
 </html>
