@@ -4,14 +4,10 @@ const cors = require('cors');
 const crypto = require('crypto');
 const helmet = require('helmet');
 const app = express();
-
-// Configurações de Segurança e Middleware
 app.use(helmet({ contentSecurityPolicy: false })); 
 app.use(cors({ origin: '*' }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
-
-// Inicialização do Firebase
 if (!admin.apps.length) {
     try {
         const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
@@ -25,12 +21,8 @@ if (!admin.apps.length) {
         process.exit(1);
     }
 }
-
 const db = admin.database();
-
-// --- ADICIONADO: VALIDAÇÃO DE SENHA DO RENDER ---
 const SENHA_MESTRE = process.env.ADMIN_PASS || process.env.SENHA_MESTRE;
-
 const verificarAdmin = (req, res, next) => {
     const senhaRecebida = req.headers['x-admin-pass'];
     if (!senhaRecebida || senhaRecebida !== SENHA_MESTRE) {
@@ -38,9 +30,6 @@ const verificarAdmin = (req, res, next) => {
     }
     next();
 };
-// ------------------------------------------------
-
-// Puxa todos os dados para o Painel (ADICIONADO verificarAdmin)
 app.get('/admin/dados', verificarAdmin, async (req, res) => {
     try {
         const snapshot = await db.ref('/').once('value');
@@ -63,8 +52,6 @@ app.get('/admin/dados', verificarAdmin, async (req, res) => {
         });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
-
-// Rota para o site buscar a lista de grupos aprovados
 app.get('/listar-grupos', async (req, res) => {
     try {
         const snap = await db.ref('grupos').once('value');
@@ -77,8 +64,14 @@ app.get('/listar-grupos', async (req, res) => {
         res.status(500).json([]);
     }
 });
-
-// Aprovar ou Recusar solicitações (ADICIONADO verificarAdmin)
+app.get('/admin/dados-publicos', async (req, res) => {
+    try {
+        const snapshot = await db.ref('videos_shopee').once('value');
+        res.json({ videos: snapshot.val() || {} });
+    } catch (e) {
+        res.status(500).json({ videos: {} });
+    }
+});
 app.post('/admin/decidir', verificarAdmin, async (req, res) => {
     const { id, aprovar } = req.body;
     try {
@@ -89,7 +82,6 @@ app.post('/admin/decidir', verificarAdmin, async (req, res) => {
             if(dados) {
                 const expira = Number(dados.vipExpiraEm) || 0;
                 const ehVip = (dados.vip === true || dados.vip === "true");
-
                 await db.ref(`grupos/${id}`).set({ 
                     ...dados, 
                     status: 'aprovado', 
@@ -104,8 +96,6 @@ app.post('/admin/decidir', verificarAdmin, async (req, res) => {
         res.json({ success: true });
     } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
-
-// Adicionar Moedas via Painel (ADICIONADO verificarAdmin)
 app.post('/admin/moedas/add', verificarAdmin, async (req, res) => {
     const { uid, qtd } = req.body;
     try {
@@ -113,8 +103,6 @@ app.post('/admin/moedas/add', verificarAdmin, async (req, res) => {
         res.json({ success: true });
     } catch (e) { res.status(500).json({ success: false }); }
 });
-
-// Gerar Código VIP via Painel (ADICIONADO verificarAdmin)
 app.post('/admin/vip/gerar', verificarAdmin, async (req, res) => {
     const { horas } = req.body;
     try {
@@ -128,23 +116,18 @@ app.post('/admin/vip/gerar', verificarAdmin, async (req, res) => {
         res.json({ success: true, codigo: cod });
     } catch (e) { res.status(500).json({ success: false }); }
 });
-
-// Vídeos Shopee (Add/Delete) (ADICIONADO verificarAdmin)
 app.post('/admin/video/add', verificarAdmin, async (req, res) => {
     try {
         await db.ref(`videos_shopee/${Date.now()}`).set({ link: req.body.link });
         res.json({ success: true });
     } catch (e) { res.status(500).json({ success: false }); }
 });
-
 app.post('/admin/video/delete', verificarAdmin, async (req, res) => {
     try {
         await db.ref(`videos_shopee/${req.body.id}`).remove();
         res.json({ success: true });
     } catch (e) { res.status(500).json({ success: false }); }
 });
-
-// Editar/Apagar Grupo via Monitoramento do Painel (ADICIONADO verificarAdmin)
 app.post('/admin/grupo/edit', verificarAdmin, async (req, res) => {
     const { id, nome, link, foto } = req.body;
     try {
@@ -152,18 +135,12 @@ app.post('/admin/grupo/edit', verificarAdmin, async (req, res) => {
         res.json({ success: true });
     } catch (e) { res.status(500).json({ success: false }); }
 });
-
 app.post('/admin/grupo/delete', verificarAdmin, async (req, res) => {
     try {
         await db.ref(`grupos/${req.body.id}`).remove();
         res.json({ success: true });
     } catch (e) { res.status(500).json({ success: false }); }
 });
-
-// ==========================================
-//    ROTAS DO SITE (USUÁRIOS) - SEM ALTERAÇÃO
-// ==========================================
-
 app.post('/ganhar-moeda', async (req, res) => {
     const { usuarioID } = req.body;
     if (!usuarioID) return res.status(400).json({ success: false });
@@ -172,20 +149,17 @@ app.post('/ganhar-moeda', async (req, res) => {
         res.json({ success: true });
     } catch (e) { res.status(500).json({ success: false }); }
 });
-
 app.get('/status-usuario/:usuarioID', async (req, res) => {
     try {
         const snap = await db.ref(`usuarios/${req.params.usuarioID}`).once('value');
         res.json({ success: true, moedas: snap.val()?.moedas || 0, id: req.params.usuarioID });
     } catch (e) { res.status(500).json({ success: false }); }
 });
-
 app.post('/salvar-grupo', async (req, res) => {
     const { nome, link, categoria, descricao, foto, dono, codigoVip } = req.body;
     try {
         const gSnap = await db.ref('grupos').orderByChild('link').equalTo(link).once('value');
         if (gSnap.exists()) return res.json({ success: false, message: "Link já cadastrado!" });
-
         let e_vip = false;
         let expira = 0;
         if (codigoVip) {
@@ -203,24 +177,20 @@ app.post('/salvar-grupo', async (req, res) => {
         res.json({ success: true, message: "Enviado para aprovação!" });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
-
 app.post('/contar-clique', async (req, res) => {
     try {
         await db.ref(`grupos/${req.body.key}/cliques`).transaction(c => (c || 0) + 1);
         res.json({ success: true });
     } catch (e) { res.status(500).send(); }
 });
-
 app.post('/editar-grupo', async (req, res) => {
     const { key, donoLocal, nome, link, descricao, categoria, foto, codigoVip } = req.body;
     try {
         const refGrupo = db.ref(`grupos/${key}`);
         const snap = await refGrupo.once('value');
         const grupo = snap.val();
-
         if (snap.exists() && (grupo.dono === donoLocal || grupo.usuarioID === donoLocal)) {
             let updates = { nome, link, descricao, categoria, foto };
-
             if (codigoVip && codigoVip.trim() !== "") {
                 const codLimpo = codigoVip.trim();
                 const vSnap = await db.ref(`codigos_vips/${codLimpo}`).once('value');
@@ -240,14 +210,12 @@ app.post('/editar-grupo', async (req, res) => {
         res.status(500).json({ success: false, message: e.message });
     }
 });
-
 app.post('/excluir-grupo', async (req, res) => {
     const { key, donoLocal } = req.body;
     try {
         const refGrupo = db.ref(`grupos/${key}`);
         const snap = await refGrupo.once('value');
         const grupo = snap.val();
-
         if (grupo && (grupo.dono === donoLocal || grupo.usuarioID === donoLocal)) {
             await refGrupo.remove();
             return res.json({ success: true });
@@ -255,14 +223,12 @@ app.post('/excluir-grupo', async (req, res) => {
         res.status(403).json({ success: false });
     } catch (e) { res.status(500).json({ success: false }); }
 });
-
 app.post('/impulsionar-grupo', async (req, res) => {
     const { key, donoLocal } = req.body;
     try {
         const refGrupo = db.ref(`grupos/${key}`);
         const snap = await refGrupo.once('value');
         const grupo = snap.val();
-
         if (grupo && (grupo.dono === donoLocal || grupo.usuarioID === donoLocal)) {
             await refGrupo.update({ ultimoImpulso: Date.now() });
             return res.json({ success: true });
@@ -270,7 +236,6 @@ app.post('/impulsionar-grupo', async (req, res) => {
         res.status(403).json({ success: false });
     } catch (e) { res.status(500).json({ success: false }); }
 });
-
 setInterval(async () => {
     const agora = Date.now();
     const snap = await db.ref('grupos').orderByChild('vip').equalTo(true).once('value');
@@ -280,14 +245,12 @@ setInterval(async () => {
         }
     });
 }, 60000);
-
 app.post('/resgatar-vip-server', async (req, res) => {
     const { usuarioID } = req.body;
     try {
         const userRef = db.ref(`usuarios/${usuarioID}`);
         const snap = await userRef.once('value');
         const moedas = snap.val()?.moedas || 0;
-
         if (moedas >= 30) {
             const cod = "VIP-" + crypto.randomBytes(3).toString('hex').toUpperCase();
             await db.ref(`codigos_vips/${cod}`).set({
@@ -306,6 +269,5 @@ app.post('/resgatar-vip-server', async (req, res) => {
         res.status(500).json({ success: false, message: "Erro interno no servidor." });
     }
 });
-
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Servidor Rodando na Porta ${PORT}`));
