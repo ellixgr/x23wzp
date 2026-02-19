@@ -9,20 +9,24 @@
         :root { --primary: #b78cff; --vip: #ffd700; --danger: #ff4d4d; --success: #2ecc71; --blue: #3498db; --boost: #f1c40f; --dark: #2c3e50; }
         body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; display: flex; flex-direction: column; align-items: center; margin: 0; }
         
+        /* Stats */
         .stats-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; width: 100%; max-width: 600px; margin-bottom: 20px; }
         .stat-card { background: white; padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-bottom: 4px solid var(--primary); }
         .stat-card h4 { margin: 0; font-size: 11px; color: #888; text-transform: uppercase; }
         .stat-card p { margin: 5px 0 0; font-size: 22px; font-weight: bold; color: var(--dark); }
 
+        /* Cards */
         .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 600px; margin-bottom: 20px; box-sizing: border-box; }
         input, select, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; font-weight: bold; }
         button { background: var(--primary); color: white; border: none; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
         button:hover { filter: brightness(0.9); }
 
+        /* Gestão de Grupos */
         .item-gestao { background: white; padding: 15px; margin-top: 12px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-left: 6px solid #ccc; position: relative; }
         .is-vip { border-left-color: var(--vip) !important; background: #fffdf0; }
         .is-boosted { border-left-color: var(--boost) !important; }
 
+        /* Badges */
         .badge { font-size: 10px; padding: 3px 7px; border-radius: 4px; font-weight: bold; text-transform: uppercase; display: inline-block; margin-right: 5px; margin-top: 5px; }
         .badge-vip { background: var(--vip); color: #000; }
         .badge-boost { background: var(--boost); color: #000; }
@@ -110,25 +114,39 @@
     let senhaDigitada = "";
     let idSendoEditado = null;
 
+    // LOGIN VALIDANDO NO SERVIDOR
     async function logar() {
         const pass = document.getElementById('pass-input').value;
+        if(!pass) return alert("Digite a senha!");
+        
         try {
-            const res = await fetch(`${API_BASE}/admin/dados`, { headers: { 'x-admin-pass': pass } });
+            // Tenta buscar dados. Se a senha estiver errada, o servidor deve retornar 401 ou erro.
+            const res = await fetch(`${API_BASE}/admin/dados`, { 
+                headers: { 'x-admin-pass': pass } 
+            });
+
             if(res.ok) {
                 senhaDigitada = pass;
                 document.getElementById('login-box').style.display = 'none';
                 document.getElementById('area-abareta').style.display = 'block';
                 carregarDados();
-                setInterval(carregarDados, 15000);
-            } else { alert("Senha Incorreta!"); }
-        } catch (e) { alert("Erro de conexão com servidor."); }
+                setInterval(carregarDados, 15000); // Atualiza dados automaticamente
+            } else { 
+                alert("ACESSO NEGADO: Senha incorreta no servidor!"); 
+            }
+        } catch (e) { 
+            alert("Erro ao conectar com o servidor no Render."); 
+        }
     }
 
     function logout() { location.reload(); }
 
+    // CARREGA TODOS OS DADOS DO SERVIDOR
     async function carregarDados() {
         try {
-            const res = await fetch(`${API_BASE}/admin/dados`, { headers: { 'x-admin-pass': senhaDigitada } });
+            const res = await fetch(`${API_BASE}/admin/dados`, { 
+                headers: { 'x-admin-pass': senhaDigitada } 
+            });
             const d = await res.json();
 
             document.getElementById('count-visitas').innerText = d.stats.visitas || 0;
@@ -139,30 +157,37 @@
             renderVideos(d.videos);
             renderCodigos(d.codigos);
             renderGrupos(d.grupos, d.usuarios);
-        } catch (e) { console.error("Erro ao atualizar"); }
+        } catch (e) { console.error("Erro ao atualizar dados."); }
     }
 
+    // RENDERIZA LISTA DE VÍDEOS
     function renderVideos(vids) {
         const div = document.getElementById('lista-videos-shopee');
         div.innerHTML = "";
         if(!vids) return;
         Object.keys(vids).forEach(id => {
-            div.innerHTML += `<div style="font-size:11px; padding:5px; border-bottom:1px solid #eee; display:flex; justify-content:space-between">
+            div.innerHTML += `<div style="font-size:11px; padding:5px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
                 <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:80%">${vids[id].link}</span>
-                <button onclick="apiCall('/admin/video/delete', {id:'${id}'})" style="width:auto; padding:2px 8px; margin:0; background:red">X</button>
+                <button onclick="apiCall('/admin/video/delete', {id:'${id}'})" style="width:auto; padding:2px 8px; margin:0; background:var(--danger)">EXCLUIR</button>
             </div>`;
         });
     }
 
+    // RENDERIZA LISTA DE CÓDIGOS VIP
     function renderCodigos(cods) {
         const div = document.getElementById('lista-codigos-ativos');
         div.innerHTML = "";
         if(!cods) return;
         Object.keys(cods).forEach(c => {
-            if(!cods[c].usado) div.innerHTML += `<div style="font-size:12px; padding:3px; color:#555"><b>${c}</b> - ${cods[c].validadeHoras}h</div>`;
+            if(!cods[c].usado) {
+                div.innerHTML += `<div style="font-size:12px; padding:5px; border-bottom:1px solid #eee;">
+                    <b>CÓDIGO:</b> <code style="background:#eee; padding:2px 5px;">${c}</code> | <b>DURAÇÃO:</b> ${cods[c].validadeHoras}h
+                </div>`;
+            }
         });
     }
 
+    // RENDERIZA MONITORAMENTO DE GRUPOS
     function renderGrupos(grupos, usuarios) {
         const div = document.getElementById('lista-grupos');
         div.innerHTML = "";
@@ -178,18 +203,26 @@
 
             div.innerHTML += `
                 <div class="item-gestao ${isVip ? 'is-vip' : ''} ${isBoost ? 'is-boosted' : ''}">
-                    <b>${g.nome}</b><br>
-                    <span class="badge badge-id">ID: ${donoId}</span>
-                    <span class="badge badge-moeda">$ ${moedas}</span>
-                    ${isVip ? `<span class="badge badge-vip">VIP</span>` : ''}
-                    <div class="info-grid">
-                        <div><span class="info-label">VIP EXPIRA</span><b>${isVip ? formatarTempo(g.vipExpiraEm) : '---'}</b></div>
-                        <div><span class="info-label">IMPULSO</span><b>${isBoost ? formatarTempo((g.ultimoImpulso||0)+3600000) : 'LIVRE'}</b></div>
-                        <div><span class="info-label">CLIQUES</span><b>${g.cliques || 0}</b></div>
+                    <div style="display:flex; justify-content:space-between;">
+                        <b>${g.nome}</b>
+                        <div>
+                            ${isVip ? `<span class="badge badge-vip">VIP</span>` : ''}
+                            ${isBoost ? `<span class="badge badge-boost">BOOST</span>` : ''}
+                        </div>
                     </div>
+                    <span class="badge badge-id">ID: ${donoId}</span>
+                    <span class="badge badge-moeda"><i class="fa fa-coins"></i> ${moedas}</span>
+                    
+                    <div class="info-grid">
+                        <div><span class="info-label">VIP EXPIRA EM</span><b>${isVip ? formatarTempo(g.vipExpiraEm) : 'INATIVO'}</b></div>
+                        <div><span class="info-label">IMPULSO</span><b>${isBoost ? formatarTempo((g.ultimoImpulso||0)+3600000) : 'DISPONÍVEL'}</b></div>
+                        <div><span class="info-label">CLIQUES NO LINK</span><b>${g.cliques || 0}</b></div>
+                        <div><span class="info-label">CATEGORIA</span><b>${g.categoria || 'Geral'}</b></div>
+                    </div>
+                    
                     <div style="display:flex; gap:5px; margin-top:10px">
-                        <button onclick="abrirModal('${id}','${g.nome}','${g.link}','${g.foto}')" style="background:var(--blue); padding:5px; font-size:10px">EDITAR</button>
-                        <button onclick="apiCall('/admin/grupo/delete', {id:'${id}'})" style="background:var(--danger); padding:5px; font-size:10px">EXCLUIR</button>
+                        <button onclick="abrirModal('${id}','${g.nome}','${g.link}','${g.foto}')" style="background:var(--blue); padding:8px; font-size:10px">EDITAR</button>
+                        <button onclick="apiCall('/admin/grupo/delete', {id:'${id}'})" style="background:var(--danger); padding:8px; font-size:10px">EXCLUIR</button>
                     </div>
                 </div>`;
         });
@@ -203,18 +236,28 @@
         return `${h}h ${m}m`;
     }
 
+    // CHAMADA GENÉRICA PARA API (USA A SENHA NO HEADER)
     async function apiCall(endpoint, data = {}) {
         try {
             const res = await fetch(`${API_BASE}${endpoint}`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'x-admin-pass': senhaDigitada },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'x-admin-pass': senhaDigitada 
+                },
                 body: JSON.stringify(data)
             });
             const r = await res.json();
-            if(r.success) { carregarDados(); } else { alert(r.message); }
-        } catch (e) { alert("Erro na ação."); }
+            if(r.success) { 
+                alert("Operação realizada!");
+                carregarDados(); 
+            } else { 
+                alert("Erro: " + r.message); 
+            }
+        } catch (e) { alert("Erro na comunicação com o servidor."); }
     }
 
+    // FUNÇÕES ESPECÍFICAS
     function addVideo() {
         const link = document.getElementById('video-link-input').value;
         if(link) apiCall('/admin/video/add', { link });
@@ -223,7 +266,7 @@
     function adicionarMoedas() {
         const uid = document.getElementById('moeda-user-id').value;
         const qtd = document.getElementById('moeda-qtd').value;
-        apiCall('/admin/moedas/add', { uid, qtd: parseInt(qtd) });
+        if(uid && qtd) apiCall('/admin/moedas/add', { uid, qtd: parseInt(qtd) });
     }
 
     function gerarVip() {
@@ -231,6 +274,7 @@
         apiCall('/admin/vip/gerar', { horas: parseInt(h) });
     }
 
+    // EDIÇÃO DE GRUPO (MODAL)
     function abrirModal(id, n, l, f) {
         idSendoEditado = id;
         document.getElementById('edit-nome').value = n;
