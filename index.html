@@ -900,37 +900,48 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
     if (mostrarTarjaAnalise) {
         btnContainer.innerHTML = `<div class="btn-falso-entrar" style="background:#888">AGUARDANDO APROVAÇÃO</div>`;
     } else if (modoMeusGrupos) {
-        if (!vipAtivo) {
-            const agora = Date.now();
-            const tempoEspera = 60 * 60 * 1000; // 1 Hora
+        // --- LÓGICA PARA GRUPOS VIP (MOSTRA QUANTO TEMPO RESTA DE VIP) ---
+        if (vipAtivo && expiraEm > agora) {
+            const restanteVip = expiraEm - agora;
+            const dias = Math.floor(restanteVip / (24 * 60 * 60 * 1000));
+            const horas = Math.floor((restanteVip % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+            const minutos = Math.floor((restanteVip % (60 * 60 * 1000)) / 60000);
+
+            btnContainer.innerHTML = `
+                <div class="btn-falso-entrar" style="background: #ffd700; color: #000; margin-bottom: 8px; font-size: 11px; height: auto; padding: 5px;">
+                    ⭐ VIP EXPIRA EM: ${dias}d ${horas}h ${minutos}m
+                </div>
+                <div class="btn-falso-entrar" onclick="window.location.href='${g.link}'">ENTRAR NO GRUPO</div>
+            `;
+            // Atualiza a cada minuto
+            setTimeout(() => carregarGrupos(), 60000);
+
+        } else if (!vipAtivo) {
+            // --- LÓGICA PARA GRUPOS NORMAIS (CONTADOR DE IMPULSO) ---
+            const tempoEspera = 60 * 60 * 1000; 
             const ultimoImpulsoLocal = Number(localStorage.getItem('last_impulse_' + g.key) || 0);
             const tempoPassado = agora - ultimoImpulsoLocal;
 
             if (tempoPassado < tempoEspera) {
-                // EXIBE A CONTAGEM REGRESSIVA NO BOTÃO
                 const restante = tempoEspera - tempoPassado;
                 const min = Math.floor(restante / 60000);
                 const seg = Math.floor((restante % 60000) / 1000);
                 
                 btnContainer.innerHTML = `
                     <div class="btn-falso-entrar" style="background: #555; color: #ccc; cursor: not-allowed;">
-                        ⏳ AGUARDE ${min}:${seg < 10 ? '0'+seg : seg}
+                        ⏳ IMPULSO EM ${min}:${seg < 10 ? '0'+seg : seg}
                     </div>`;
-                
-                // Atualiza o botão a cada segundo sem recarregar a página toda
                 setTimeout(() => carregarGrupos(), 1000); 
             } else {
                 btnContainer.innerHTML = `
-                    <div class="btn-falso-entrar" 
-                         style="background: #2575fc; color: white; cursor: pointer;" 
-                         onclick="impulsionarGrupo('${g.key}')">
+                    <div class="btn-falso-entrar" style="background: #2575fc; color: white; cursor: pointer;" onclick="impulsionarGrupo('${g.key}')">
                          🚀 IMPULSIONAR GRUPO
                     </div>`;
             }
         } else {
+            // Caso seja VIP sem data de expiração (VIP Vitalício)
             btnContainer.innerHTML = `<div class="btn-falso-entrar" onclick="window.location.href='${g.link}'">ENTRAR NO GRUPO</div>`;
         }
-
     } else {
         const btnEntrar = document.createElement('div');
         btnEntrar.className = "btn-falso-entrar";
