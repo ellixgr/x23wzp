@@ -279,5 +279,5 @@ app.post('/resgatar-vip-server', async (req, res) => {
         res.status(500).json({ success: false, message: "Erro interno no servidor." });
     }
 });
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT || 8080;
 app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Servidor Rodando na Porta ${PORT}`));
