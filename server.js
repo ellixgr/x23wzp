@@ -246,15 +246,31 @@ app.post('/impulsionar-grupo', async (req, res) => {
         res.status(403).json({ success: false });
     } catch (e) { res.status(500).json({ success: false }); }
 });
+// Versão otimizada para não travar no Zeabur
 setInterval(async () => {
-    const agora = Date.now();
-    const snap = await db.ref('grupos').orderByChild('vip').equalTo(true).once('value');
-    snap.forEach(child => {
-        if (child.val().vipExpiraEm && agora > child.val().vipExpiraEm) {
-            db.ref(`grupos/${child.key}`).update({ vip: false, vipExpiraEm: null });
+    try {
+        const agora = Date.now();
+        // Buscamos apenas uma vez e processamos em segundo plano
+        const snap = await db.ref('grupos').orderByChild('vip').equalTo(true).once('value');
+        const updates = {};
+        
+        snap.forEach(child => {
+            const dados = child.val();
+            if (dados.vipExpiraEm && agora > dados.vipExpiraEm) {
+                updates[`grupos/${child.key}/vip`] = false;
+                updates[`grupos/${child.key}/vipExpiraEm`] = null;
+            }
+        });
+
+        if (Object.keys(updates).length > 0) {
+            await db.ref().update(updates);
+            console.log(`✅ VIPs expirados limpos: ${Object.keys(updates).length}`);
         }
-    });
-}, 60000);
+    } catch (e) {
+        console.error("Erro na limpeza de VIPs:", e.message);
+    }
+}, 300000);
+
 app.post('/resgatar-vip-server', async (req, res) => {
     const { usuarioID } = req.body;
     try {
