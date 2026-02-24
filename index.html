@@ -946,8 +946,23 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
         const btnEntrar = document.createElement('div');
         btnEntrar.className = "btn-falso-entrar";
         btnEntrar.innerHTML = vipAtivo ? "⭐ ENTRAR NO GRUPO" : "ENTRAR NO GRUPO";
-        btnEntrar.onclick = () => {
+        
+        btnEntrar.onclick = async () => {
+            // Abre o anúncio em uma nova aba
             window.open('https://www.effectivegatecpm.com/afavj9a2y?key=5875f3c51a281666d53e659422973930', '_blank');
+            
+            // Envia o clique para o servidor no Zeabur processar a soma
+            try {
+                await fetch("https://x23wzp.zeabur.app/contar-clique", {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ key: g.key })
+                });
+            } catch (e) {
+                console.log("Erro ao registrar clique");
+            }
+
+            // Redireciona o usuário para o grupo de WhatsApp
             window.location.href = g.link;
         };
         btnContainer.appendChild(btnEntrar);
