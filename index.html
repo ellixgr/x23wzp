@@ -947,19 +947,20 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
         btnEntrar.className = "btn-falso-entrar";
         btnEntrar.innerHTML = vipAtivo ? "⭐ ENTRAR NO GRUPO" : "ENTRAR NO GRUPO";
 btnEntrar.onclick = async () => {
-    // 1. Tenta registrar o clique no servidor (usando a rota certa agora)
+    // 1. Registra o clique e ESPERA a confirmação antes de sair da página
     try {
         await fetch(`https://x23wzp.zeabur.app/registrar-clique?key=${g.key}`);
     } catch (e) {
-        console.log("Erro ao registrar clique, mas seguindo...");
+        console.error("Erro ao registrar clique:", e);
     }
 
     // 2. Abre o anúncio em uma nova aba
     window.open('https://www.effectivegatecpm.com/afavj9a2y?key=5875f3c51a281666d53e659422973930', '_blank');
 
-    // 3. Redireciona para o WhatsApp na aba atual
+    // 3. Redireciona para o WhatsApp
     window.location.href = g.link;
 };
+
 
         btnContainer.appendChild(btnEntrar);
     }
