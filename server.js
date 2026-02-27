@@ -136,26 +136,44 @@ app.get('/status-usuario/:usuarioID', async (req, res) => {
 
 // --- ROTAS DE GRUPOS E SOLICITAÇÕES ---
 
-app.post('/salvar-grupo', async (req, res) => {
-    const { nome, link, categoria, descricao, foto, dono, codigoVip } = req.body;
+app.post('/salvar-grupo', verificarToken, async (req, res) => {
+    const { nome, link, categoria, descricao, foto, codigoVip } = req.body;
+    const uidSeguro = req.uid; // Pega o ID direto do Token verificado pelo Firebase
     try {
-        const gSnap = await db.ref('grupos').orderByChild('link').equalTo(link).once('value');
-        if (gSnap.exists()) return res.json({ success: false, message: "Link já cadastrado!" });
-        let e_vip = false; let expira = 0;
-        if (codigoVip) {
-            const vSnap = await db.ref(`codigos_vips/${codigoVip}`).once('value');
+        // Verifica se link já existe em grupos ou solicitações
+        const [gSnap, sSnap] = await Promise.all([
+            db.ref('grupos').orderByChild('link').equalTo(link).once('value'),
+            db.ref('solicitacoes').orderByChild('link').equalTo(link).once('value')
+        ]);
+        
+        if (gSnap.exists() || sSnap.exists()) {
+            return res.json({ success: false, message: "Este link já está cadastrado ou em análise!" });
+        }
+
+        let e_vip = false; 
+        let expira = 0;
+
+        if (codigoVip && codigoVip.trim() !== "") {
+            const vSnap = await db.ref(`codigos_vips/${codigoVip.trim()}`).once('value');
             if (vSnap.exists() && vSnap.val().status === "disponivel") {
                 e_vip = true;
                 expira = Date.now() + (vSnap.val().validadeHoras * 3600000);
-                await db.ref(`codigos_vips/${codigoVip}`).update({ status: "usado", usado: true });
+                await db.ref(`codigos_vips/${codigoVip.trim()}`).update({ status: "usado", usado: true });
             }
         }
+
         await db.ref('solicitacoes').push().set({
-            nome, link, categoria, descricao, foto, dono,
-            vip: e_vip, vipExpiraEm: expira, status: "pendente", criadoEm: Date.now()
+            nome, link, categoria, descricao, foto, 
+            dono: uidSeguro, // Salva o dono real
+            vip: e_vip, 
+            vipExpiraEm: expira, 
+            status: "pendente", 
+            criadoEm: Date.now()
         });
         res.json({ success: true, message: "Enviado para aprovação!" });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { 
+        res.status(500).json({ success: false, message: "Erro ao salvar grupo." }); 
+    }
 });
 
 app.post('/editar-grupo', verificarToken, async (req, res) => {
