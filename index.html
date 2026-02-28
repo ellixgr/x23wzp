@@ -714,48 +714,51 @@ window.salvarNovoGrupo = async function() {
     const categoria = document.getElementById('grupoCategoria').value;
     const descricao = document.getElementById('grupoDescricao').value.trim();
     const foto = document.getElementById('previewFoto').src;
-    const meuID = localStorage.getItem('usuarioID');
+    const codigoVip = document.getElementById('grupoVipCodigo').value.trim();
+
+    if(!nome || !link || !categoria) {
+        window.showAlert("Preencha os campos obrigatórios!");
+        return;
+    }
 
     const btn = document.getElementById('salvarGrupo');
     btn.disabled = true;
+    btn.textContent = "ENVIANDO...";
 
     try {
+        // Garante que o usuário está logado antes de enviar
         if(!auth.currentUser) await window.fazerLogin();
+        
+        // Pega o Token de segurança atualizado
         const token = await auth.currentUser.getIdToken();
 
         const response = await fetch("https://x23wzp.zeabur.app/salvar-grupo", {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
+                'Authorization': `Bearer ${token}` // O servidor precisa disso!
             },
-            body: JSON.stringify({ nome, link, categoria, descricao, foto, dono: auth.currentUser.uid })
+            body: JSON.stringify({ nome, link, categoria, descricao, foto, codigoVip })
         });
 
         const res = await response.json();
         if (res.success) {
-            // Fecha o modal de envio
             document.getElementById('modalEnvioGrupo').style.display = 'none';
+            window.showAlert("✅ Enviado! O grupo aparecerá em 'Meus Grupos' assim que o administrador aprovar.");
             
-            // Configura o botão OK do seu alerta customizado para abrir a aba
-            const alertaBtn = document.querySelector('#customAlert button');
-            document.getElementById('customAlertMessage').textContent = "✅ Enviado! O grupo aparecerá em 'Meus Grupos' assim que o administrador aprovar.";
-            document.getElementById('customAlert').style.display = 'flex';
-
-            alertaBtn.onclick = () => {
-                document.getElementById('customAlert').style.display = 'none';
-                // REDIRECIONAMENTO MANUAL
-                document.getElementById('meusGrupos').click();
-            };
+            // Limpa os campos para o próximo envio
+            document.getElementById('grupoNome').value = '';
+            document.getElementById('grupoLink').value = '';
+        } else {
+            window.showAlert("❌ " + res.message);
         }
     } catch (e) {
-        alert("Erro ao conectar com o servidor.");
+        window.showAlert("❌ Erro ao conectar com o servidor.");
     } finally {
         btn.disabled = false;
+        btn.textContent = "ENVIAR GRUPO";
     }
 };
-
-
 
 
 window.abrirEdicao = function(g) {
@@ -967,20 +970,19 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
         const btnEntrar = document.createElement('div');
         btnEntrar.className = "btn-falso-entrar";
         btnEntrar.innerHTML = vipAtivo ? "⭐ ENTRAR NO GRUPO" : "ENTRAR NO GRUPO";
-btnEntrar.onclick = async () => {
-    // 1. Registra o clique e ESPERA a confirmação antes de sair da página
-    try {
-        await fetch(`https://x23wzp.zeabur.app/registrar-clique?key=${g.key}`);
-    } catch (e) {
-        console.error("Erro ao registrar clique:", e);
-    }
+btnEntrar.onclick = () => {
+    // 1. Registra o clique em segundo plano (usa fetch sem travar o usuário)
+    fetch(`https://x23wzp.zeabur.app/registrar-clique?key=${g.key}`, { method: 'GET', mode: 'no-cors' });
 
     // 2. Abre o anúncio em uma nova aba
     window.open('https://www.effectivegatecpm.com/afavj9a2y?key=5875f3c51a281666d53e659422973930', '_blank');
 
-    // 3. Redireciona para o WhatsApp
-    window.location.href = g.link;
+    // 3. Redireciona para o WhatsApp na mesma aba
+    setTimeout(() => {
+        window.location.href = g.link;
+    }, 100); 
 };
+
 
 
         btnContainer.appendChild(btnEntrar);
