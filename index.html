@@ -3,119 +3,174 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Bronxs7</title>
-
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="Grupos whatsapp💬">
-    <meta property="og:description" content="Acesse nossos grupos e conteúdos exclusivos aqui.">
-    <meta property="og:url" content="https://seusite.com"> <meta property="og:image" content="https://i.postimg.cc/nV2t5Cz1/1769082090576-(1).jpg">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
+    <title>Links</title>
+    <meta name="robots" content="noindex, nofollow">
 
     <style>
+        :root {
+            --primary: #b78cff;
+            --led-blue: #00d2ff;
+            --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #d6dee9 100%);
+        }
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        /* Impede seleção de texto para dificultar cópia */
         body {
-            font-family: 'Segoe UI', Roboto, sans-serif;
-            background: #ebebeb;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg-gradient);
             display: flex;
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
             padding-bottom: 50px;
+            user-select: none; 
+            -webkit-user-select: none;
         }
 
-        /* --- Cabeçalho --- */
         header {
             width: 100%;
-            background: #fff;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            height: 50px;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            margin-bottom: 10px;
         }
 
-        /* --- Foto Principal (Linktree) --- */
+        .aviso-click {
+            font-size: 11px;
+            color: #ff4444;
+            font-weight: 900;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            text-align: center;
+            text-shadow: 1px 1px 0px white;
+        }
+
+        /* --- CONTAINER COM BORDA LED ANIMADA --- */
+        .led-box {
+            position: relative;
+            width: 92%;
+            max-width: 380px;
+            height: 160px;
+            padding: 3px; /* Espessura da borda led */
+            background: #000;
+            border-radius: 23px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 0 20px rgba(0, 210, 255, 0.4);
+            margin-bottom: 20px;
+        }
+
+        /* O efeito do LED correndo */
+        .led-box::before {
+            content: '';
+            position: absolute;
+            width: 150%;
+            height: 150%;
+            background-image: conic-gradient(transparent, transparent, transparent, var(--led-blue));
+            animation: rotateLed 3s linear infinite;
+        }
+
+        @keyframes rotateLed {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         .linktree-container {
             position: relative;
-            width: 90%;
-            max-width: 380px;
-            height: 150px; 
-            margin-bottom: 30px;
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 5px 20px rgba(183, 140, 255, 0.3);
-            border: 2px solid #b78cff;
-        }
-        .linktree-container img {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            border-radius: 20px; 
+            overflow: hidden;
+            z-index: 1;
+            background: #fff;
             display: block;
         }
+        
+        .linktree-container img { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+            transition: transform 0.5s;
+        }
+
+        /* BOTÃO PULSANTE */
         .btn-overlay {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
             color: white;
-            padding: 10px 20px;
-            border-radius: 30px;
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            font-weight: bold;
-            font-size: 14px;
+            padding: 12px 25px;
+            border-radius: 50px; 
+            border: 2px solid var(--led-blue);
+            font-weight: 800;
+            font-size: 15px;
             text-transform: uppercase;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            box-shadow: 0 0 15px var(--led-blue);
+            animation: pulse 2s infinite ease-in-out;
+            pointer-events: none;
+            z-index: 2;
         }
 
-        /* --- Espaçador de Anúncios --- */
+        @keyframes pulse {
+            0% { transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 10px var(--led-blue); }
+            50% { transform: translate(-50%, -50%) scale(1.08); box-shadow: 0 0 25px var(--led-blue); }
+            100% { transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 10px var(--led-blue); }
+        }
+
+        .section-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: #888;
+            text-transform: uppercase;
+            margin: 20px 0 10px;
+            letter-spacing: 1px;
+        }
+
         .ad-wrapper {
             display: flex;
             flex-direction: column;
             align-items: center;
             width: 100%;
             gap: 20px; 
-            margin-top: 20px;
         }
 
-        /* --- Anúncios de Imagem (Seus) --- */
         .ad-box {
-            width: 75%;
-            max-width: 280px; 
-            border-radius: 12px;
+            width: 85%;
+            max-width: 300px; 
+            border-radius: 0; 
             overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             background: #fff;
+            border: 1px solid #ddd;
         }
         .ad-box img { width: 100%; display: block; }
 
-        /* --- Estilo para o Banner Adsterra --- */
         .adsterra-banner {
             width: 300px;
             height: 250px;
             background: #fff;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
 
-        /* --- Menu Lateral --- */
         .menu-btn {
             position: fixed;
-            top: 15px;
+            top: 10px;
             right: 15px;
-            font-size: 24px;
+            font-size: 22px;
             background: #fff;
-            color: #333;
             padding: 8px 12px;
             border-radius: 10px;
             cursor: pointer;
-            z-index: 2000;
+            z-index: 2001;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
+
         .side-menu {
             position: fixed;
             top: 0;
@@ -125,8 +180,7 @@
             background: white;
             padding: 60px 20px;
             transition: 0.4s;
-            z-index: 1900;
-            box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+            z-index: 2000;
         }
         .side-menu.active { right: 0; }
         .side-menu a {
@@ -136,7 +190,7 @@
             padding: 14px;
             margin-bottom: 12px;
             border-radius: 10px;
-            border: 1px solid #f0f0f0;
+            background: #f8f8f8;
             font-weight: 600;
         }
         .close-x { position: absolute; top: 20px; right: 20px; cursor: pointer; }
@@ -144,81 +198,71 @@
         footer { text-align: center; color: #aaa; font-size: 10px; margin-top: 40px; }
     </style>
 </head>
-<body>
-
-    <div class="menu-btn" onclick="toggleMenu()">☰</div>
+<body oncontextmenu="return false;"> <div class="menu-btn" onclick="toggleMenu()">☰</div>
 
     <div class="side-menu" id="sideMenu">
         <div class="close-x" onclick="toggleMenu()">❌</div>
-        <h2 style="margin-bottom: 20px; font-size: 18px;">MENU</h2>
-        <a href="https://ellixgr.github.io/x23wzp/ads" style="background: #f0f8ff;">🇺🇸 Números Virtuais 🇧🇷</a>
+        <h2 style="margin-bottom: 20px;">MENU</h2>
+        <a href="https://ellixgr.github.io/x23wzp/ads">🇺🇸 Números Virtuais 🇧🇷</a>
         <a href="https://br.shp.ee/5q1d37e?smtt=0.0.9" target="_blank">🛍️ Loja Acessórios</a>
-        <a href="https://wa.me/5521977231625" target="_blank" style="background: #f5fff9; color: #128c7e;">🟢 Suporte WhatsApp</a>
+        <a href="https://wa.me/5521977231625" target="_blank" style="color: #128c7e;">🟢 Suporte WhatsApp</a>
     </div>
 
     <header></header>
 
-    <a href="https://linktr.ee/Bronxs7" target="_blank" class="linktree-container">
-        <img src="https://i.postimg.cc/nV2t5Cz1/1769082090576-(1).jpg" alt="Ver Grupos">
-        <div class="btn-overlay">VER GRUPOS</div>
-    </a>
+    <div class="aviso-click">⚠️ SE ABRIR ANÚNCIO, VOLTE E CLIQUE DE NOVO!</div>
+
+    <div class="led-box">
+        <a href="https://linktr.ee/Bronxs7" target="_blank" class="linktree-container" onclick="handleAdClick(event)">
+            <img src="https://i.postimg.cc/nV2t5Cz1/1769082090576-(1).jpg" alt="Grupos">
+            <div class="btn-overlay">VER GRUPOS</div>
+        </a>
+    </div>
+
+    <p class="section-title">Publicidade</p>
 
     <div class="ad-wrapper">
-        
         <div class="adsterra-banner">
             <script type="text/javascript">
-                atOptions = {
-                    'key' : '3e1fe799cb19b129dba9470a4e2f2556',
-                    'format' : 'iframe',
-                    'height' : 250,
-                    'width' : 300,
-                    'params' : {}
-                };
+                atOptions = { 'key' : '3e1fe799cb19b129dba9470a4e2f2556', 'format' : 'iframe', 'height' : 250, 'width' : 300, 'params' : {} };
             </script>
             <script type="text/javascript" src="https://www.highperformanceformat.com/3e1fe799cb19b129dba9470a4e2f2556/invoke.js"></script>
         </div>
 
-        <div class="ad-box">
-            <a href="https://www.tiktok.com/d/4/ZS91q1HKdapRv-ki0E3/" target="_blank">
-                <img src="https://i.postimg.cc/dQjhrMsK/1769968251192-(1).jpg" alt="TikTok">
-            </a>
-        </div>
-
-        <div class="adsterra-banner">
-            <script type="text/javascript">
-                atOptions = {
-                    'key' : '3e1fe799cb19b129dba9470a4e2f2556',
-                    'format' : 'iframe',
-                    'height' : 250,
-                    'width' : 300,
-                    'params' : {}
-                };
-            </script>
-            <script type="text/javascript" src="https://www.highperformanceformat.com/3e1fe799cb19b129dba9470a4e2f2556/invoke.js"></script>
-        </div>
+        <p class="section-title">Parceiros</p>
 
         <div class="ad-box">
             <a href="https://soupopular.net/ref/bagau" target="_blank">
                 <img src="https://files.catbox.moe/k4dtyg.jpg" alt="Popular">
             </a>
         </div>
-
-        <div class="ad-box">
-            <a href="https://br.shp.ee/5q1d37e?smtt=0.0.9" target="_blank">
-                <img src="https://files.catbox.moe/xjuhw5.png" alt="Shopee">
-            </a>
-        </div>
-
     </div>
 
-    <footer>© 2026</footer>
+    <footer>© 2026 BRONXS7</footer>
 
     <script src="https://pl28642215.effectivegatecpm.com/b9/7f/04/b97f0402af5fa803ef8d137e4050caf4.js"></script>
 
     <script>
+        // Segurança: Bloqueia atalhos de desenvolvedor (F12, Ctrl+Shift+I)
+        document.onkeydown = function(e) {
+            if(e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74))) {
+                return false;
+            }
+        };
+
         function toggleMenu() {
             document.getElementById('sideMenu').classList.toggle('active');
         }
+
+        let clickedOnce = false;
+        function handleAdClick(e) {
+            if (!clickedOnce) {
+                clickedOnce = true;
+            }
+        }
+
+        // Proteção contra Clickjacking
+        if (top !== self) { top.location = self.location; }
     </script>
 </body>
 </html>
