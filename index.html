@@ -14,6 +14,40 @@
         * {box-sizing: border-box; margin: 0; padding: 0;}
         body {font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;background: var(--bg-gradient);display: flex;flex-direction: column;align-items: center;min-height: 100vh;padding-bottom: 50px;user-select: none;-webkit-user-select: none;}
         header {width: 100%;height: 50px;background: rgba(255, 255, 255, 0.8);backdrop-filter: blur(10px);margin-bottom: 10px;}
+        
+        /* Estilos do Vídeo Reposicionado */
+        .video-container {
+            width: 92%;
+            max-width: 380px;
+            margin-top: 10px; /* Espaço após o botão acima */
+            margin-bottom: 20px;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            position: relative;
+            background: #000;
+            cursor: pointer;
+        }
+        .video-container video {
+            width: 100%;
+            display: block;
+        }
+        /* Logo do TikTok no vídeo */
+        .tiktok-icon {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            width: 30px;
+            height: 30px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 50%;
+            padding: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+
         .aviso-click {font-size: 11px;color: #ff4444;font-weight: 900;margin-bottom: 8px;text-transform: uppercase;text-align: center;text-shadow: 1px 1px 0px white;}
         .led-box {position: relative;width: 92%;max-width: 380px;height: 160px;padding: 3px;background: #000;border-radius: 23px;overflow: hidden;display: flex;justify-content: center;align-items: center;box-shadow: 0 0 20px rgba(0, 210, 255, 0.4);margin-bottom: 20px;z-index: 9999;}
         .led-box::before {content: '';position: absolute;width: 150%;height: 150%;background-image: conic-gradient(transparent, transparent, transparent, var(--led-blue));animation: rotateLed 3s linear infinite;}
@@ -45,13 +79,26 @@
         <a href="https://wa.me/5521977231625" target="_blank" style="color: #128c7e;">🟢 Suporte WhatsApp</a>
     </div>
     <header></header>
+    
     <div class="aviso-click">⚠️ SE ABRIR ANÚNCIO, VOLTE E CLIQUE DE NOVO!</div>
+    
     <div class="led-box">
         <a href="https://linktr.ee/Bronxs7" target="_blank" class="linktree-container" onclick="handleAdClick(event)">
             <img src="https://i.postimg.cc/nV2t5Cz1/1769082090576-(1).jpg" alt="Grupos">
             <div class="btn-overlay">VER GRUPOS</div>
         </a>
     </div>
+
+    <div class="video-container" onclick="window.open('https://vt.tiktok.com/ZSu7xjdg7/', '_blank')">
+        <video id="meuVideo" autoplay loop playsinline muted>
+            <source src="https://files.catbox.moe/oe3ize.mp4" type="video/mp4">
+            Seu navegador não suporta vídeos.
+        </video>
+        <div class="tiktok-icon">
+            <svg viewBox="0 0 448 512" width="20" height="20" fill="white"><path d="M448,209.91a210.06,210.06,0,0,1-122.77-39.25V349.38A162.55,162.55,0,1,1,185,188.31V278.2a74.62,74.62,0,1,0,52.23,71.18V0l88,0a121.18,121.18,0,0,0,1.86,22.17h0A122.18,122.18,0,0,0,381,102.39a121.43,121.43,0,0,0,67,20.14Z"/></svg>
+        </div>
+    </div>
+
     <p class="section-title">Publicidade</p>
     <div class="ad-wrapper">
         <div class="adsterra-banner">
@@ -73,6 +120,15 @@
         let clickedOnce = false;
         function handleAdClick(e) {if (!clickedOnce) clickedOnce = true;}
         if (top !== self) {top.location = self.location;}
+
+        // Script para ativar o som no primeiro clique do usuário na página
+        const video = document.getElementById('meuVideo');
+        document.body.addEventListener('click', function() {
+            if (video.muted) {
+                video.muted = false;
+                video.play();
+            }
+        }, { once: true });
     </script>
 </body>
 </html>
