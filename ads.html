@@ -9,7 +9,6 @@
         :root {--blue: #00d2ff;}
         * {box-sizing: border-box; margin: 0; padding: 0;}
         
-        /* Fundo Dark Moderno para ficar mais bonito */
         body {
             font-family: sans-serif; 
             background: #0f111a; 
@@ -31,8 +30,8 @@
         /* Conteúdo principal */
         #content {display: none; width: 100%; max-width: 400px; flex-direction: column; align-items: center;}
         
-        /* Banner Principal Clicável */
-        .main-banner {
+        /* Banners Clicáveis */
+        .banner-link {
             width: 100%; 
             display: block; 
             text-decoration: none; 
@@ -43,11 +42,11 @@
             transition: transform 0.3s;
             margin-bottom: 25px;
         }
-        .main-banner:active {transform: scale(0.98);}
-        .main-banner img {width: 100%; display: block;}
+        .banner-link:active {transform: scale(0.98);}
+        .banner-link img {width: 100%; display: block;}
 
-        /* Espaçamento Ads */
-        .ad-container {width: 100%; margin-bottom: 20px; display: flex; justify-content: center;}
+        /* Container de Ads Externos */
+        .ad-container {width: 100%; margin-bottom: 25px; display: flex; justify-content: center;}
 
         footer {margin-top: auto; padding: 30px 0; color: #444; font-size: 10px; text-align: center;}
     </style>
@@ -64,8 +63,8 @@
 
     <main id="content">
         
-        <a href="https://t.me/UmCliqueBot?start=7711945457" target="_blank" class="main-banner">
-            <img src="https://i.postimg.cc/HLwNGCXP/1776292577111.png" alt="Ads">
+        <a href="https://t.me/UmCliqueBot?start=7711945457" target="_blank" class="banner-link">
+            <img src="https://i.postimg.cc/HLwNGCXP/1776292577111.png" alt="Telegram">
         </a>
 
         <div class="ad-container">
@@ -75,6 +74,10 @@
             </div>
         </div>
 
+        <a href="https://s.shopee.com.br/1qY81MkQcA" target="_blank" class="banner-link">
+            <img src="https://i.postimg.cc/PfyPXpdC/i802ubr-11134207-7r98o-ly835zkvwov906.jpg" alt="Shopee">
+        </a>
+
         <div class="ad-container">
             <script type="text/javascript">
                 atOptions = {'key':'3e1fe799cb19b129dba9470a4e2f2556','format':'iframe','height':250,'width':300,'params':{}};
@@ -82,7 +85,7 @@
             <script type="text/javascript" src="https://www.highperformanceformat.com/3e1fe799cb19b129dba9470a4e2f2556/invoke.js"></script>
         </div>
 
-        <footer>© 2026 ellixgr</footer>
+        <footer>© 2026 ellixgr.github.io/x23wzp/ads</footer>
     </main>
 
     <script>
@@ -91,7 +94,7 @@
             document.getElementById('content').style.display = 'flex';
         }
 
-        // Segurança básica contra inspeção
+        // Anti-inspeção
         window.addEventListener('keydown', function(e) {
             if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74))) {
                 e.preventDefault();
