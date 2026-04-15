@@ -3,169 +3,173 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Grupos Whatsapp💬</title>
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="Grupos whatsapp💬">
-    <meta property="og:description" content="Acesse nossos grupos aqui.">
-    <meta property="og:image" content="https://i.postimg.cc/nV2t5Cz1/1769082090576-(1).jpg">
-    <meta name="robots" content="noindex, nofollow">
+    <title>Números Virtuais - Ads</title>
     <style>
         :root {--primary: #b78cff;--led-blue: #00d2ff;--bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #d6dee9 100%);}
         * {box-sizing: border-box; margin: 0; padding: 0;}
-        body {font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;background: var(--bg-gradient);display: flex;flex-direction: column;align-items: center;min-height: 100vh;padding-bottom: 50px;user-select: none;-webkit-user-select: none;}
-        header {width: 100%;height: 50px;background: rgba(255, 255, 255, 0.8);backdrop-filter: blur(10px);margin-bottom: 10px;}
         
-        .video-container {
-            width: 92%;
-            max-width: 380px;
-            margin-top: 10px;
-            margin-bottom: 20px;
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            position: relative;
-            background: #000;
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg-gradient);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            user-select: none;
+            overflow-x: hidden;
         }
-        .video-container video {
+
+        /* Efeito de desfoque quando o aviso está ativo */
+        .blur-container {
+            filter: blur(12px);
+            transition: filter 0.4s ease;
             width: 100%;
-            display: block;
-            cursor: pointer;
-        }
-
-        /* Botão de Mudo */
-        .mute-btn {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            z-index: 10;
-            background: rgba(0, 0, 0, 0.5);
-            border-radius: 50%;
-            width: 35px;
-            height: 35px;
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            border: 1px solid rgba(255,255,255,0.3);
-        }
-
-        .tiktok-icon {
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            width: 30px;
-            height: 30px;
-            background: rgba(0,0,0,0.5);
-            border-radius: 50%;
-            padding: 5px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(4px);
             pointer-events: none;
         }
 
-        .aviso-click {font-size: 11px;color: #ff4444;font-weight: 900;margin-bottom: 8px;text-transform: uppercase;text-align: center;text-shadow: 1px 1px 0px white;}
-        .led-box {position: relative;width: 92%;max-width: 380px;height: 160px;padding: 3px;background: #000;border-radius: 23px;overflow: hidden;display: flex;justify-content: center;align-items: center;box-shadow: 0 0 20px rgba(0, 210, 255, 0.4);margin-bottom: 20px;z-index: 9999;}
-        .led-box::before {content: '';position: absolute;width: 150%;height: 150%;background-image: conic-gradient(transparent, transparent, transparent, var(--led-blue));animation: rotateLed 3s linear infinite;}
-        @keyframes rotateLed {0% {transform: rotate(0deg);} 100% {transform: rotate(360deg);}}
-        .linktree-container {position: relative;width: 100%;height: 100%;border-radius: 20px;overflow: hidden;z-index: 10000;background: #fff;display: block;}
-        .linktree-container img {width: 100%;height: 100%;object-fit: cover;}
-        .btn-overlay {position: absolute;top: 50%;left: 50%;transform: translate(-50%, -50%);background: rgba(0, 0, 0, 0.6);backdrop-filter: blur(8px);color: white;padding: 12px 25px;border-radius: 50px;border: 2px solid var(--led-blue);font-weight: 800;font-size: 15px;text-transform: uppercase;box-shadow: 0 0 15px var(--led-blue);animation: pulse 2s infinite ease-in-out;pointer-events: none;z-index: 10001;}
-        @keyframes pulse {0% {transform: translate(-50%, -50%) scale(1);box-shadow: 0 0 10px var(--led-blue);} 50% {transform: translate(-50%, -50%) scale(1.08);box-shadow: 0 0 25px var(--led-blue);} 100% {transform: translate(-50%, -50%) scale(1);box-shadow: 0 0 10px var(--led-blue);}}
-        .section-title {font-size: 12px;font-weight: 700;color: #888;text-transform: uppercase;margin: 20px 0 10px;letter-spacing: 1px;}
-        .ad-wrapper {display: flex;flex-direction: column;align-items: center;width: 100%;gap: 20px;}
-        .ad-box {width: 85%;max-width: 300px;border-radius: 0;overflow: hidden;box-shadow: 0 4px 10px rgba(0,0,0,0.1);background: #fff;border: 1px solid #ddd;}
-        .ad-box img {width: 100%; display: block;}
-        .adsterra-banner {width: 300px;height: 250px;background: #fff;box-shadow: 0 4px 10px rgba(0,0,0,0.1);}
-        .menu-btn {position: fixed;top: 10px;right: 15px;font-size: 22px;background: #fff;padding: 8px 12px;border-radius: 10px;cursor: pointer;z-index: 20000;box-shadow: 0 2px 5px rgba(0,0,0,0.2);}
-        .side-menu {position: fixed;top: 0;right: -300px;width: 260px;height: 100%;background: white;padding: 60px 20px;transition: 0.4s;z-index: 19999;}
-        .side-menu.active {right: 0;}
-        .side-menu a {display: block;text-decoration: none;color: #333;padding: 14px;margin-bottom: 12px;border-radius: 10px;background: #f8f8f8;font-weight: 600;}
-        .close-x {position: absolute;top: 20px;right: 20px;cursor: pointer;}
-        footer {text-align: center;color: #aaa;font-size: 10px;margin-top: 40px;}
-    </style>
-</head>
-<body oncontextmenu="return false;"> 
-    <div class="menu-btn" onclick="toggleMenu()">☰</div>
-    <div class="side-menu" id="sideMenu">
-        <div class="close-x" onclick="toggleMenu()">❌</div>
-        <h2 style="margin-bottom: 20px;">MENU</h2>
-        <a href="https://ellixgr.github.io/x23wzp/ads">🇺🇸 Números Virtuais 🇧🇷</a>
-        <a href="https://br.shp.ee/5q1d37e?smtt=0.0.9" target="_blank">🛍️ Loja Acessórios</a>
-        <a href="https://wa.me/5521977231625" target="_blank" style="color: #128c7e;">🟢 Suporte WhatsApp</a>
-    </div>
-    <header></header>
-    
-    <div class="aviso-click">⚠️ SE ABRIR ANÚNCIO, VOLTE E CLIQUE DE NOVO!</div>
-    
-    <div class="led-box">
-        <a href="https://linktr.ee/Bronxs7" target="_blank" class="linktree-container" onclick="handleAdClick(event)">
-            <img src="https://i.postimg.cc/nV2t5Cz1/1769082090576-(1).jpg" alt="Grupos">
-            <div class="btn-overlay">VER GRUPOS</div>
-        </a>
-    </div>
-
-    <div class="video-container">
-        <div class="mute-btn" onclick="toggleMute(event)">
-            <span id="muteIcon" style="font-size: 18px;">🔇</span>
-        </div>
-        
-        <video id="meuVideo" autoplay loop playsinline muted onclick="window.open('https://vt.tiktok.com/ZSHnLCePm/', '_blank')">
-            <source src="https://files.catbox.moe/oe3ize.mp4" type="video/mp4">
-            Seu navegador não suporta vídeos.
-        </video>
-        
-        <div class="tiktok-icon">
-            <svg viewBox="0 0 448 512" width="20" height="20" fill="white"><path d="M448,209.91a210.06,210.06,0,0,1-122.77-39.25V349.38A162.55,162.55,0,1,1,185,188.31V278.2a74.62,74.62,0,1,0,52.23,71.18V0l88,0a121.18,121.18,0,0,0,1.86,22.17h0A122.18,122.18,0,0,0,381,102.39a121.43,121.43,0,0,0,67,20.14Z"/></svg>
-        </div>
-    </div>
-
-    <p class="section-title"></p>
-    <div class="ad-wrapper">
-        <div class="adsterra-banner">
-            <script type="text/javascript">atOptions = {'key':'3e1fe799cb19b129dba9470a4e2f2556','format':'iframe','height':250,'width':300,'params':{}};</script>
-            <script type="text/javascript" src="https://www.highperformanceformat.com/3e1fe799cb19b129dba9470a4e2f2556/invoke.js"></script>
-        </div>
-        <p class="section-title"></p>
-        <div class="ad-box">
-            <a href="https://soupopular.net/ref/bagau" target="_blank">
-                <img src="https://files.catbox.moe/k4dtyg.jpg" alt="Popular">
-            </a>
-        </div>
-    </div>
-    <footer>© 2026 ellixgr.github.io/x23wzp/</footer>
-
-    <script>
-        document.onkeydown = function(e) {if(e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74))) return false;};
-        function toggleMenu() {document.getElementById('sideMenu').classList.toggle('active');}
-        let clickedOnce = false;
-        function handleAdClick(e) {if (!clickedOnce) clickedOnce = true;}
-        if (top !== self) {top.location = self.location;}
-
-        const video = document.getElementById('meuVideo');
-        const muteIcon = document.getElementById('muteIcon');
-
-        // Função para mutar/desmutar
-        function toggleMute(event) {
-            event.stopPropagation(); // Impede de abrir o TikTok ao clicar no botão de mudo
-            if (video.muted) {
-                video.muted = false;
-                muteIcon.innerText = "🔊";
-            } else {
-                video.muted = true;
-                muteIcon.innerText = "🔇";
-            }
+        .blur-container.active {
+            filter: blur(0);
+            pointer-events: auto;
         }
 
-        // Tenta ligar o som no primeiro clique do usuário em qualquer lugar
-        document.body.addEventListener('click', function() {
-            if (video.muted && muteIcon.innerText === "🔇") {
-                // Opcional: Descomente abaixo se quiser que o som ligue sozinho no primeiro clique na página
-                // video.muted = false;
-                // muteIcon.innerText = "🔊";
-            }
-        }, { once: true });
+        /* Modal de Aviso +18 */
+        #aviso-modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 99999;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 90%;
+            width: 320px;
+            box-shadow: 0 0 30px rgba(0, 210, 255, 0.6);
+        }
+
+        .modal-content h2 { color: #ff4444; margin-bottom: 15px; font-size: 24px; }
+        .modal-content p { margin-bottom: 25px; font-weight: 600; color: #333; line-height: 1.4; }
+        
+        .btn-entrar {
+            background: #25d366;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-weight: 800;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            text-transform: uppercase;
+            box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+        }
+
+        /* Conteúdo */
+        .section-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #666;
+            text-transform: uppercase;
+            margin: 25px 0 15px;
+            letter-spacing: 1px;
+        }
+
+        .ad-box {
+            width: 100%;
+            max-width: 380px;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border: 2px solid var(--led-blue);
+            text-decoration: none;
+        }
+
+        .ad-box img { width: 100%; display: block; }
+        .btn-link {
+            background: #000;
+            color: #fff;
+            text-align: center;
+            padding: 15px;
+            font-weight: 800;
+            border-radius: 0 0 13px 13px;
+        }
+
+        /* Container do Native Banner da Adsterra */
+        .native-ad-container {
+            width: 100%;
+            max-width: 380px;
+            margin: 20px 0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        footer { margin-top: 40px; padding-bottom: 30px; color: #aaa; font-size: 11px; }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <div id="aviso-modal">
+        <div class="modal-content">
+            <h2>AVISO! 🔞</h2>
+            <p>Este site contém anúncios para adultos e conteúdos exclusivos. Você tem mais de 18 anos?</p>
+            <button class="btn-entrar" onclick="aceitarAviso()">SIM, TENHO +18 ANOS</button>
+        </div>
+    </div>
+
+    <div class="blur-container" id="mainContent">
+        
+        <h1 class="section-title">📱 Números Virtuais Disponíveis</h1>
+
+        <a href="https://t.me/UmCliqueBot?start=7711945457" target="_blank" class="ad-box">
+            <img src="https://i.postimg.cc/nV2t5Cz1/1769082090576-(1).jpg" alt="Números">
+            <div style="padding: 15px; text-align: center; color: #333; font-weight: bold;">
+                CLIQUE PARA ADQUIRIR SEU NÚMERO
+            </div>
+            <div class="btn-link">IR PARA O BOT TELEGRAM</div>
+        </a>
+
+        <p class="section-title">Anúncios Recomendados</p>
+
+        <div class="native-ad-container">
+            <script async="async" data-cfasync="false" src="https://pl28627138.profitablecpmratenetwork.com/1fd37c2a1d9d1e19537dc1d7d97cdc9b/invoke.js"></script>
+            <div id="container-1fd37c2a1d9d1e19537dc1d7d97cdc9b"></div>
+        </div>
+
+        <div style="margin-top: 20px;">
+            <script type="text/javascript">
+                atOptions = {'key':'3e1fe799cb19b129dba9470a4e2f2556','format':'iframe','height':250,'width':300,'params':{}};
+            </script>
+            <script type="text/javascript" src="https://www.highperformanceformat.com/3e1fe799cb19b129dba9470a4e2f2556/invoke.js"></script>
+        </div>
+
+        <footer>© 2026 ellixgr.github.io/x23wzp/ads</footer>
+    </div>
+
+    <script>
+        function aceitarAviso() {
+            // Remove o modal e o efeito de desfoque
+            document.getElementById('aviso-modal').style.display = 'none';
+            document.getElementById('mainContent').classList.add('active');
+        }
+
+        // Bloqueio de inspeção
+        document.onkeydown = function(e) {
+            if(e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74))) return false;
+        };
+
+        // Redirecionamento se estiver em iframe
+        if (top !== self) { top.location = self.location; }
     </script>
 </body>
 </html>
