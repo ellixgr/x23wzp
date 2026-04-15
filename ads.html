@@ -2,151 +2,70 @@
 <html lang="pt-BR">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Números Virtuais - Ads</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anúncios Autorizados</title>
+    <script>if (top !== self) top.location = self.location;</script>
     <style>
-        :root {--primary: #b78cff;--led-blue: #00d2ff;--bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #d6dee9 100%);}
+        :root {--bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #d6dee9 100%);--blue: #00d2ff;}
         * {box-sizing: border-box; margin: 0; padding: 0;}
+        body {font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: var(--bg-gradient); display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 20px; user-select: none;}
         
-        body {
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background: var(--bg-gradient);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
-            user-select: none;
-            overflow-x: hidden;
-        }
-
-        /* Efeito de desfoque quando o aviso está ativo */
-        .blur-container {
-            filter: blur(12px);
-            transition: filter 0.4s ease;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            pointer-events: none;
-        }
-
-        .blur-container.active {
-            filter: blur(0);
-            pointer-events: auto;
-        }
-
-        /* Modal de Aviso +18 */
-        #aviso-modal {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 99999;
-        }
-
-        .modal-content {
-            background: white;
-            padding: 30px;
-            border-radius: 20px;
-            text-align: center;
-            max-width: 90%;
-            width: 320px;
-            box-shadow: 0 0 30px rgba(0, 210, 255, 0.6);
-        }
-
-        .modal-content h2 { color: #ff4444; margin-bottom: 15px; font-size: 24px; }
-        .modal-content p { margin-bottom: 25px; font-weight: 600; color: #333; line-height: 1.4; }
+        /* Modal +18 */
+        #verify {position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; justify-content: center; align-items: center; z-index: 100000; padding: 20px;}
+        .verify-card {background: white; padding: 30px; border-radius: 20px; text-align: center; max-width: 320px; box-shadow: 0 0 30px rgba(0, 210, 255, 0.4);}
+        .verify-card h2 {color: #ff4444; margin-bottom: 15px; font-size: 24px;}
+        .verify-card p {color: #333; margin-bottom: 25px; font-weight: 600; line-height: 1.4;}
+        .btn-green {background: #25d366; color: white; border: none; padding: 15px 30px; border-radius: 50px; font-weight: 800; cursor: pointer; width: 100%; font-size: 16px; text-transform: uppercase;}
         
-        .btn-entrar {
-            background: #25d366;
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 50px;
-            font-weight: 800;
-            cursor: pointer;
-            width: 100%;
-            font-size: 16px;
-            text-transform: uppercase;
-            box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
-        }
+        /* Conteúdo principal (começa desfocado) */
+        #content {display: none; width: 100%; max-width: 380px; flex-direction: column; align-items: center;}
+        
+        .title {font-size: 13px; font-weight: 700; color: #666; text-transform: uppercase; margin: 25px 0 15px; letter-spacing: 1px;}
+        
+        /* Imagem do anúncio com link */
+        .ad-link {display: block; text-decoration: none; color: inherit;}
+        .ad-card {background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border: 2px solid var(--blue); transition: transform 0.2s, box-shadow 0.2s;}
+        .ad-card:hover {transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,210,255,0.2);}
+        .ad-card img {width: 100%; display: block; border-bottom: 1px solid #ddd;}
+        .ad-text {padding: 15px; text-align: center; color: #333; font-weight: bold; line-height: 1.3;}
+        .btn-link {background: #000; color: #fff; text-align: center; padding: 15px; font-weight: 800; border-radius: 0 0 13px 13px; border-top: 2px solid var(--blue);}
 
-        /* Conteúdo */
-        .section-title {
-            font-size: 13px;
-            font-weight: 700;
-            color: #666;
-            text-transform: uppercase;
-            margin: 25px 0 15px;
-            letter-spacing: 1px;
-        }
+        /* Native Banner Adsterra */
+        .native-ad {width: 100%; margin: 20px 0;}
 
-        .ad-box {
-            width: 100%;
-            max-width: 380px;
-            background: white;
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            border: 2px solid var(--led-blue);
-            text-decoration: none;
-        }
-
-        .ad-box img { width: 100%; display: block; }
-        .btn-link {
-            background: #000;
-            color: #fff;
-            text-align: center;
-            padding: 15px;
-            font-weight: 800;
-            border-radius: 0 0 13px 13px;
-        }
-
-        /* Container do Native Banner da Adsterra */
-        .native-ad-container {
-            width: 100%;
-            max-width: 380px;
-            margin: 20px 0;
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
-        footer { margin-top: 40px; padding-bottom: 30px; color: #aaa; font-size: 11px; }
+        footer {margin-top: auto; padding: 30px 0; color: #aaa; font-size: 11px; text-align: center; width: 100%;}
     </style>
 </head>
 <body oncontextmenu="return false;">
 
-    <div id="aviso-modal">
-        <div class="modal-content">
+    <div id="verify">
+        <div class="verify-card">
             <h2>AVISO! 🔞</h2>
-            <p>Este site contém anúncios para adultos e conteúdos exclusivos. Você tem mais de 18 anos?</p>
-            <button class="btn-entrar" onclick="aceitarAviso()">SIM, TENHO +18 ANOS</button>
+            <p>Este site contém anúncios para adultos e conteúdos exclusivos.<br>Você tem mais de 18 anos?</p>
+            <button class="btn-green" onclick="acceptVerify()">SIM, SOU MAIOR DE 18</button>
         </div>
     </div>
 
-    <div class="blur-container" id="mainContent">
+    <main id="content">
         
-        <h1 class="section-title">📱 Números Virtuais Disponíveis</h1>
+        <h1 class="title">Anúncio Disponível</h1>
 
-        <a href="https://t.me/UmCliqueBot?start=7711945457" target="_blank" class="ad-box">
-            <img src="https://i.postimg.cc/nV2t5Cz1/1769082090576-(1).jpg" alt="Números">
-            <div style="padding: 15px; text-align: center; color: #333; font-weight: bold;">
-                CLIQUE PARA ADQUIRIR SEU NÚMERO
+        <a href="https://t.me/UmCliqueBot?start=7711945457" target="_blank" class="ad-link">
+            <div class="ad-card">
+                <img src="https://i.postimg.cc/HLwNGCXP/1776292577111.png" alt="Anúncio">
+                <p class="ad-text">ADQUIRIR AGORA NÚMEROS VIRTUAIS</p>
+                <div class="btn-link">ABRIR NO TELEGRAM</div>
             </div>
-            <div class="btn-link">IR PARA O BOT TELEGRAM</div>
         </a>
 
-        <p class="section-title">Anúncios Recomendados</p>
+        <p class="title">Outros Anúncios</p>
 
-        <div class="native-ad-container">
+        <div class="native-ad">
             <script async="async" data-cfasync="false" src="https://pl28627138.profitablecpmratenetwork.com/1fd37c2a1d9d1e19537dc1d7d97cdc9b/invoke.js"></script>
             <div id="container-1fd37c2a1d9d1e19537dc1d7d97cdc9b"></div>
         </div>
 
-        <div style="margin-top: 20px;">
+        <div style="margin-top: 15px;">
             <script type="text/javascript">
                 atOptions = {'key':'3e1fe799cb19b129dba9470a4e2f2556','format':'iframe','height':250,'width':300,'params':{}};
             </script>
@@ -154,22 +73,26 @@
         </div>
 
         <footer>© 2026 ellixgr.github.io/x23wzp/ads</footer>
-    </div>
+    </main>
 
     <script>
-        function aceitarAviso() {
-            // Remove o modal e o efeito de desfoque
-            document.getElementById('aviso-modal').style.display = 'none';
-            document.getElementById('mainContent').classList.add('active');
+        // Função para destravar o conteúdo
+        function acceptVerify() {
+            document.getElementById('verify').style.display = 'none';
+            document.getElementById('content').style.display = 'flex';
         }
 
-        // Bloqueio de inspeção
-        document.onkeydown = function(e) {
-            if(e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74))) return false;
-        };
-
-        // Redirecionamento se estiver em iframe
-        if (top !== self) { top.location = self.location; }
+        // SEGURANÇA: Anti-Debug/Inspecionador
+        (function() {
+            // Impede F12, Ctrl+Shift+I/C/J
+            window.addEventListener('keydown', function(e) {
+                if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 67 || e.keyCode === 74 || e.keyCode === 85))) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                }
+            });
+        })();
     </script>
 </body>
 </html>
