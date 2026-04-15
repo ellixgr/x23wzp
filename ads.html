@@ -3,37 +3,53 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anúncios Autorizados</title>
+    <title>Ads</title>
     <script>if (top !== self) top.location = self.location;</script>
     <style>
-        :root {--bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #d6dee9 100%);--blue: #00d2ff;}
+        :root {--blue: #00d2ff;}
         * {box-sizing: border-box; margin: 0; padding: 0;}
-        body {font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: var(--bg-gradient); display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 20px; user-select: none;}
+        
+        /* Fundo Dark Moderno para ficar mais bonito */
+        body {
+            font-family: sans-serif; 
+            background: #0f111a; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            min-height: 100vh; 
+            padding: 20px; 
+            user-select: none;
+        }
         
         /* Modal +18 */
-        #verify {position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; justify-content: center; align-items: center; z-index: 100000; padding: 20px;}
-        .verify-card {background: white; padding: 30px; border-radius: 20px; text-align: center; max-width: 320px; box-shadow: 0 0 30px rgba(0, 210, 255, 0.4);}
+        #verify {position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: flex; justify-content: center; align-items: center; z-index: 100000; padding: 20px;}
+        .verify-card {background: #1a1d29; padding: 30px; border-radius: 20px; text-align: center; max-width: 320px; border: 1px solid #333; box-shadow: 0 0 40px rgba(0, 210, 255, 0.2);}
         .verify-card h2 {color: #ff4444; margin-bottom: 15px; font-size: 24px;}
-        .verify-card p {color: #333; margin-bottom: 25px; font-weight: 600; line-height: 1.4;}
+        .verify-card p {color: #ccc; margin-bottom: 25px; font-weight: 600; line-height: 1.4;}
         .btn-green {background: #25d366; color: white; border: none; padding: 15px 30px; border-radius: 50px; font-weight: 800; cursor: pointer; width: 100%; font-size: 16px; text-transform: uppercase;}
         
-        /* Conteúdo principal (começa desfocado) */
-        #content {display: none; width: 100%; max-width: 380px; flex-direction: column; align-items: center;}
+        /* Conteúdo principal */
+        #content {display: none; width: 100%; max-width: 400px; flex-direction: column; align-items: center;}
         
-        .title {font-size: 13px; font-weight: 700; color: #666; text-transform: uppercase; margin: 25px 0 15px; letter-spacing: 1px;}
-        
-        /* Imagem do anúncio com link */
-        .ad-link {display: block; text-decoration: none; color: inherit;}
-        .ad-card {background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border: 2px solid var(--blue); transition: transform 0.2s, box-shadow 0.2s;}
-        .ad-card:hover {transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,210,255,0.2);}
-        .ad-card img {width: 100%; display: block; border-bottom: 1px solid #ddd;}
-        .ad-text {padding: 15px; text-align: center; color: #333; font-weight: bold; line-height: 1.3;}
-        .btn-link {background: #000; color: #fff; text-align: center; padding: 15px; font-weight: 800; border-radius: 0 0 13px 13px; border-top: 2px solid var(--blue);}
+        /* Banner Principal Clicável */
+        .main-banner {
+            width: 100%; 
+            display: block; 
+            text-decoration: none; 
+            border-radius: 15px; 
+            overflow: hidden; 
+            border: 2px solid var(--blue);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transition: transform 0.3s;
+            margin-bottom: 25px;
+        }
+        .main-banner:active {transform: scale(0.98);}
+        .main-banner img {width: 100%; display: block;}
 
-        /* Native Banner Adsterra */
-        .native-ad {width: 100%; margin: 20px 0;}
+        /* Espaçamento Ads */
+        .ad-container {width: 100%; margin-bottom: 20px; display: flex; justify-content: center;}
 
-        footer {margin-top: auto; padding: 30px 0; color: #aaa; font-size: 11px; text-align: center; width: 100%;}
+        footer {margin-top: auto; padding: 30px 0; color: #444; font-size: 10px; text-align: center;}
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -41,58 +57,46 @@
     <div id="verify">
         <div class="verify-card">
             <h2>AVISO! 🔞</h2>
-            <p>Este site contém anúncios para adultos e conteúdos exclusivos.<br>Você tem mais de 18 anos?</p>
+            <p>Este site contém anúncios para adultos.<br>Você tem mais de 18 anos?</p>
             <button class="btn-green" onclick="acceptVerify()">SIM, SOU MAIOR DE 18</button>
         </div>
     </div>
 
     <main id="content">
         
-        <h1 class="title">Anúncio Disponível</h1>
-
-        <a href="https://t.me/UmCliqueBot?start=7711945457" target="_blank" class="ad-link">
-            <div class="ad-card">
-                <img src="https://i.postimg.cc/HLwNGCXP/1776292577111.png" alt="Anúncio">
-                <p class="ad-text">ADQUIRIR AGORA NÚMEROS VIRTUAIS</p>
-                <div class="btn-link">ABRIR NO TELEGRAM</div>
-            </div>
+        <a href="https://t.me/UmCliqueBot?start=7711945457" target="_blank" class="main-banner">
+            <img src="https://i.postimg.cc/HLwNGCXP/1776292577111.png" alt="Ads">
         </a>
 
-        <p class="title">Outros Anúncios</p>
-
-        <div class="native-ad">
-            <script async="async" data-cfasync="false" src="https://pl28627138.profitablecpmratenetwork.com/1fd37c2a1d9d1e19537dc1d7d97cdc9b/invoke.js"></script>
-            <div id="container-1fd37c2a1d9d1e19537dc1d7d97cdc9b"></div>
+        <div class="ad-container">
+            <div style="width: 100%;">
+                <script async="async" data-cfasync="false" src="https://pl28627138.profitablecpmratenetwork.com/1fd37c2a1d9d1e19537dc1d7d97cdc9b/invoke.js"></script>
+                <div id="container-1fd37c2a1d9d1e19537dc1d7d97cdc9b"></div>
+            </div>
         </div>
 
-        <div style="margin-top: 15px;">
+        <div class="ad-container">
             <script type="text/javascript">
                 atOptions = {'key':'3e1fe799cb19b129dba9470a4e2f2556','format':'iframe','height':250,'width':300,'params':{}};
             </script>
             <script type="text/javascript" src="https://www.highperformanceformat.com/3e1fe799cb19b129dba9470a4e2f2556/invoke.js"></script>
         </div>
 
-        <footer>© 2026 ellixgr.github.io/x23wzp/ads</footer>
+        <footer>© 2026 ellixgr</footer>
     </main>
 
     <script>
-        // Função para destravar o conteúdo
         function acceptVerify() {
             document.getElementById('verify').style.display = 'none';
             document.getElementById('content').style.display = 'flex';
         }
 
-        // SEGURANÇA: Anti-Debug/Inspecionador
-        (function() {
-            // Impede F12, Ctrl+Shift+I/C/J
-            window.addEventListener('keydown', function(e) {
-                if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 67 || e.keyCode === 74 || e.keyCode === 85))) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    return false;
-                }
-            });
-        })();
+        // Segurança básica contra inspeção
+        window.addEventListener('keydown', function(e) {
+            if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74))) {
+                e.preventDefault();
+            }
+        });
     </script>
 </body>
 </html>
