@@ -4,6 +4,13 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Grupos Whatsapp💬</title>
+
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Grupos whatsapp💬">
+    <meta property="og:description" content="Acesse nossos grupos aqui.">
+    <meta property="og:image" content="https://i.postimg.cc/nV2t5Cz1/1769082090576-(1).jpg">
+    <meta name="robots" content="noindex, nofollow">
+
     <script>if (top !== self) {top.location = self.location;}</script>
     
     <style>
@@ -263,8 +270,6 @@
         function toggleMute(event) {
             event.preventDefault();
             event.stopPropagation();
-            
-            // Troca o estado de mudo sem pausar ou recarregar
             video.muted = !video.muted;
             muteIcon.innerText = video.muted ? "🔇" : "🔊";
         }
