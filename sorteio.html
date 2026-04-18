@@ -208,7 +208,7 @@
             if(nome.trim().length > 3 && document.getElementById('comprovante').files.length > 0) {
                 const email = "sorteiofclx@gmail.com";
                 const subject = encodeURIComponent("SORTEIO 200: " + nome.toUpperCase());
-                const body = encodeURIComponent("Olá, segue meu comprovante para a meta de 200 usuários.\n\nNome: " + nome);
+                const body = encodeURIComponent("Olá, segue meu comprovante.\n\nNome: " + nome);
                 
                 alert("O Gmail vai abrir. ANEXE O PRINT e envie o e-mail!");
                 window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
