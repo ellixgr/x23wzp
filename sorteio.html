@@ -25,9 +25,47 @@
             padding: 20px;
         }
 
-        .form-card {
-            width: 100%;
+        /* Modal de Termos */
+        #modal-termos {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .termos-box {
+            background: #1a1e2e;
+            padding: 30px;
+            border-radius: 20px;
+            border: 1px solid var(--led-blue);
             max-width: 400px;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(0, 210, 255, 0.2);
+        }
+
+        .termos-box h3 { color: var(--led-blue); margin-bottom: 15px; text-transform: uppercase; }
+        .termos-box p { font-size: 14px; line-height: 1.6; color: #ccc; margin-bottom: 25px; text-align: left; }
+        
+        .btn-aceitar {
+            background: var(--success);
+            color: #000;
+            border: none;
+            padding: 18px;
+            border-radius: 12px;
+            font-weight: 900;
+            cursor: pointer;
+            width: 100%;
+            text-transform: uppercase;
+        }
+
+        /* Conteúdo Principal */
+        #conteudo-sorteio { display: none; width: 100%; max-width: 400px; }
+
+        .form-card {
             background: rgba(255, 255, 255, 0.03);
             backdrop-filter: blur(20px);
             padding: 30px;
@@ -36,134 +74,106 @@
             text-align: center;
         }
 
-        h2 { font-size: 24px; margin-bottom: 20px; color: #fff; }
-
-        /* Zoom do QR Code sem abrir link */
         .qr-container {
-            background: white;
-            padding: 8px;
-            border-radius: 15px;
-            width: 160px;
-            margin: 0 auto 15px;
-            transition: transform 0.3s ease;
-            cursor: pointer;
+            background: white; padding: 8px; border-radius: 15px;
+            width: 160px; margin: 0 auto 15px; transition: 0.3s; cursor: pointer;
         }
-        .qr-container.zoom {
-            transform: scale(1.6);
-            z-index: 100;
-            position: relative;
-        }
+        .qr-container.zoom { transform: scale(1.6); z-index: 100; position: relative; }
         .qr-container img { width: 100%; display: block; border-radius: 8px; }
 
         .pix-box {
-            background: rgba(0, 0, 0, 0.4);
-            padding: 15px;
-            border-radius: 15px;
-            margin-bottom: 25px;
-            border: 1px solid var(--led-blue);
+            background: rgba(0, 0, 0, 0.4); padding: 15px;
+            border-radius: 15px; margin-bottom: 25px; border: 1px solid var(--led-blue);
         }
 
-        .pix-value { font-size: 20px; font-weight: 800; color: var(--success); display: block; margin-bottom: 10px; }
+        .pix-value { font-size: 22px; font-weight: 800; color: var(--success); display: block; margin-bottom: 10px; }
 
         .copy-btn {
-            background: var(--led-blue);
-            color: #000;
-            border: none;
-            padding: 10px;
-            border-radius: 10px;
-            font-weight: 800;
-            width: 100%;
-            cursor: pointer;
+            background: var(--led-blue); color: #000; border: none;
+            padding: 12px; border-radius: 10px; font-weight: 800; width: 100%; cursor: pointer;
         }
 
         .input-group { text-align: left; margin-bottom: 15px; }
-        label { font-size: 12px; margin-bottom: 5px; display: block; color: #888; }
+        label { font-size: 11px; margin-bottom: 5px; display: block; color: #888; font-weight: 700; }
         
         input[type="text"] {
-            width: 100%;
-            padding: 12px;
-            border-radius: 10px;
-            border: 1px solid rgba(255,255,255,0.1);
-            background: rgba(0,0,0,0.3);
-            color: white;
-            outline: none;
+            width: 100%; padding: 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(0,0,0,0.3); color: white; outline: none;
         }
 
         .file-label {
-            display: block;
-            background: rgba(255,255,255,0.05);
-            border: 2px dashed rgba(255,255,255,0.1);
-            padding: 12px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 14px;
+            display: block; background: rgba(255,255,255,0.05); border: 2px dashed rgba(255,255,255,0.1);
+            padding: 15px; border-radius: 10px; cursor: pointer; font-size: 14px; transition: 0.3s;
         }
 
         .btn-send {
-            width: 100%;
-            padding: 16px;
-            border: none;
-            border-radius: 12px;
-            background: #333;
-            color: white;
-            font-weight: 800;
-            cursor: not-allowed;
-            margin-top: 10px;
+            width: 100%; padding: 18px; border: none; border-radius: 12px;
+            background: #333; color: white; font-weight: 800; cursor: not-allowed; margin-top: 10px;
         }
 
-        .btn-send.ready {
-            background: var(--success) !important;
-            color: #000;
-            cursor: pointer;
-        }
+        .btn-send.ready { background: var(--success) !important; color: #000; cursor: pointer; box-shadow: 0 0 20px rgba(0, 255, 136, 0.3); }
 
         .toast {
-            position: fixed;
-            bottom: 20px;
-            background: var(--led-blue);
-            color: #000;
-            padding: 10px 20px;
-            border-radius: 20px;
-            display: none;
-            font-weight: 700;
+            position: fixed; bottom: 20px; background: var(--led-blue);
+            color: #000; padding: 10px 20px; border-radius: 20px; display: none; font-weight: 700; z-index: 2000;
         }
     </style>
 </head>
 <body>
 
-    <div class="form-card">
-        <h2>Participar do Sorteio</h2>
-
-        <div class="qr-container" id="qrContainer" onclick="toggleZoom()">
-            <img src="https://i.postimg.cc/BbKjRwF3/WA-1776479820106.jpg" alt="QR Code">
+    <div id="modal-termos">
+        <div class="termos-box">
+            <h3>REGRAS DO SORTEIO</h3>
+            <p>
+                1. <b>META DE PARTICIPANTES:</b> O sorteio de R$ 10,00 será realizado exclusivamente quando atingirmos a marca de <b>200 usuários</b> cadastrados. <br><br>
+                2. <b>FINANCIAMENTO:</b> O prêmio é gerado através das participações. <br><br>
+                3. <b>SEM REEMBOLSO:</b> Ao pagar os R$ 0,11, você contribui para a meta. Caso a meta não seja atingida, o valor não será devolvido, sendo destinado aos custos do site.
+            </p>
+            <button class="btn-aceitar" onclick="aceitarTermos()">CONCORDO E QUERO PARTICIPAR</button>
         </div>
-        <p style="font-size: 10px; color: #666; margin-bottom: 15px;">Toque na imagem para dar zoom</p>
-
-        <div class="pix-box">
-            <span class="pix-value">R$ 0,11</span>
-            <button class="copy-btn" onclick="copyPix()">COPIAR CHAVE PIX</button>
-        </div>
-
-        <div class="input-group">
-            <label>NOME COMPLETO</label>
-            <input type="text" id="nome" placeholder="Seu nome" oninput="validar()">
-        </div>
-
-        <div class="input-group">
-            <label>COMPROVANTE</label>
-            <label for="comprovante" class="file-label" id="file-label">
-                <span id="file-text">Selecionar Imagem</span>
-                <input type="file" id="comprovante" accept="image/*" style="display:none" onchange="validar()">
-            </label>
-        </div>
-
-        <button id="btnEnviar" class="btn-send" onclick="enviarGmail()">ENVIAR PARA GMAIL</button>
     </div>
 
-    <div id="toast" class="toast">Código copiado!</div>
+    <div id="conteudo-sorteio">
+        <div class="form-card">
+            <h2 style="margin-bottom: 25px;">Sorteio R$ 10,00</h2>
+
+            <div class="qr-container" id="qrContainer" onclick="toggleZoom()">
+                <img src="https://i.postimg.cc/BbKjRwF3/WA-1776479820106.jpg" alt="QR Code">
+            </div>
+            <p style="font-size: 10px; color: #666; margin-bottom: 15px;">Toque no QR Code para dar zoom</p>
+
+            <div class="pix-box">
+                <span class="pix-value">R$ 0,11</span>
+                <button class="copy-btn" onclick="copyPix()">COPIAR CHAVE PIX</button>
+            </div>
+
+            <div class="input-group">
+                <label>NOME COMPLETO</label>
+                <input type="text" id="nome" placeholder="Seu nome aqui..." oninput="validar()">
+            </div>
+
+            <div class="input-group">
+                <label>COMPROVANTE (PRINT)</label>
+                <label for="comprovante" class="file-label" id="file-label">
+                    <span id="file-text">Clique para anexar imagem</span>
+                    <input type="file" id="comprovante" accept="image/*" style="display:none" onchange="validar()">
+                </label>
+            </div>
+
+            <button id="btnEnviar" class="btn-send" onclick="enviarGmail()">FINALIZAR NO GMAIL</button>
+        </div>
+        <p style="text-align: center; margin-top: 20px; font-size: 12px; opacity: 0.5;">Acompanhe os grupos para saber o status da meta.</p>
+    </div>
+
+    <div id="toast" class="toast">Código PIX copiado!</div>
 
     <script>
         const pixCode = "00020126970014BR.GOV.BCB.PIX013689a5c070-cdd1-443b-997d-0cbbcf80e2de0235JA PENSOU TU GANHAR 1 CONTO DO NADA52040000530398654040.115802BR5918Elias da Conceicao6009SAO PAULO62140510bRwkUSs8Zs63047D56";
+
+        function aceitarTermos() {
+            document.getElementById('modal-termos').style.display = 'none';
+            document.getElementById('conteudo-sorteio').style.display = 'block';
+        }
 
         function toggleZoom() {
             document.getElementById('qrContainer').classList.toggle('zoom');
@@ -182,11 +192,11 @@
             const btn = document.getElementById('btnEnviar');
             
             if(file > 0) {
-                document.getElementById('file-text').innerText = "✅ Selecionado";
+                document.getElementById('file-text').innerText = "✅ Imagem Selecionada";
                 document.getElementById('file-label').style.borderColor = "var(--success)";
             }
 
-            if(nome.length > 3 && file > 0) {
+            if(nome.trim().length > 3 && file > 0) {
                 btn.classList.add('ready');
             } else {
                 btn.classList.remove('ready');
@@ -195,10 +205,12 @@
 
         function enviarGmail() {
             const nome = document.getElementById('nome').value;
-            if(nome.length > 3 && document.getElementById('comprovante').files.length > 0) {
+            if(nome.trim().length > 3 && document.getElementById('comprovante').files.length > 0) {
                 const email = "sorteiofclx@gmail.com";
-                const subject = encodeURIComponent("Sorteio: " + nome);
-                const body = encodeURIComponent("Nome: " + nome + "\nComprovante em anexo.");
+                const subject = encodeURIComponent("SORTEIO 200: " + nome.toUpperCase());
+                const body = encodeURIComponent("Olá, segue meu comprovante para a meta de 200 usuários.\n\nNome: " + nome);
+                
+                alert("O Gmail vai abrir. ANEXE O PRINT e envie o e-mail!");
                 window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
             }
         }
