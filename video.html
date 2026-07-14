@@ -5,10 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Conteúdo Exclusivo</title>
     
+    <!-- Meta tags de compartilhamento -->
     <meta property="og:title" content="Conteúdo Exclusivo">
     <meta property="og:description" content="Clique para acessar o conteúdo completo!">
     <meta property="og:image" content="https://files.catbox.moe/s7yqzc.jpeg">
     <meta property="og:type" content="website">
+
+    <!-- Importando ícones para o botão do Telegram -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <style>
         body { 
@@ -24,41 +28,94 @@
             padding: 20px; 
             text-align: center; 
         }
-        .btn-acesso { 
-            background-image: url('https://files.catbox.moe/s7yqzc.jpeg');
-            background-size: cover;
-            background-position: center;
-            background-color: rgba(0, 0, 0, 0.4);
-            background-blend-mode: overlay;
-            color: #fff; 
-            padding: 40px 60px; 
-            border: 2px solid #fff; 
-            border-radius: 15px; 
-            font-size: 28px; 
-            font-weight: bold; 
-            cursor: pointer; 
-            text-transform: uppercase;
-            margin-bottom: 30px;
-            text-shadow: 2px 2px 4px #000;
+        
+        .video-container {
+            width: 100%;
+            max-width: 560px; /* Formato padrão do player */
+            aspect-ratio: 16 / 9; /* Força proporção do YouTube */
+            margin-bottom: 20px;
+            border: 2px solid #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0px 4px 15px rgba(255, 255, 255, 0.2);
+            background-color: #000;
         }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+
+        .btn-telegram {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background-color: #229ED9;
+            color: #fff;
+            text-decoration: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 30px;
+            border: none;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 10px rgba(34, 158, 217, 0.3);
+        }
+
+        .btn-telegram:hover {
+            background-color: #1e8ec3;
+            transform: scale(1.03);
+        }
+
         .banner-ad { margin: 20px 0; }
     </style>
 </head>
 <body>
 
-    <button class="btn-acesso" onclick="abrirConteudo()">CLIQUE PARA ACESSAR</button>
+    <!-- O vídeo agora chama a função segura ao dar Play -->
+    <div class="video-container">
+        <video id="meuVideo" controls playsinline onplay="dispararAnuncioSeguro()">
+            <source src="https://ellixgr.github.io/x23wzp/1783749723785.mp4" type="video/mp4">
+            Seu navegador não suporta a reprodução de vídeos.
+        </video>
+    </div>
 
-    <h1></h1>
+    <!-- Botão de entrar no grupo do Telegram -->
+    <a href="https://t.me/+Me11HHGOfFhjOTMx" target="_blank" class="btn-telegram">
+        <i class="fa-brands fa-telegram" style="font-size: 24px;"></i>
+        ENTRAR NO GRUPO DO TELEGRAM
+    </a>
 
+    <!-- Banner estático do Adsterra -->
     <div class="banner-ad">
         <script async="async" data-cfasync="false" src="https://pl28627138.effectivecpmnetwork.com/1fd37c2a1d9d1e19537dc1d7d97cdc9b/invoke.js"></script>
         <div id="container-1fd37c2a1d9d1e19537dc1d7d97cdc9b"></div>
     </div>
     
     <script>
-        function abrirConteudo() {
-            window.open('https://www.effectivecpmnetwork.com/y99yjf7v3y?key=5f6de430d75a855ddff7717775ff4ae3', '_blank');
-            window.location.href = 'https://www.xvideos.com';
+        // Limpa o controle de cliques toda vez que a página é carregada do zero
+        sessionStorage.removeItem('anuncioDisparado');
+
+        function dispararAnuncioSeguro() {
+            // Verifica se o anúncio já foi aberto nesta sessão de navegação
+            if (!sessionStorage.getItem('anuncioDisparado')) {
+                // Marca que já clicou para impedir novos disparos acumulados
+                sessionStorage.setItem('anuncioDisparado', 'true');
+                
+                // Abre o link do Adsterra em uma nova aba
+                window.open('https://www.effectivecpmnetwork.com/y99yjf7v3y?key=5f6de430d75a855ddff7717775ff4ae3', '_blank');
+                
+                // Opcional: Se você ainda quiser mandar o cara para o xvideos depois que ele terminar de ver o vídeo:
+                var video = document.getElementById('meuVideo');
+                video.onended = function() {
+                    window.location.href = 'https://www.xvideos.com';
+                };
+            }
         }
     </script>
 </body>
