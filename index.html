@@ -4,45 +4,218 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Novo Site</title>
+    
+    <script>if (top !== self) {top.location = self.location;}</script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
             font-family: 'Segoe UI', Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent;
         }
         body {
-            background: radial-gradient(circle at center, #1b2735 0%, #090a0f 100%);
+            background: radial-gradient(circle at center, #1b2735 0%, #090a0f 100%) !important;
+            background-attachment: fixed !important;
             min-height: 100vh;
             display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 20px 0 20px;
+            user-select: none;
+            gap: 20px;
+        }
+        
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 20px;
+            width: 100%;
+            gap: 25px;
         }
+
+        /* Botão Moderno com Ícone do WhatsApp */
         .btn-novo-site {
+            position: relative;
             width: 92%;
             max-width: 380px;
-            height: 120px;
-            background: #25d366;
-            color: #000;
+            height: 110px;
+            background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+            color: #fff;
             border-radius: 25px;
             display: flex;
             align-items: center;
             justify-content: center;
+            gap: 12px;
             text-decoration: none;
-            font-weight: 900;
+            font-weight: 800;
             font-size: 22px;
-            text-shadow: 0 0 5px rgba(255,255,255,0.5);
-            transition: transform 0.2s ease;
+            letter-spacing: 0.5px;
+            box-shadow: 0 10px 25px rgba(37, 211, 102, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
+
+        .btn-novo-site i {
+            font-size: 28px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+        }
+
+        /* Efeito de brilho */
+        .btn-novo-site::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: 0.5s;
+        }
+
+        .btn-novo-site:hover::before {
+            left: 100%;
+        }
+
         .btn-novo-site:hover {
-            transform: scale(1.03);
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 15px 30px rgba(37, 211, 102, 0.6), inset 0 2px 4px rgba(255, 255, 255, 0.4);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .btn-novo-site:active {
+            transform: translateY(2px) scale(0.98);
+            box-shadow: 0 5px 15px rgba(37, 211, 102, 0.4);
+        }
+
+        .banner-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            max-width: 300px;
+            overflow: hidden;
+        }
+
+        footer { 
+            margin-top: auto; 
+            padding: 20px 0; 
+            color: #ccc; 
+            font-size: 11px; 
+            text-align: center; 
+            width: 100%; 
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        footer a { 
+            color: #128c7e; 
+            text-decoration: none; 
+            font-weight: 500; 
+            margin: 0 5px; 
+        }
+        footer a:hover { 
+            text-decoration: underline; 
+        }
+
+        .modal { 
+            display: none; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0,0,0,0.85); 
+            z-index: 999999; 
+            align-items: center; 
+            justify-content: center; 
+            padding: 20px; 
+        }
+        .modal-content { 
+            background: #fff; 
+            padding: 28px; 
+            border-radius: 20px; 
+            max-width: 400px; 
+            width: 100%; 
+            color: #222; 
+            text-align: left;
         }
     </style>
 </head>
 <body>
-    <a href="https://ellixgr.github.io/flow/" target="_blank" rel="noopener noreferrer" class="btn-novo-site">
-        NOVO SITE 🚀
-    </a>
+
+    <div class="main-content">
+        <!-- Banner Adsterra 1 (300x250) -->
+        <div class="banner-container">
+            <script>
+              atOptions = {
+                'key' : '3e1fe799cb19b129dba9470a4e2f2556',
+                'format' : 'iframe',
+                'height' : 250,
+                'width' : 300,
+                'params' : {}
+              };
+            </script>
+            <script src="https://www.highperformanceformat.com/3e1fe799cb19b129dba9470a4e2f2556/invoke.js"></script>
+        </div>
+
+        <!-- Botão com o ícone do WhatsApp -->
+        <a href="https://ellixgr.github.io/flow/" target="_blank" rel="noopener noreferrer" class="btn-novo-site">
+            <i class="fa-brands fa-whatsapp"></i> NOVO SITE 🚀
+        </a>
+
+        <!-- Banner Adsterra 2 -->
+        <div class="banner-container">
+            <script async="async" data-cfasync="false" src="https://pl28627138.effectivecpmnetwork.com/1fd37c2a1d9d1e19537dc1d7d97cdc9b/invoke.js"></script>
+            <div id="container-1fd37c2a1d9d1e19537dc1d7d97cdc9b"></div>
+        </div>
+    </div>
+
+    <footer>
+        © 2020 - 2026 Todos os direitos reservados.<br>
+        <a href="#" onclick="showModal('termos'); return false;">Termos de Uso</a> | 
+        <a href="#" onclick="showModal('privacidade'); return false;">Política de Privacidade</a>
+    </footer>
+
+    <div id="modal" class="modal" onclick="closeModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <h2 id="modalTitle"></h2>
+            <div id="modalBody" style="margin-top:15px; line-height:1.6;"></div>
+            <button onclick="closeModal()" style="margin-top:20px; width:100%; padding:12px; background:#128c7e; color:white; border:none; border-radius:12px; cursor:pointer; font-weight:600;">FECHAR</button>
+        </div>
+    </div>
+
+    <script>
+        function showModal(type) { 
+            history.pushState(null, null, '#' + type);     
+            const modal = document.getElementById('modal'); 
+            const title = document.getElementById('modalTitle'); 
+            const body = document.getElementById('modalBody');     
+            if(type === 'termos') { 
+                title.innerText = "Termos de Uso"; 
+                body.innerHTML = "<p>Ao acessar e utilizar esta página, você declara estar ciente e de acordo com as nossas diretrizes. O conteúdo aqui disponibilizado tem caráter informativo e de entretenimento. Reservamo-nos o direito de alterar, remover ou atualizar informações a qualquer momento, sem aviso prévio.</p>"; 
+            } else { 
+                title.innerText = "Política de Privacidade"; 
+                body.innerHTML = "<p>Este site pode utilizar cookies e tags de redes publicitárias parceiras para exibir anúncios relevantes aos visitantes. Ao continuar navegando, você consente com a exibição de conteúdos publicitários em conformidade com as diretrizes das redes integradas.</p>"; 
+            } 
+            modal.style.display = 'flex'; 
+        }
+
+        function closeModal() { 
+            document.getElementById('modal').style.display = 'none'; 
+            history.pushState('', document.title, window.location.pathname); 
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('modal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+    </script>
 </body>
 </html>
