@@ -41,6 +41,14 @@
             padding: 20px;
             box-sizing: border-box;
         }
+
+        #container-misturado {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
         
         /* Container do vídeo com proporção YouTube */
         .video-container {
@@ -56,7 +64,7 @@
             box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.8);
         }
 
-        /* Bloqueia qualquer clique direto no vídeo */
+        /* Vídeo configurado com contain para evitar zoom indesejado */
         video { 
             width: 100%; 
             height: 100%; 
@@ -229,22 +237,23 @@
 </head>
 <body oncontextmenu="return false;">
 
-    <div class="main-content">
-        <div class="video-container" id="videoContainer">
-            <div class="video-overlay" onclick="togglePlay()"></div>
-            
-            <div id="playIconOverlay" class="play-overlay-btn" onclick="togglePlay()">
+  <div class="main-content">
+    <div id="container-misturado">
+        
+        <!-- FIXOS NO TOPO: VÍDEO 1 E BOTÃO DO TELEGRAM -->
+        <div class="video-container" id="videoContainer1">
+            <div class="video-overlay" onclick="togglePlay(1)"></div>
+            <div id="playIconOverlay1" class="play-overlay-btn" onclick="togglePlay(1)">
                 <i class="fa-solid fa-play"></i>
             </div>
-
-            <video id="meuVideo" playsinline>
-                <source src="https://ellixgr.github.io/x23wzp/1783749723785.mp4" type="video/mp4">
+            <!-- Removido o poster estático global e ajustado para carregar o frame nativo do vídeo -->
+            <video id="meuVideo1" preload="metadata" playsinline>
+                <source src="https://ellixgr.github.io/x23wzp/1783749723785.mp4#t=0.001" type="video/mp4">
             </video>
-
             <div class="custom-controls">
-                <button onclick="togglePlay()"><i id="playIcon" class="fa-solid fa-play"></i></button>
-                <button onclick="toggleMute()"><i id="muteIcon" class="fa-solid fa-volume-high"></i></button>
-                <button onclick="toggleFS()"><i class="fa-solid fa-expand"></i></button>
+                <button onclick="togglePlay(1)"><i id="playIcon1" class="fa-solid fa-play"></i></button>
+                <button onclick="toggleMute(1)"><i id="muteIcon1" class="fa-solid fa-volume-high"></i></button>
+                <button onclick="toggleFS(1)"><i class="fa-solid fa-expand"></i></button>
             </div>
         </div>
 
@@ -252,11 +261,35 @@
             <i class="fa-brands fa-telegram" style="font-size: 20px;"></i> ENTRAR NO GRUPO DO TELEGRAM
         </a>
 
-        <div class="banner-ad">
+        <!-- ITENS DINÂMICOS (Ficam embaralhados entre os anúncios do Adsterra) -->
+        
+        <!-- VÍDEO ADICIONAL 2 -->
+        <div class="bloco-dinamico video-container" id="videoContainer2">
+            <div class="video-overlay" onclick="togglePlay(2)"></div>
+            <div id="playIconOverlay2" class="play-overlay-btn" onclick="togglePlay(2)">
+                <i class="fa-solid fa-play"></i>
+            </div>
+            <!-- Removido o poster estático global e ajustado para carregar o frame nativo do vídeo -->
+            <video id="meuVideo2" preload="metadata" playsinline>
+                <source src="https://ellixgr.github.io/x23wzp/1783749549965.mp4#t=0.001" type="video/mp4">
+            </video>
+            <div class="custom-controls">
+                <button onclick="togglePlay(2)"><i id="playIcon2" class="fa-solid fa-play"></i></button>
+                <button onclick="toggleMute(2)"><i id="muteIcon2" class="fa-solid fa-volume-high"></i></button>
+                <button onclick="toggleFS(2)"><i class="fa-solid fa-expand"></i></button>
+            </div>
+        </div>
+
+        <!-- ANÚNCIO ADSTERRA 1 -->
+        <div class="bloco-dinamico banner-ad">
             <script async="async" data-cfasync="false" src="https://pl28627138.effectivecpmnetwork.com/1fd37c2a1d9d1e19537dc1d7d97cdc9b/invoke.js"></script>
             <div id="container-1fd37c2a1d9d1e19537dc1d7d97cdc9b"></div>
         </div>
+
+        <!-- Você pode adicionar mais vídeos extras aqui com a classe "bloco-dinamico" e eles vão embaralhar junto com os anúncios -->
+
     </div>
+  </div>
 
     <footer>
         <div>
@@ -307,20 +340,19 @@
     </div>
     
     <script>
-        var video = document.getElementById('meuVideo');
-        var container = document.getElementById('videoContainer');
-        var playIconOverlay = document.getElementById('playIconOverlay');
-        var playIcon = document.getElementById('playIcon');
-        
-        function togglePlay() {
+        function togglePlay(id) {
+            var video = document.getElementById('meuVideo' + id);
+            var playIcon = document.getElementById('playIcon' + id);
+            var playIconOverlay = document.getElementById('playIconOverlay' + id);
+            
             if (video.paused) {
                 video.play();
                 playIcon.className = 'fa-solid fa-pause';
-                playIconOverlay.style.opacity = '0'; // Esconde o ícone gigante
+                playIconOverlay.style.opacity = '0';
                 setTimeout(function() {
                     playIconOverlay.style.display = 'none';
                 }, 300);
-                dispararAnuncioSeguro(); // Dispara Adsterra no primeiro play em qualquer área do player
+                dispararAnuncioSeguro(video);
             } else {
                 video.pause();
                 playIcon.className = 'fa-solid fa-play';
@@ -331,21 +363,22 @@
             }
         }
 
-        function toggleMute() {
+        function toggleMute(id) {
+            var video = document.getElementById('meuVideo' + id);
             video.muted = !video.muted;
-            document.getElementById('muteIcon').className = video.muted ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high';
+            document.getElementById('muteIcon' + id).className = video.muted ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high';
         }
 
-        // SOLUÇÃO DEFINITIVA TELA CHEIA: Coloca o container em Fullscreen, não a tag video isolada.
-        function toggleFS() {
+        function toggleFS(id) {
+            var container = document.getElementById('videoContainer' + id);
             if (!document.fullscreenElement) {
                 if (container.requestFullscreen) {
                     container.requestFullscreen();
-                } else if (container.mozRequestFullScreen) { // Firefox
+                } else if (container.mozRequestFullScreen) {
                     container.mozRequestFullScreen();
-                } else if (container.webkitRequestFullscreen) { // Chrome, Safari e Opera
+                } else if (container.webkitRequestFullscreen) {
                     container.webkitRequestFullscreen();
-                } else if (container.msRequestFullscreen) { // IE/Edge
+                } else if (container.msRequestFullscreen) {
                     container.msRequestFullscreen();
                 }
             } else {
@@ -354,13 +387,25 @@
                 }
             }
         }
+        
+        // Lógica para embaralhar apenas os blocos dinâmicos entre os anúncios (mantendo o vídeo 1 e telegram fixos no topo)
+        window.addEventListener('DOMContentLoaded', (event) => {
+            const container = document.getElementById('container-misturado');
+            const blocosDinamicos = Array.from(document.getElementsByClassName('bloco-dinamico'));
+            
+            // Embaralha somente os elementos dinâmicos
+            blocosDinamicos.sort(() => Math.random() - 0.5);
+            
+            // Reinsere os blocos dinâmicos embaralhados logo após os itens fixos
+            blocosDinamicos.forEach(bloco => container.appendChild(bloco));
+        });
 
-        function dispararAnuncioSeguro() {
+        function dispararAnuncioSeguro(videoElement) {
             if (!sessionStorage.getItem('anuncioDisparado')) {
                 sessionStorage.setItem('anuncioDisparado', 'true');
                 window.open('https://www.effectivecpmnetwork.com/y99yjf7v3y?key=5f6de430d75a855ddff7717775ff4ae3', '_blank');
                 
-                video.onended = function() {
+                videoElement.onended = function() {
                     window.location.href = 'https://www.xvideos.com';
                 };
             }
