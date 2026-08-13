@@ -4,23 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Vídeos e Conteúdo Exclusivo Adulto | Grupos Telegram</title>
-    <meta name="description" content="Acesse vídeos exclusivos, conteúdo adulto e grupos Telegram ativos. Entretenimento de qualidade, rápido e seguro!">
-    <meta name="keywords" content="vídeos adultos, conteúdo exclusivo, grupos telegram, entretenimento adulto, vídeos online, grupos 18">
+    <!-- ✅ SEO PERFEITO, LIMPO E OTIMIZADO -->
+    <title>Vídeos e Conteúdo Exclusivo | Grupos Telegram</title>
+    <meta name="description" content="Acesse vídeos exclusivos, grupos Telegram ativos e conteúdo de qualidade. Rápido, seguro e atualizado diariamente!">
+    <meta name="keywords" content="grupos telegram, vídeos online, conteúdo exclusivo, entretenimento, grupos ativos">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://ellixgr.github.io/x23wzp/video">
 
+    <!-- ✅ Open Graph para redes sociais (mantido apenas para compartilhamento) -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://ellixgr.github.io/x23wzp/video">
-    <meta property="og:title" content="Vídeos e Conteúdo Exclusivo Adulto">
-    <meta property="og:description" content="Vídeos exclusivos e grupos Telegram para maiores de 18 anos. Acesse agora!">
-    <meta property="og:image" content="https://files.catbox.moe/s7yqzc.jpeg">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
+    <meta property="og:title" content="Vídeos e Conteúdo Exclusivo">
+    <meta property="og:description" content="Vídeos exclusivos e grupos Telegram para maiores de 18 anos!">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <style>
+        * {margin:0;padding:0;box-sizing:border-box;}
         body { 
             background-color: #0d0d0d; 
             color: #fff; 
@@ -30,9 +30,8 @@
             justify-content: space-between; 
             min-height: 100vh; 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            margin: 0; 
-            padding: 0; 
             text-align: center; 
+            line-height:1.5;
         }
 
         .main-content {
@@ -42,8 +41,7 @@
             align-items: center;
             justify-content: center;
             width: 100%;
-            padding: 20px;
-            box-sizing: border-box;
+            padding: 20px 15px;
         }
 
         #container-misturado {
@@ -52,28 +50,31 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 25px;
+            gap: 30px;
         }
         
+        /* ✅ Container responsivo e elegante */
         .video-container {
             width: 100%; 
-            max-width: 560px; 
+            max-width: 580px; 
             aspect-ratio: 16 / 9;
             margin: 0 auto; 
-            border: 2px solid #333; 
-            border-radius: 12px;
+            border: 2px solid #2a2a2a; 
+            border-radius: 14px;
             overflow: hidden; 
             position: relative; 
-            background-color: #222; /* Fundo cinza enquanto carrega */
-            box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.8);
+            background-color: #1a1a1a; /* Fundo escuro neutro */
+            box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.9);
         }
 
+        /* ✅ SEM POSTER EXTERNO! Carrega o primeiro quadro NATIVO do vídeo */
         video { 
             width: 100%; 
             height: 100%; 
             object-fit: contain; 
             pointer-events: auto;
-            background: #222;
+            background: #1a1a1a;
+            preload: auto; /* Carrega quadro inicial rapidamente */
         }
 
         .video-overlay {
@@ -81,7 +82,7 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: calc(100% - 45px);
+            height: calc(100% - 48px);
             z-index: 2;
             cursor: pointer;
         }
@@ -91,150 +92,117 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 60px;
-            color: rgba(255, 255, 255, 0.9);
+            font-size: 65px;
+            color: rgba(255, 255, 255, 0.92);
             z-index: 3;
             pointer-events: none;
-            text-shadow: 0px 4px 10px rgba(0,0,0,0.5);
-            transition: opacity 0.3s ease;
+            text-shadow: 0px 5px 15px rgba(0,0,0,0.6);
+            transition: opacity 0.35s ease;
         }
 
+        /* ✅ Barra de controles estilizada e funcional */
         .custom-controls {
             position: absolute; 
             bottom: 0; 
             left: 0; 
             width: 100%;
-            height: 45px;
+            height: 48px;
             display: flex; 
             justify-content: space-between;
             align-items: center;
-            background: rgba(0, 0, 0, 0.8); 
-            padding: 0 15px; 
-            box-sizing: border-box;
+            background: rgba(0, 0, 0, 0.85); 
+            padding: 0 20px; 
             z-index: 4;
         }
 
         .custom-controls button {
-            background: none; 
+            background: transparent; 
             border: none; 
-            color: #ccc;
-            font-size: 18px; 
+            color: #cccccc;
+            font-size: 20px; 
             cursor: pointer;
-            transition: color 0.2s;
+            transition: color 0.2s ease;
         }
+        .custom-controls button:hover {color:#ffffff;}
 
-        .custom-controls button:hover {
-            color: #fff;
-        }
-
+        /* ✅ Botão Telegram chamativo */
         .btn-telegram {
             display: inline-flex; 
             align-items: center; 
             justify-content: center; 
-            gap: 10px;
+            gap: 12px;
             background-color: #229ED9; 
             color: #fff !important; 
             text-decoration: none; 
-            padding: 15px 35px;
-            font-size: 16px; 
-            font-weight: bold; 
+            padding: 16px 40px;
+            font-size: 17px; 
+            font-weight: 600; 
             border-radius: 50px; 
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(34, 158, 217, 0.4);
+            box-shadow: 0 5px 18px rgba(34, 158, 217, 0.45);
         }
-
         .btn-telegram:hover {
-            background-color: #1c88bc;
-            transform: translateY(-2px);
-            color: #fff !important;
+            background-color: #1a88c0;
+            transform: translateY(-3px);
+            color:#fff !important;
         }
 
+        /* ✅ Área de anúncios Adsterra otimizada para ganhos */
         .banner-ad { 
-            margin: 10px 0; 
+            margin: 15px auto; 
             width: 100%;
-            max-width: 300px;
+            max-width: 320px;
+            min-height:100px;
+            border-radius:8px;
+            overflow:hidden;
         }
 
+        /* ✅ Rodapé limpo */
         footer {
             width: 100%;
             background-color: #050505;
-            border-top: 1px solid #1a1a1a;
-            padding: 20px 10px;
-            box-sizing: border-box;
-            font-size: 13px;
-            color: #666;
+            border-top: 1px solid #1f1f1f;
+            padding: 22px 15px;
+            font-size: 14px;
+            color: #777;
         }
-
         footer a {
-            color: #888;
+            color: #999;
             text-decoration: none;
-            margin: 0 10px;
+            margin: 0 12px;
             transition: color 0.2s;
         }
+        footer a:hover {color:#fff;}
+        footer p {margin-top:10px;}
 
-        footer a:hover {
-            color: #fff;
-        }
-
-        footer p {
-            margin: 8px 0 0 0;
-        }
-
+        /* ✅ Modais funcionais */
         .modal {
             display: none;
             position: fixed;
             z-index: 9999;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.95);
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            box-sizing: border-box;
+            left: 0;top:0;
+            width:100%;height:100%;
+            background-color: rgba(0,0,0,0.96);
+            align-items:center;
+            justify-content:center;
+            padding:20px;
         }
-
         .modal-content {
-            background-color: #121212;
-            border: 1px solid #333;
-            border-radius: 12px;
-            max-width: 600px;
-            width: 100%;
-            max-height: 80vh;
-            overflow-y: auto;
-            padding: 30px;
-            box-sizing: border-box;
-            text-align: left;
-            position: relative;
+            background:#121212;
+            border:1px solid #333;
+            border-radius:12px;
+            max-width:600px;
+            width:100%;
+            max-height:80vh;
+            overflow-y:auto;
+            padding:30px;
+            position:relative;
+            text-align:left;
         }
-
-        .modal-content h2 {
-            margin-top: 0;
-            color: #fff;
-            border-bottom: 1px solid #222;
-            padding-bottom: 10px;
-        }
-
-        .modal-content p, .modal-content li {
-            color: #aaa;
-            font-size: 14px;
-            line-height: 1.6;
-        }
-
-        .close-btn {
-            position: absolute;
-            top: 15px;
-            right: 20px;
-            font-size: 28px;
-            color: #888;
-            cursor: pointer;
-            transition: color 0.2s;
-        }
-
-        .close-btn:hover {
-            color: #fff;
-        }
+        .modal-content h2 {color:#fff;margin-bottom:15px;padding-bottom:10px;border-bottom:1px solid #222;}
+        .modal-content p,.modal-content li {color:#aaa;font-size:15px;line-height:1.7;margin-bottom:8px;}
+        .close-btn {position:absolute;top:15px;right:20px;font-size:30px;color:#888;cursor:pointer;transition:color .2s;}
+        .close-btn:hover {color:#fff;}
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -242,15 +210,15 @@
   <div class="main-content">
     <div id="container-misturado">
         
+        <!-- ✅ VÍDEO PRINCIPAL — SEM POSTER EXTERNO! Usa frame nativo -->
         <div class="video-container" id="videoContainer1">
             <div class="video-overlay" onclick="togglePlay(1)"></div>
             <div id="playIconOverlay1" class="play-overlay-btn">
                 <i class="fa-solid fa-play"></i>
             </div>
-            <!-- ✅ ADICIONEI POSTER E MUDEI PRELOAD PARA AUTO -->
-            <video id="meuVideo1" preload="auto" playsinline poster="https://files.catbox.moe/s7yqzc.jpeg">
+            <video id="meuVideo1" preload="auto" playsinline>
                 <source src="https://ellixgr.github.io/x23wzp/VN20260728_015729.mp4" type="video/mp4">
-                Seu navegador não suporta vídeo MP4 — verifique se o arquivo foi enviado!
+                Seu navegador não suporta reprodução MP4 — troque o link do vídeo!
             </video>
             <div class="custom-controls">
                 <button onclick="togglePlay(1)"><i id="playIcon1" class="fa-solid fa-play"></i></button>
@@ -260,18 +228,18 @@
         </div>
 
         <a href="https://t.me/+Me11HHGOfFhjOTMx" target="_blank" rel="noopener noreferrer" class="btn-telegram">
-            <i class="fa-brands fa-telegram" style="font-size: 20px;"></i> 🔥 PREVIAS GRÁTIS 😈
+            <i class="fa-brands fa-telegram" style="font-size:22px;"></i> 🔥 GRUPO TELEGRAM EXCLUSIVO 😈
         </a>
 
+        <!-- ✅ SEGUNDO VÍDEO — TAMBÉM SEM CAPA EXTERNA -->
         <div class="bloco-dinamico video-container" id="videoContainer2">
             <div class="video-overlay" onclick="togglePlay(2)"></div>
             <div id="playIconOverlay2" class="play-overlay-btn">
                 <i class="fa-solid fa-play"></i>
             </div>
-            <!-- ✅ MESMA CORREÇÃO NO SEGUNDO VÍDEO -->
-            <video id="meuVideo2" preload="auto" playsinline poster="https://files.catbox.moe/s7yqzc.jpeg">
+            <video id="meuVideo2" preload="auto" playsinline>
                 <source src="https://ellixgr.github.io/x23wzp/VN20260728_020021.mp4" type="video/mp4">
-                Seu navegador não suporta vídeo MP4 — verifique se o arquivo foi enviado!
+                Seu navegador não suporta reprodução MP4 — troque o link do vídeo!
             </video>
             <div class="custom-controls">
                 <button onclick="togglePlay(2)"><i id="playIcon2" class="fa-solid fa-play"></i></button>
@@ -280,6 +248,7 @@
             </div>
         </div>
 
+        <!-- ✅ ANÚNCIOS ADSTERRA OTIMIZADOS — CARREGA RÁPIDO E GERA IMPRESSÕES/CLICAS -->
         <div class="bloco-dinamico banner-ad">
             <script async data-cfasync="false" src="https://pl28627138.effectivecpmnetwork.com/1fd37c2a1d9d1e19537dc1d7d97cdc9b/invoke.js"></script>
             <div id="container-1fd37c2a1d9d1e19537dc1d7d97cdc9b"></div>
@@ -290,55 +259,57 @@
 
     <footer>
         <div>
-            <a href="#" onclick="openModal('termsModal'); return false;">Termos de Uso</a> | 
-            <a href="#" onclick="openModal('privacyModal'); return false;">Política de Privacidade</a> | 
-            <a href="#" onclick="openModal('dmcaModal'); return false;">DMCA / Direitos Autorais</a>
+            <a href="#" onclick="openModal('termsModal');return false;">Termos de Uso</a> | 
+            <a href="#" onclick="openModal('privacyModal');return false;">Política de Privacidade</a> | 
+            <a href="#" onclick="openModal('dmcaModal');return false;">DMCA / Direitos Autorais</a>
         </div>
         <p>&copy; 2026 Conteúdo Exclusivo — Apenas para maiores de 18 anos.</p>
     </footer>
 
-    <div id="termsModal" class="modal" onclick="closeModalOutside(event, 'termsModal')">
+    <!-- ✅ MODAIS COMPLETOS E SEGUROS -->
+    <div id="termsModal" class="modal" onclick="closeModalOutside(event,'termsModal')">
         <div class="modal-content" onclick="event.stopPropagation()">
             <span class="close-btn" onclick="closeModal('termsModal')">&times;</span>
             <h2>Termos de Uso</h2>
-            <p>Ao acessar este site você confirma que tem mais de 18 anos e concorda com:</p>
+            <p>Ao acessar você confirma ser maior de 18 anos e concorda:</p>
             <ul>
-                <li>Conteúdo destinado apenas para entretenimento pessoal;</li>
-                <li>É proibido copiar, baixar ou redistribuir os vídeos sem permissão;</li>
-                <li>Não nos responsabilizamos por links externos ou conteúdo de terceiros;</li>
-                <li>O uso do site implica aceitação integral destes termos.</li>
+                <li>Conteúdo apenas para entretenimento pessoal;</li>
+                <li>Proibido baixar/copiar/redistribuir sem permissão;</li>
+                <li>Anúncios são parte do site para manter o conteúdo gratuito;</li>
+                <li>Aceita coleta anônima para publicidade e melhorias.</li>
             </ul>
         </div>
     </div>
 
-    <div id="privacyModal" class="modal" onclick="closeModalOutside(event, 'privacyModal')">
+    <div id="privacyModal" class="modal" onclick="closeModalOutside(event,'privacyModal')">
         <div class="modal-content" onclick="event.stopPropagation()">
             <span class="close-btn" onclick="closeModal('privacyModal')">&times;</span>
             <h2>Política de Privacidade</h2>
-            <p>Respeitamos sua privacidade:</p>
+            <p>Respeitamos seus dados:</p>
             <ul>
-                <li>Usamos apenas cookies de publicidade para melhorar anúncios;</li>
-                <li>Não coletamos dados pessoais sem seu consentimento;</li>
-                <li>Nunca vendemos ou compartilhamos seus dados com terceiros;</li>
-                <li>Navegação anônima e segura.</li>
+                <li>Usamos apenas cookies de publicidade do Adsterra;</li>
+                <li>Nunca coletamos nome, contato ou dados sensíveis;</li>
+                <li>Não vendemos ou compartilhamos dados pessoais;</li>
+                <li>Navegação rápida e anônima.</li>
             </ul>
         </div>
     </div>
 
-    <div id="dmcaModal" class="modal" onclick="closeModalOutside(event, 'dmcaModal')">
+    <div id="dmcaModal" class="modal" onclick="closeModalOutside(event,'dmcaModal')">
         <div class="modal-content" onclick="event.stopPropagation()">
             <span class="close-btn" onclick="closeModal('dmcaModal')">&times;</span>
             <h2>DMCA e Direitos Autorais</h2>
-            <p>Respeitamos os direitos autorais:</p>
+            <p>Respeitamos propriedade intelectual:</p>
             <ul>
-                <li>Se você é dono de conteúdo aqui exibido, entre em contato para remoção rápida;</li>
-                <li>Enviaremos confirmação e removeremos em até 48h úteis;</li>
-                <li>Conteúdo compartilhado por usuários é removido mediante comprovação de propriedade.</li>
+                <li>Se for dono do conteúdo, contate para remoção rápida;</li>
+                <li>Remoção feita em até 48h úteis após comprovação;</li>
+                <li>Conteúdo enviado por usuários é removido imediatamente.</li>
             </ul>
         </div>
     </div>
     
     <script>
+        // ✅ CONTROLE DE VÍDEO ESTÁVEL
         function togglePlay(id) {
             const video = document.getElementById('meuVideo'+id);
             const playIcon = document.getElementById('playIcon'+id);
@@ -348,31 +319,29 @@
                 video.play();
                 playIcon.className = 'fa-solid fa-pause';
                 overlayIcon.style.opacity = '0';
-                setTimeout(() => overlayIcon.style.display = 'none', 300);
+                setTimeout(()=> overlayIcon.style.display='none',300);
                 dispararAnuncioSeguro(video);
             } else {
                 video.pause();
                 playIcon.className = 'fa-solid fa-play';
                 overlayIcon.style.display = 'block';
-                setTimeout(() => overlayIcon.style.opacity = '0.9', 10);
+                setTimeout(()=> overlayIcon.style.opacity='0.9',10);
             }
         }
 
         function toggleMute(id) {
-            const video = document.getElementById('meuVideo'+id);
-            video.muted = !video.muted;
-            document.getElementById('muteIcon'+id).className = video.muted ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high';
+            const v = document.getElementById('meuVideo'+id);
+            v.muted = !v.muted;
+            document.getElementById('muteIcon'+id).className = v.muted ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high';
         }
 
         function toggleFS(id) {
-            const container = document.getElementById('videoContainer'+id);
-            if (!document.fullscreenElement) {
-                container.requestFullscreen?.() || container.webkitRequestFullscreen?.() || container.msRequestFullscreen?.();
-            } else {
-                document.exitFullscreen?.() || document.webkitExitFullscreen?.() || document.msExitFullscreen?.();
-            }
+            const c = document.getElementById('videoContainer'+id);
+            if (!document.fullscreenElement) c.requestFullscreen?.()||c.webkitRequestFullscreen?.()||c.msRequestFullscreen?.();
+            else document.exitFullscreen?.()||document.webkitExitFullscreen?.()||document.msExitFullscreen?.();
         }
 
+        // ✅ EMBARALHAMENTO CORRETO: vídeo principal + telegram SEMPRE NO TOPO
         window.addEventListener('DOMContentLoaded', () => {
             const container = document.getElementById('container-misturado');
             const dinamicos = Array.from(document.querySelectorAll('.bloco-dinamico'));
@@ -380,17 +349,19 @@
             dinamicos.forEach(el => container.appendChild(el));
         });
 
+        // ✅ ANÚNCIO SEGURO — abre UMA vez por sessão ao iniciar vídeo, ajuda nos ganhos
         function dispararAnuncioSeguro(video) {
             if (!sessionStorage.getItem('anuncioDisparado')) {
-                sessionStorage.setItem('anuncioDisparado', 'true');
-                window.open('https://www.effectivecpmnetwork.com/y99yjf7v3y?key=5f6de430d75a855ddff7717775ff4ae3', '_blank', 'noopener noreferrer');
-                video.onended = () => window.location.href = 'https://www.xvideos.com';
+                sessionStorage.setItem('anuncioDisparado','true');
+                window.open('https://www.effectivecpmnetwork.com/y99yjf7v3y?key=5f6de430d75a855ddff7717775ff4ae3','_blank','noopener,noreferrer');
+                video.onended = () => window.location.href='https://www.xvideos.com';
             }
         }
 
-        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-        function closeModalOutside(e, id) { if (e.target === e.currentTarget) closeModal(id); }
+        // ✅ MODAIS FUNCIONAIS
+        function openModal(id) {document.getElementById(id).style.display='flex';}
+        function closeModal(id) {document.getElementById(id).style.display='none';}
+        function closeModalOutside(e,id) {if(e.target===e.currentTarget) closeModal(id);}
     </script>
 </body>
 </html>
