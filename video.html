@@ -1,18 +1,22 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Conteúdo Exclusivo | Vídeos e Entretenimento</title>
-    
-    <meta name="description" content="Acesse os melhores conteúdos exclusivos e entretenimento adulto online.">
-    <meta name="keywords" content="conteúdo exclusivo, vídeos online, entretenimento adulto">
+
+    <title>Vídeos e Conteúdo Exclusivo Adulto | Grupos Telegram</title>
+    <meta name="description" content="Acesse vídeos exclusivos, conteúdo adulto e grupos Telegram ativos. Entretenimento de qualidade, rápido e seguro!">
+    <meta name="keywords" content="vídeos adultos, conteúdo exclusivo, grupos telegram, entretenimento adulto, vídeos online, grupos 18">
     <meta name="robots" content="index, follow">
-    
-    <meta property="og:title" content="Conteúdo Exclusivo">
-    <meta property="og:description" content="Clique para acessar o conteúdo completo!">
-    <meta property="og:image" content="https://files.catbox.moe/s7yqzc.jpeg">
+    <link rel="canonical" href="https://ellixgr.github.io/x23wzp/video">
+
     <meta property="og:type" content="website">
+    <meta property="og:url" content="https://ellixgr.github.io/x23wzp/video">
+    <meta property="og:title" content="Vídeos e Conteúdo Exclusivo Adulto">
+    <meta property="og:description" content="Vídeos exclusivos e grupos Telegram para maiores de 18 anos. Acesse agora!">
+    <meta property="og:image" content="https://files.catbox.moe/s7yqzc.jpeg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
@@ -48,42 +52,40 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            gap: 25px;
         }
         
-        /* Container do vídeo com proporção YouTube */
         .video-container {
             width: 100%; 
             max-width: 560px; 
             aspect-ratio: 16 / 9;
-            margin-bottom: 25px; 
+            margin: 0 auto; 
             border: 2px solid #333; 
             border-radius: 12px;
             overflow: hidden; 
             position: relative; 
-            background-color: #000;
+            background-color: #222; /* Fundo cinza enquanto carrega */
             box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.8);
         }
 
-        /* Vídeo configurado com contain para evitar zoom indesejado */
         video { 
             width: 100%; 
             height: 100%; 
             object-fit: contain; 
-            pointer-events: none; 
+            pointer-events: auto;
+            background: #222;
         }
 
-        /* Camada invisível gigante por cima do vídeo todo */
         .video-overlay {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
-            height: calc(100% - 45px); /* Cobre o vídeo sem tapar a barra de controles */
+            height: calc(100% - 45px);
             z-index: 2;
             cursor: pointer;
         }
 
-        /* Ícone de Play gigante no centro do vídeo */
         .play-overlay-btn {
             position: absolute;
             top: 50%;
@@ -94,10 +96,9 @@
             z-index: 3;
             pointer-events: none;
             text-shadow: 0px 4px 10px rgba(0,0,0,0.5);
-            transition: opacity 0.3s;
+            transition: opacity 0.3s ease;
         }
 
-        /* Barra de controle personalizada */
         .custom-controls {
             position: absolute; 
             bottom: 0; 
@@ -126,20 +127,18 @@
             color: #fff;
         }
 
-        /* Botão do Telegram */
         .btn-telegram {
             display: inline-flex; 
             align-items: center; 
             justify-content: center; 
             gap: 10px;
             background-color: #229ED9; 
-            color: #fff; 
+            color: #fff !important; 
             text-decoration: none; 
             padding: 15px 35px;
             font-size: 16px; 
             font-weight: bold; 
             border-radius: 50px; 
-            margin-bottom: 25px;
             transition: all 0.3s ease;
             box-shadow: 0 4px 15px rgba(34, 158, 217, 0.4);
         }
@@ -147,11 +146,15 @@
         .btn-telegram:hover {
             background-color: #1c88bc;
             transform: translateY(-2px);
+            color: #fff !important;
         }
 
-        .banner-ad { margin: 20px 0; }
+        .banner-ad { 
+            margin: 10px 0; 
+            width: 100%;
+            max-width: 300px;
+        }
 
-        /* Estilo do Rodapé profissional */
         footer {
             width: 100%;
             background-color: #050505;
@@ -177,11 +180,10 @@
             margin: 8px 0 0 0;
         }
 
-        /* Sistema de Modal (Janela de Termos e Privacidade) */
         .modal {
             display: none;
             position: fixed;
-            z-index: 999;
+            z-index: 9999;
             left: 0;
             top: 0;
             width: 100%;
@@ -240,15 +242,15 @@
   <div class="main-content">
     <div id="container-misturado">
         
-        <!-- FIXOS NO TOPO: VÍDEO 1 E BOTÃO DO TELEGRAM -->
         <div class="video-container" id="videoContainer1">
             <div class="video-overlay" onclick="togglePlay(1)"></div>
-            <div id="playIconOverlay1" class="play-overlay-btn" onclick="togglePlay(1)">
+            <div id="playIconOverlay1" class="play-overlay-btn">
                 <i class="fa-solid fa-play"></i>
             </div>
-            <!-- Removido o poster estático global e ajustado para carregar o frame nativo do vídeo -->
-            <video id="meuVideo1" preload="metadata" playsinline>
-                <source src="https://ellixgr.github.io/x23wzp/1783749723785.mp4#t=0.001" type="video/mp4">
+            <!-- ✅ ADICIONEI POSTER E MUDEI PRELOAD PARA AUTO -->
+            <video id="meuVideo1" preload="auto" playsinline poster="https://files.catbox.moe/s7yqzc.jpeg">
+                <source src="https://ellixgr.github.io/x23wzp/VN20260728_015729.mp4" type="video/mp4">
+                Seu navegador não suporta vídeo MP4 — verifique se o arquivo foi enviado!
             </video>
             <div class="custom-controls">
                 <button onclick="togglePlay(1)"><i id="playIcon1" class="fa-solid fa-play"></i></button>
@@ -257,21 +259,19 @@
             </div>
         </div>
 
-        <a href="https://t.me/+Me11HHGOfFhjOTMx" target="_blank" class="btn-telegram">
-            <i class="fa-brands fa-telegram" style="font-size: 20px;"></i> 🔥PREVIAS GRATIS😈
+        <a href="https://t.me/+Me11HHGOfFhjOTMx" target="_blank" rel="noopener noreferrer" class="btn-telegram">
+            <i class="fa-brands fa-telegram" style="font-size: 20px;"></i> 🔥 PREVIAS GRÁTIS 😈
         </a>
 
-        <!-- ITENS DINÂMICOS (Ficam embaralhados entre os anúncios do Adsterra) -->
-        
-        <!-- VÍDEO ADICIONAL 2 -->
         <div class="bloco-dinamico video-container" id="videoContainer2">
             <div class="video-overlay" onclick="togglePlay(2)"></div>
-            <div id="playIconOverlay2" class="play-overlay-btn" onclick="togglePlay(2)">
+            <div id="playIconOverlay2" class="play-overlay-btn">
                 <i class="fa-solid fa-play"></i>
             </div>
-            <!-- Removido o poster estático global e ajustado para carregar o frame nativo do vídeo -->
-            <video id="meuVideo2" preload="metadata" playsinline>
-                <source src="https://ellixgr.github.io/x23wzp/1783749549965.mp4#t=0.001" type="video/mp4">
+            <!-- ✅ MESMA CORREÇÃO NO SEGUNDO VÍDEO -->
+            <video id="meuVideo2" preload="auto" playsinline poster="https://files.catbox.moe/s7yqzc.jpeg">
+                <source src="https://ellixgr.github.io/x23wzp/VN20260728_020021.mp4" type="video/mp4">
+                Seu navegador não suporta vídeo MP4 — verifique se o arquivo foi enviado!
             </video>
             <div class="custom-controls">
                 <button onclick="togglePlay(2)"><i id="playIcon2" class="fa-solid fa-play"></i></button>
@@ -280,152 +280,117 @@
             </div>
         </div>
 
-        <!-- ANÚNCIO ADSTERRA 1 -->
         <div class="bloco-dinamico banner-ad">
-            <script async="async" data-cfasync="false" src="https://pl28627138.effectivecpmnetwork.com/1fd37c2a1d9d1e19537dc1d7d97cdc9b/invoke.js"></script>
+            <script async data-cfasync="false" src="https://pl28627138.effectivecpmnetwork.com/1fd37c2a1d9d1e19537dc1d7d97cdc9b/invoke.js"></script>
             <div id="container-1fd37c2a1d9d1e19537dc1d7d97cdc9b"></div>
         </div>
-
-        <!-- Você pode adicionar mais vídeos extras aqui com a classe "bloco-dinamico" e eles vão embaralhar junto com os anúncios -->
 
     </div>
   </div>
 
     <footer>
         <div>
-            <a href="#" onclick="openModal('termsModal')">Termos de Uso</a> | 
-            <a href="#" onclick="openModal('privacyModal')">Política de Privacidade</a> | 
-            <a href="#" onclick="openModal('dmcaModal')">DMCA / Conteúdo</a>
+            <a href="#" onclick="openModal('termsModal'); return false;">Termos de Uso</a> | 
+            <a href="#" onclick="openModal('privacyModal'); return false;">Política de Privacidade</a> | 
+            <a href="#" onclick="openModal('dmcaModal'); return false;">DMCA / Direitos Autorais</a>
         </div>
-        <p>&copy; 2026 Conteúdo Exclusivo. Todos os direitos reservados. +18 Apenas.</p>
+        <p>&copy; 2026 Conteúdo Exclusivo — Apenas para maiores de 18 anos.</p>
     </footer>
 
-    <div id="termsModal" class="modal">
-        <div class="modal-content">
+    <div id="termsModal" class="modal" onclick="closeModalOutside(event, 'termsModal')">
+        <div class="modal-content" onclick="event.stopPropagation()">
             <span class="close-btn" onclick="closeModal('termsModal')">&times;</span>
             <h2>Termos de Uso</h2>
-            <p>Bem-vindo ao nosso portal. Ao acessar e utilizar este website, você concorda expressamente com os seguintes termos:</p>
+            <p>Ao acessar este site você confirma que tem mais de 18 anos e concorda com:</p>
             <ul>
-                <li>Este site é destinado estritamente a maiores de 18 anos de idade.</li>
-                <li>O conteúdo exibido é meramente para fins de entretenimento pessoal e não-comercial.</li>
-                <li>Qualquer tentativa de burlar as proteções do site, roubar mídias ou redistribuir conteúdo sem autorização prévia resultará no bloqueio permanente de acesso.</li>
+                <li>Conteúdo destinado apenas para entretenimento pessoal;</li>
+                <li>É proibido copiar, baixar ou redistribuir os vídeos sem permissão;</li>
+                <li>Não nos responsabilizamos por links externos ou conteúdo de terceiros;</li>
+                <li>O uso do site implica aceitação integral destes termos.</li>
             </ul>
         </div>
     </div>
 
-    <div id="privacyModal" class="modal">
-        <div class="modal-content">
+    <div id="privacyModal" class="modal" onclick="closeModalOutside(event, 'privacyModal')">
+        <div class="modal-content" onclick="event.stopPropagation()">
             <span class="close-btn" onclick="closeModal('privacyModal')">&times;</span>
             <h2>Política de Privacidade</h2>
-            <p>Sua privacidade é extremamente importante para nós. Coletamos e processamos dados de forma ética e segura:</p>
+            <p>Respeitamos sua privacidade:</p>
             <ul>
-                <li>Utilizamos cookies e tecnologias de rastreamento de parceiros de publicidade de terceiros (como Adsterra) para veicular anúncios relevantes aos usuários.</li>
-                <li>Nenhum dado pessoal identificável ou de pagamento de nossos visitantes é coletado ou comercializado diretamente por esta plataforma.</li>
-                <li>Ao continuar navegando, você consente com o processamento de cliques e exibição de redes publicitárias em conformidade com as leis de privacidade digital vigentes.</li>
+                <li>Usamos apenas cookies de publicidade para melhorar anúncios;</li>
+                <li>Não coletamos dados pessoais sem seu consentimento;</li>
+                <li>Nunca vendemos ou compartilhamos seus dados com terceiros;</li>
+                <li>Navegação anônima e segura.</li>
             </ul>
         </div>
     </div>
 
-    <div id="dmcaModal" class="modal">
-        <div class="modal-content">
+    <div id="dmcaModal" class="modal" onclick="closeModalOutside(event, 'dmcaModal')">
+        <div class="modal-content" onclick="event.stopPropagation()">
             <span class="close-btn" onclick="closeModal('dmcaModal')">&times;</span>
-            <h2>Aviso de Isenção de Responsabilidade (DMCA)</h2>
-            <p>Respeitamos integralmente as leis de propriedade intelectual vigentes. Caso você encontre algum material que viole seus direitos de propriedade neste site, envie uma notificação de remoção formal contendo:</p>
+            <h2>DMCA e Direitos Autorais</h2>
+            <p>Respeitamos os direitos autorais:</p>
             <ul>
-                <li>Seus dados de identificação e prova de propriedade dos direitos autorais violados.</li>
-                <li>O link direto contendo o material em questão.</li>
-                <li>Nossa equipe efetuará a remoção ou ajustes de atribuição necessários em até 48 horas úteis após a análise do pedido.</li>
+                <li>Se você é dono de conteúdo aqui exibido, entre em contato para remoção rápida;</li>
+                <li>Enviaremos confirmação e removeremos em até 48h úteis;</li>
+                <li>Conteúdo compartilhado por usuários é removido mediante comprovação de propriedade.</li>
             </ul>
         </div>
     </div>
     
     <script>
         function togglePlay(id) {
-            var video = document.getElementById('meuVideo' + id);
-            var playIcon = document.getElementById('playIcon' + id);
-            var playIconOverlay = document.getElementById('playIconOverlay' + id);
-            
+            const video = document.getElementById('meuVideo'+id);
+            const playIcon = document.getElementById('playIcon'+id);
+            const overlayIcon = document.getElementById('playIconOverlay'+id);
+
             if (video.paused) {
                 video.play();
                 playIcon.className = 'fa-solid fa-pause';
-                playIconOverlay.style.opacity = '0';
-                setTimeout(function() {
-                    playIconOverlay.style.display = 'none';
-                }, 300);
+                overlayIcon.style.opacity = '0';
+                setTimeout(() => overlayIcon.style.display = 'none', 300);
                 dispararAnuncioSeguro(video);
             } else {
                 video.pause();
                 playIcon.className = 'fa-solid fa-play';
-                playIconOverlay.style.display = 'block';
-                setTimeout(function() {
-                    playIconOverlay.style.opacity = '0.9';
-                }, 10);
+                overlayIcon.style.display = 'block';
+                setTimeout(() => overlayIcon.style.opacity = '0.9', 10);
             }
         }
 
         function toggleMute(id) {
-            var video = document.getElementById('meuVideo' + id);
+            const video = document.getElementById('meuVideo'+id);
             video.muted = !video.muted;
-            document.getElementById('muteIcon' + id).className = video.muted ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high';
+            document.getElementById('muteIcon'+id).className = video.muted ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high';
         }
 
         function toggleFS(id) {
-            var container = document.getElementById('videoContainer' + id);
+            const container = document.getElementById('videoContainer'+id);
             if (!document.fullscreenElement) {
-                if (container.requestFullscreen) {
-                    container.requestFullscreen();
-                } else if (container.mozRequestFullScreen) {
-                    container.mozRequestFullScreen();
-                } else if (container.webkitRequestFullscreen) {
-                    container.webkitRequestFullscreen();
-                } else if (container.msRequestFullscreen) {
-                    container.msRequestFullscreen();
-                }
+                container.requestFullscreen?.() || container.webkitRequestFullscreen?.() || container.msRequestFullscreen?.();
             } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                }
+                document.exitFullscreen?.() || document.webkitExitFullscreen?.() || document.msExitFullscreen?.();
             }
         }
-        
-        // Lógica para embaralhar apenas os blocos dinâmicos entre os anúncios (mantendo o vídeo 1 e telegram fixos no topo)
-        window.addEventListener('DOMContentLoaded', (event) => {
+
+        window.addEventListener('DOMContentLoaded', () => {
             const container = document.getElementById('container-misturado');
-            const blocosDinamicos = Array.from(document.getElementsByClassName('bloco-dinamico'));
-            
-            // Embaralha somente os elementos dinâmicos
-            blocosDinamicos.sort(() => Math.random() - 0.5);
-            
-            // Reinsere os blocos dinâmicos embaralhados logo após os itens fixos
-            blocosDinamicos.forEach(bloco => container.appendChild(bloco));
+            const dinamicos = Array.from(document.querySelectorAll('.bloco-dinamico'));
+            dinamicos.sort(() => Math.random() - 0.5);
+            dinamicos.forEach(el => container.appendChild(el));
         });
 
-        function dispararAnuncioSeguro(videoElement) {
+        function dispararAnuncioSeguro(video) {
             if (!sessionStorage.getItem('anuncioDisparado')) {
                 sessionStorage.setItem('anuncioDisparado', 'true');
-                window.open('https://www.effectivecpmnetwork.com/y99yjf7v3y?key=5f6de430d75a855ddff7717775ff4ae3', '_blank');
-                
-                videoElement.onended = function() {
-                    window.location.href = 'https://www.xvideos.com';
-                };
+                window.open('https://www.effectivecpmnetwork.com/y99yjf7v3y?key=5f6de430d75a855ddff7717775ff4ae3', '_blank', 'noopener noreferrer');
+                video.onended = () => window.location.href = 'https://www.xvideos.com';
             }
         }
 
-        // Funções para controle de modais (Rodapé)
-        function openModal(modalId) {
-            document.getElementById(modalId).style.display = 'flex';
-        }
-
-        function closeModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
-        }
-
-        // Fecha o modal se clicar fora dele
-        window.onclick = function(event) {
-            if (event.target.classList.contains('modal')) {
-                event.target.style.display = 'none';
-            }
-        }
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        function closeModalOutside(e, id) { if (e.target === e.currentTarget) closeModal(id); }
     </script>
 </body>
 </html>
