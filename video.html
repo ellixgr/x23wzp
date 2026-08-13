@@ -11,7 +11,7 @@
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://ellixgr.github.io/x23wzp/video">
 
-    <!-- ✅ Open Graph para redes sociais (mantido apenas para compartilhamento) -->
+    <!-- ✅ Open Graph para redes sociais -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://ellixgr.github.io/x23wzp/video">
     <meta property="og:title" content="Vídeos e Conteúdo Exclusivo">
@@ -52,8 +52,7 @@
             justify-content: center;
             gap: 30px;
         }
-        
-        /* ✅ Container responsivo e elegante */
+    
         .video-container {
             width: 100%; 
             max-width: 580px; 
@@ -63,18 +62,17 @@
             border-radius: 14px;
             overflow: hidden; 
             position: relative; 
-            background-color: #1a1a1a; /* Fundo escuro neutro */
+            background-color: #1a1a1a;
             box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.9);
         }
 
-        /* ✅ SEM POSTER EXTERNO! Carrega o primeiro quadro NATIVO do vídeo */
+        
         video { 
             width: 100%; 
             height: 100%; 
             object-fit: contain; 
             pointer-events: auto;
             background: #1a1a1a;
-            preload: auto; /* Carrega quadro inicial rapidamente */
         }
 
         .video-overlay {
@@ -99,8 +97,6 @@
             text-shadow: 0px 5px 15px rgba(0,0,0,0.6);
             transition: opacity 0.35s ease;
         }
-
-        /* ✅ Barra de controles estilizada e funcional */
         .custom-controls {
             position: absolute; 
             bottom: 0; 
@@ -125,7 +121,7 @@
         }
         .custom-controls button:hover {color:#ffffff;}
 
-        /* ✅ Botão Telegram chamativo */
+
         .btn-telegram {
             display: inline-flex; 
             align-items: center; 
@@ -146,8 +142,6 @@
             transform: translateY(-3px);
             color:#fff !important;
         }
-
-        /* ✅ Área de anúncios Adsterra otimizada para ganhos */
         .banner-ad { 
             margin: 15px auto; 
             width: 100%;
@@ -156,8 +150,6 @@
             border-radius:8px;
             overflow:hidden;
         }
-
-        /* ✅ Rodapé limpo */
         footer {
             width: 100%;
             background-color: #050505;
@@ -175,7 +167,7 @@
         footer a:hover {color:#fff;}
         footer p {margin-top:10px;}
 
-        /* ✅ Modais funcionais */
+        /* ✅ Modais */
         .modal {
             display: none;
             position: fixed;
@@ -210,7 +202,7 @@
   <div class="main-content">
     <div id="container-misturado">
         
-        <!-- ✅ VÍDEO PRINCIPAL — SEM POSTER EXTERNO! Usa frame nativo -->
+        <!--  VÍDEO PRINCIPAL-->
         <div class="video-container" id="videoContainer1">
             <div class="video-overlay" onclick="togglePlay(1)"></div>
             <div id="playIconOverlay1" class="play-overlay-btn">
@@ -231,7 +223,7 @@
             <i class="fa-brands fa-telegram" style="font-size:22px;"></i> 🔥 GRUPO TELEGRAM EXCLUSIVO 😈
         </a>
 
-        <!-- ✅ SEGUNDO VÍDEO — TAMBÉM SEM CAPA EXTERNA -->
+        <!-- SEGUNDO VÍDEO -->
         <div class="bloco-dinamico video-container" id="videoContainer2">
             <div class="video-overlay" onclick="togglePlay(2)"></div>
             <div id="playIconOverlay2" class="play-overlay-btn">
@@ -248,7 +240,7 @@
             </div>
         </div>
 
-        <!-- ✅ ANÚNCIOS ADSTERRA OTIMIZADOS — CARREGA RÁPIDO E GERA IMPRESSÕES/CLICAS -->
+        <!-- ADSTERRA -->
         <div class="bloco-dinamico banner-ad">
             <script async data-cfasync="false" src="https://pl28627138.effectivecpmnetwork.com/1fd37c2a1d9d1e19537dc1d7d97cdc9b/invoke.js"></script>
             <div id="container-1fd37c2a1d9d1e19537dc1d7d97cdc9b"></div>
@@ -266,7 +258,7 @@
         <p>&copy; 2026 Conteúdo Exclusivo — Apenas para maiores de 18 anos.</p>
     </footer>
 
-    <!-- ✅ MODAIS COMPLETOS E SEGUROS -->
+    <!--  MODAIS -->
     <div id="termsModal" class="modal" onclick="closeModalOutside(event,'termsModal')">
         <div class="modal-content" onclick="event.stopPropagation()">
             <span class="close-btn" onclick="closeModal('termsModal')">&times;</span>
@@ -309,7 +301,7 @@
     </div>
     
     <script>
-        // ✅ CONTROLE DE VÍDEO ESTÁVEL
+        
         function togglePlay(id) {
             const video = document.getElementById('meuVideo'+id);
             const playIcon = document.getElementById('playIcon'+id);
@@ -340,8 +332,6 @@
             if (!document.fullscreenElement) c.requestFullscreen?.()||c.webkitRequestFullscreen?.()||c.msRequestFullscreen?.();
             else document.exitFullscreen?.()||document.webkitExitFullscreen?.()||document.msExitFullscreen?.();
         }
-
-        // ✅ EMBARALHAMENTO CORRETO: vídeo principal + telegram SEMPRE NO TOPO
         window.addEventListener('DOMContentLoaded', () => {
             const container = document.getElementById('container-misturado');
             const dinamicos = Array.from(document.querySelectorAll('.bloco-dinamico'));
@@ -349,16 +339,24 @@
             dinamicos.forEach(el => container.appendChild(el));
         });
 
-        // ✅ ANÚNCIO SEGURO — abre UMA vez por sessão ao iniciar vídeo, ajuda nos ganhos
+
+        const linksAnuncios = [
+            'https://www.effectivecpmnetwork.com/y99yjf7v3y?key=5f6de430d75a855ddff7717775ff4ae3',
+            'https://www.effectivecpmnetwork.com/uwrj92kjd1?key=8b4a6a2776963b1423e3699abe0c63e0',
+            'https://www.effectivecpmnetwork.com/afavj9a2y?key=5875f3c51a281666d53e659422973930'
+        ];
+
         function dispararAnuncioSeguro(video) {
             if (!sessionStorage.getItem('anuncioDisparado')) {
                 sessionStorage.setItem('anuncioDisparado','true');
-                window.open('https://www.effectivecpmnetwork.com/y99yjf7v3y?key=5f6de430d75a855ddff7717775ff4ae3','_blank','noopener,noreferrer');
+                // Escolhe um dos seus links aleatoriamente
+                const linkEscolhido = linksAnuncios[Math.floor(Math.random() * linksAnuncios.length)];
+                window.open(linkEscolhido,'_blank','noopener,noreferrer');
                 video.onended = () => window.location.href='https://www.xvideos.com';
             }
         }
 
-        // ✅ MODAIS FUNCIONAIS
+        // ✅ Modais funcionais
         function openModal(id) {document.getElementById(id).style.display='flex';}
         function closeModal(id) {document.getElementById(id).style.display='none';}
         function closeModalOutside(e,id) {if(e.target===e.currentTarget) closeModal(id);}
