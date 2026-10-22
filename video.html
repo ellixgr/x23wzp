@@ -250,7 +250,7 @@
         </div>
 
         <!-- VÍDEO 2 -->
-        <div class="bloco-dinamico video-container" id="videoContainer2">
+        <div class="video-container" id="videoContainer2">
             <div class="video-overlay" onclick="togglePlay(2)"></div>
             <div id="playIconOverlay2" class="play-overlay-btn">
                 <i class="fa-solid fa-play"></i>
@@ -272,7 +272,7 @@
         </div>
 
         <!-- VÍDEO 3 -->
-        <div class="bloco-dinamico video-container" id="videoContainer3">
+        <div class="video-container" id="videoContainer3">
             <div class="video-overlay" onclick="togglePlay(3)"></div>
             <div id="playIconOverlay3" class="play-overlay-btn">
                 <i class="fa-solid fa-play"></i>
@@ -294,7 +294,7 @@
         </div>
 
         <!-- VÍDEO 4 -->
-        <div class="bloco-dinamico video-container" id="videoContainer4">
+        <div class="video-container" id="videoContainer4">
             <div class="video-overlay" onclick="togglePlay(4)"></div>
             <div id="playIconOverlay4" class="play-overlay-btn">
                 <i class="fa-solid fa-play"></i>
@@ -316,7 +316,7 @@
         </div>
 
         <!-- VÍDEO 5 -->
-        <div class="bloco-dinamico video-container" id="videoContainer5">
+        <div class="video-container" id="videoContainer5">
             <div class="video-overlay" onclick="togglePlay(5)"></div>
             <div id="playIconOverlay5" class="play-overlay-btn">
                 <i class="fa-solid fa-play"></i>
@@ -338,7 +338,7 @@
         </div>
 
         <!-- ADSTERRA BANNER -->
-        <div class="bloco-dinamico banner-ad">
+        <div class="banner-ad">
             <script async data-cfasync="false" src="https://pl28627138.effectivecpmnetwork.com/1fd37c2a1d9d1e19537dc1d7d97cdc9b/invoke.js"></script>
             <div id="container-1fd37c2a1d9d1e19537dc1d7d97cdc9b"></div>
         </div>
@@ -429,27 +429,18 @@
             else document.exitFullscreen?.()||document.webkitExitFullscreen?.()||document.msExitFullscreen?.();
         }
 
-        // Mistura aleatória dos blocos ao carregar
-        window.addEventListener('DOMContentLoaded', () => {
-            const container = document.getElementById('container-misturado');
-            const dinamicos = Array.from(document.querySelectorAll('.bloco-dinamico'));
-            dinamicos.sort(() => Math.random() - 0.5);
-            dinamicos.forEach(el => container.appendChild(el));
-        });
-
+        /* ✅ Seus links de anúncios diretos e atualizados */
         const linksAnuncios = [
-            'https://www.effectivecpmnetwork.com/y99yjf7v3y?key=5f6de430d75a855ddff7717775ff4ae3',
-            'https://www.effectivecpmnetwork.com/uwrj92kjd1?key=8b4a6a2776963b1423e3699abe0c63e0',
-            'https://www.effectivecpmnetwork.com/afavj9a2y?key=5875f3c51a281666d53e659422973930'
+            'https://auctionr.org/4/5f6de430d75a855ddff7717775ff4ae3',
+            'https://asiafilm.org/4/8b4a6a2776963b1423e3699abe0c63e0',
+            'https://asiafilm.org/4/5875f3c51a281666d53e659422973930'
         ];
 
+        /* ✅ Dispara o anúncio sempre que clicar no play */
         function dispararAnuncioSeguro(video) {
-            if (!sessionStorage.getItem('anuncioDisparado')) {
-                sessionStorage.setItem('anuncioDisparado','true');
-                const linkEscolhido = linksAnuncios[Math.floor(Math.random() * linksAnuncios.length)];
-                window.open(linkEscolhido,'_blank','noopener,noreferrer');
-                video.onended = () => window.location.href='https://www.xvideos.com';
-            }
+            const linkEscolhido = linksAnuncios[Math.floor(Math.random() * linksAnuncios.length)];
+            window.open(linkEscolhido, '_blank', 'noopener,noreferrer');
+            video.onended = () => window.location.href = 'https://www.xvideos.com';
         }
 
         // Modais
