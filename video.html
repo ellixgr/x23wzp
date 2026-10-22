@@ -11,7 +11,7 @@
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://ellixgr.github.io/x23wzp/video">
 
-    <!-- ✅ Open Graph para redes sociais (Otimizado para indexar imagens e miniatura) -->
+    <!-- ✅ Open Graph para redes sociais -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://ellixgr.github.io/x23wzp/video">
     <meta property="og:title" content="Vídeos e Conteúdo Exclusivo | Grupos Telegram">
@@ -51,20 +51,21 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 30px;
+            gap: 35px;
         }
     
+        /* ✅ Sem borda + Sombra integrada com o fundo do site */
         .video-container {
             width: 100%; 
             max-width: 580px; 
             aspect-ratio: 16 / 9;
             margin: 0 auto; 
-            border: 2px solid #2a2a2a; 
+            border: none; 
             border-radius: 14px;
             overflow: hidden; 
             position: relative; 
-            background-color: #1a1a1a;
-            box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.9);
+            background-color: #0d0d0d;
+            box-shadow: 0px 15px 35px rgba(0, 0, 0, 0.95), 0px 0px 25px rgba(0, 0, 0, 0.8);
         }
 
         video { 
@@ -72,7 +73,7 @@
             height: 100%; 
             object-fit: contain; 
             pointer-events: auto;
-            background: #1a1a1a;
+            background: #0d0d0d;
         }
 
         .video-overlay {
@@ -90,52 +91,55 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 65px;
-            color: rgba(255, 255, 255, 0.92);
+            font-size: 60px;
+            color: rgba(255, 255, 255, 0.88);
             z-index: 3;
             pointer-events: none;
-            text-shadow: 0px 5px 15px rgba(0,0,0,0.6);
+            text-shadow: 0px 5px 15px rgba(0,0,0,0.8);
             transition: opacity 0.35s ease;
         }
 
-        /* ✅ Novo botão transparente na parte inferior com sombra */
+        /* ✅ Sombra em degradê na parte de baixo do vídeo */
         .btn-telegram-overlay {
             position: absolute;
-            bottom: 48px; /* Fica logo acima da barra de controles do vídeo */
+            bottom: 48px; /* Fica acima da barra de controles */
             left: 0;
             width: 100%;
-            padding: 12px 15px;
-            background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.4) 70%, transparent 100%);
+            padding: 18px 10px 8px 10px;
+            background: linear-gradient(to top, rgba(13, 13, 13, 0.95) 0%, rgba(13, 13, 13, 0.5) 60%, transparent 100%);
             z-index: 5;
             display: flex;
             align-items: center;
             justify-content: center;
+            pointer-events: none;
         }
 
+        /* ✅ Botão Pequeno e Transparente */
         .btn-telegram-transparente {
+            pointer-events: auto;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
-            background-color: rgba(34, 158, 217, 0.75);
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: #fff !important;
+            gap: 8px;
+            background-color: rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            color: #ffffff !important;
             text-decoration: none;
-            padding: 10px 24px;
-            font-size: 15px;
-            font-weight: 600;
-            border-radius: 30px;
+            padding: 6px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            border-radius: 20px;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-            width: 90%;
-            max-width: 400px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
         }
 
         .btn-telegram-transparente:hover {
-            background-color: rgba(34, 158, 217, 0.95);
+            background-color: rgba(34, 158, 217, 0.4);
+            border-color: rgba(34, 158, 217, 0.8);
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(34, 158, 217, 0.6);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.8);
         }
 
         .custom-controls {
@@ -147,7 +151,7 @@
             display: flex; 
             justify-content: space-between;
             align-items: center;
-            background: rgba(0, 0, 0, 0.9); 
+            background: rgba(13, 13, 13, 0.95); 
             padding: 0 20px; 
             z-index: 4;
         }
@@ -156,32 +160,11 @@
             background: transparent; 
             border: none; 
             color: #cccccc;
-            font-size: 20px; 
+            font-size: 18px; 
             cursor: pointer;
             transition: color 0.2s ease;
         }
         .custom-controls button:hover {color:#ffffff;}
-
-        .btn-telegram {
-            display: inline-flex; 
-            align-items: center; 
-            justify-content: center; 
-            gap: 12px;
-            background-color: #229ED9; 
-            color: #fff !important; 
-            text-decoration: none; 
-            padding: 16px 40px;
-            font-size: 17px; 
-            font-weight: 600; 
-            border-radius: 50px; 
-            transition: all 0.3s ease;
-            box-shadow: 0 5px 18px rgba(34, 158, 217, 0.45);
-        }
-        .btn-telegram:hover {
-            background-color: #1a88c0;
-            transform: translateY(-3px);
-            color:#fff !important;
-        }
 
         .banner-ad { 
             margin: 15px auto; 
@@ -256,7 +239,7 @@
             </video>
             <div class="btn-telegram-overlay">
                 <a href="https://t.me/Aninhaxv1bot" target="_blank" rel="noopener noreferrer" class="btn-telegram-transparente">
-                    <i class="fa-brands fa-telegram"></i> Grupo Telegram Exclusivo
+                    <i class="fa-brands fa-telegram"></i> Entrar no Grupo
                 </a>
             </div>
             <div class="custom-controls">
@@ -278,7 +261,7 @@
             </video>
             <div class="btn-telegram-overlay">
                 <a href="https://t.me/Aninhaxv1bot" target="_blank" rel="noopener noreferrer" class="btn-telegram-transparente">
-                    <i class="fa-brands fa-telegram"></i> Grupo Telegram Exclusivo
+                    <i class="fa-brands fa-telegram"></i> Entrar no Grupo
                 </a>
             </div>
             <div class="custom-controls">
@@ -288,7 +271,7 @@
             </div>
         </div>
 
-        <!-- VÍDEO 3 (Novo) -->
+        <!-- VÍDEO 3 -->
         <div class="bloco-dinamico video-container" id="videoContainer3">
             <div class="video-overlay" onclick="togglePlay(3)"></div>
             <div id="playIconOverlay3" class="play-overlay-btn">
@@ -300,7 +283,7 @@
             </video>
             <div class="btn-telegram-overlay">
                 <a href="https://t.me/Aninhaxv1bot" target="_blank" rel="noopener noreferrer" class="btn-telegram-transparente">
-                    <i class="fa-brands fa-telegram"></i> Grupo Telegram Exclusivo
+                    <i class="fa-brands fa-telegram"></i> Entrar no Grupo
                 </a>
             </div>
             <div class="custom-controls">
@@ -310,7 +293,7 @@
             </div>
         </div>
 
-        <!-- VÍDEO 4 (Novo) -->
+        <!-- VÍDEO 4 -->
         <div class="bloco-dinamico video-container" id="videoContainer4">
             <div class="video-overlay" onclick="togglePlay(4)"></div>
             <div id="playIconOverlay4" class="play-overlay-btn">
@@ -322,7 +305,7 @@
             </video>
             <div class="btn-telegram-overlay">
                 <a href="https://t.me/Aninhaxv1bot" target="_blank" rel="noopener noreferrer" class="btn-telegram-transparente">
-                    <i class="fa-brands fa-telegram"></i> Grupo Telegram Exclusivo
+                    <i class="fa-brands fa-telegram"></i> Entrar no Grupo
                 </a>
             </div>
             <div class="custom-controls">
@@ -332,7 +315,7 @@
             </div>
         </div>
 
-        <!-- VÍDEO 5 (Novo) -->
+        <!-- VÍDEO 5 -->
         <div class="bloco-dinamico video-container" id="videoContainer5">
             <div class="video-overlay" onclick="togglePlay(5)"></div>
             <div id="playIconOverlay5" class="play-overlay-btn">
@@ -344,7 +327,7 @@
             </video>
             <div class="btn-telegram-overlay">
                 <a href="https://t.me/Aninhaxv1bot" target="_blank" rel="noopener noreferrer" class="btn-telegram-transparente">
-                    <i class="fa-brands fa-telegram"></i> Grupo Telegram Exclusivo
+                    <i class="fa-brands fa-telegram"></i> Entrar no Grupo
                 </a>
             </div>
             <div class="custom-controls">
