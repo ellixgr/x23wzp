@@ -51,7 +51,26 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 35px;
+            gap: 25px;
+        }
+
+        /* ✅ Estilo dos Títulos dos Vídeos */
+        .video-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #e0e0e0;
+            text-align: left;
+            width: 100%;
+            max-width: 580px;
+            margin-bottom: -15px;
+            padding-left: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .video-title i {
+            color: #229ED9;
         }
     
         /* ✅ Sem borda + Sombra integrada com o fundo do site */
@@ -166,11 +185,13 @@
         }
         .custom-controls button:hover {color:#ffffff;}
 
+        /* ✅ Blocos de Anúncios */
         .banner-ad { 
-            margin: 15px auto; 
+            margin: 10px auto; 
             width: 100%;
-            max-width: 320px;
-            min-height:100px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             border-radius:8px;
             overflow:hidden;
         }
@@ -227,7 +248,8 @@
   <div class="main-content">
     <div id="container-misturado">
         
-        <!-- VÍDEO 1 -->
+        <!-- TÍTULO & VÍDEO 1 -->
+        <div class="video-title"><i class="fa-solid fa-fire"></i> Vídeo Exclusivo #01</div>
         <div class="video-container" id="videoContainer1">
             <div class="video-overlay" onclick="togglePlay(1)"></div>
             <div id="playIconOverlay1" class="play-overlay-btn">
@@ -249,7 +271,22 @@
             </div>
         </div>
 
-        <!-- VÍDEO 2 -->
+        <!-- ANÚNCIO 1 (300x250) -->
+        <div class="banner-ad">
+            <script>
+              atOptions = {
+                'key' : '3e1fe799cb19b129dba9470a4e2f2556',
+                'format' : 'iframe',
+                'height' : 250,
+                'width' : 300,
+                'params' : {}
+              };
+            </script>
+            <script src="https://bicea.org/22/3e1fe799cb19b129dba9470a4e2f2556"></script>
+        </div>
+
+        <!-- TÍTULO & VÍDEO 2 -->
+        <div class="video-title"><i class="fa-solid fa-star"></i> Conteúdo Em Alta #02</div>
         <div class="video-container" id="videoContainer2">
             <div class="video-overlay" onclick="togglePlay(2)"></div>
             <div id="playIconOverlay2" class="play-overlay-btn">
@@ -271,7 +308,22 @@
             </div>
         </div>
 
-        <!-- VÍDEO 3 -->
+        <!-- ANÚNCIO 2 (320x50) -->
+        <div class="banner-ad">
+            <script>
+              atOptions = {
+                'key' : 'e64f39c609130dc8030efa1e7737a3bd',
+                'format' : 'iframe',
+                'height' : 50,
+                'width' : 320,
+                'params' : {}
+              };
+            </script>
+            <script src="https://bicea.org/22/e64f39c609130dc8030efa1e7737a3bd"></script>
+        </div>
+
+        <!-- TÍTULO & VÍDEO 3 -->
+        <div class="video-title"><i class="fa-solid fa-play"></i> Vídeo VIP #03</div>
         <div class="video-container" id="videoContainer3">
             <div class="video-overlay" onclick="togglePlay(3)"></div>
             <div id="playIconOverlay3" class="play-overlay-btn">
@@ -293,7 +345,22 @@
             </div>
         </div>
 
-        <!-- VÍDEO 4 -->
+        <!-- ANÚNCIO 3 (300x250) -->
+        <div class="banner-ad">
+            <script>
+              atOptions = {
+                'key' : '3e1fe799cb19b129dba9470a4e2f2556',
+                'format' : 'iframe',
+                'height' : 250,
+                'width' : 300,
+                'params' : {}
+              };
+            </script>
+            <script src="https://bicea.org/22/3e1fe799cb19b129dba9470a4e2f2556"></script>
+        </div>
+
+        <!-- TÍTULO & VÍDEO 4 -->
+        <div class="video-title"><i class="fa-solid fa-bolt"></i> Destaque do Dia #04</div>
         <div class="video-container" id="videoContainer4">
             <div class="video-overlay" onclick="togglePlay(4)"></div>
             <div id="playIconOverlay4" class="play-overlay-btn">
@@ -315,7 +382,22 @@
             </div>
         </div>
 
-        <!-- VÍDEO 5 -->
+        <!-- ANÚNCIO 4 (320x50) -->
+        <div class="banner-ad">
+            <script>
+              atOptions = {
+                'key' : 'e64f39c609130dc8030efa1e7737a3bd',
+                'format' : 'iframe',
+                'height' : 50,
+                'width' : 320,
+                'params' : {}
+              };
+            </script>
+            <script src="https://bicea.org/22/e64f39c609130dc8030efa1e7737a3bd"></script>
+        </div>
+
+        <!-- TÍTULO & VÍDEO 5 -->
+        <div class="video-title"><i class="fa-solid fa-eye"></i> Lançamento Exclusivo #05</div>
         <div class="video-container" id="videoContainer5">
             <div class="video-overlay" onclick="togglePlay(5)"></div>
             <div id="playIconOverlay5" class="play-overlay-btn">
@@ -337,7 +419,7 @@
             </div>
         </div>
 
-        <!-- ADSTERRA BANNER -->
+        <!-- ADSTERRA BANNER NATIVO DO SITE -->
         <div class="banner-ad">
             <script async data-cfasync="false" src="https://pl28627138.effectivecpmnetwork.com/1fd37c2a1d9d1e19537dc1d7d97cdc9b/invoke.js"></script>
             <div id="container-1fd37c2a1d9d1e19537dc1d7d97cdc9b"></div>
@@ -429,14 +511,14 @@
             else document.exitFullscreen?.()||document.webkitExitFullscreen?.()||document.msExitFullscreen?.();
         }
 
-        /* ✅ Seus links de anúncios diretos e atualizados */
+        /* ✅ Links de anúncios diretos */
         const linksAnuncios = [
             'https://auctionr.org/4/5f6de430d75a855ddff7717775ff4ae3',
             'https://asiafilm.org/4/8b4a6a2776963b1423e3699abe0c63e0',
             'https://asiafilm.org/4/5875f3c51a281666d53e659422973930'
         ];
 
-        /* ✅ Dispara o anúncio sempre que clicar no play */
+        /* ✅ Dispara o anúncio sempre no play */
         function dispararAnuncioSeguro(video) {
             const linkEscolhido = linksAnuncios[Math.floor(Math.random() * linksAnuncios.length)];
             window.open(linkEscolhido, '_blank', 'noopener,noreferrer');
