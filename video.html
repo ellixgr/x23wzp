@@ -11,11 +11,12 @@
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://ellixgr.github.io/x23wzp/video">
 
-    <!-- ✅ Open Graph para redes sociais -->
+    <!-- ✅ Open Graph para redes sociais (Otimizado para indexar imagens e miniatura) -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://ellixgr.github.io/x23wzp/video">
-    <meta property="og:title" content="Vídeos e Conteúdo Exclusivo">
+    <meta property="og:title" content="Vídeos e Conteúdo Exclusivo | Grupos Telegram">
     <meta property="og:description" content="Vídeos exclusivos e grupos Telegram para maiores de 18 anos!">
+    <meta property="og:image" content="https://ellixgr.github.io/x23wzp/VN20260728_015729.mp4">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
@@ -66,7 +67,6 @@
             box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.9);
         }
 
-        
         video { 
             width: 100%; 
             height: 100%; 
@@ -97,6 +97,47 @@
             text-shadow: 0px 5px 15px rgba(0,0,0,0.6);
             transition: opacity 0.35s ease;
         }
+
+        /* ✅ Novo botão transparente na parte inferior com sombra */
+        .btn-telegram-overlay {
+            position: absolute;
+            bottom: 48px; /* Fica logo acima da barra de controles do vídeo */
+            left: 0;
+            width: 100%;
+            padding: 12px 15px;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.4) 70%, transparent 100%);
+            z-index: 5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-telegram-transparente {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background-color: rgba(34, 158, 217, 0.75);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff !important;
+            text-decoration: none;
+            padding: 10px 24px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 30px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .btn-telegram-transparente:hover {
+            background-color: rgba(34, 158, 217, 0.95);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(34, 158, 217, 0.6);
+        }
+
         .custom-controls {
             position: absolute; 
             bottom: 0; 
@@ -106,7 +147,7 @@
             display: flex; 
             justify-content: space-between;
             align-items: center;
-            background: rgba(0, 0, 0, 0.85); 
+            background: rgba(0, 0, 0, 0.9); 
             padding: 0 20px; 
             z-index: 4;
         }
@@ -120,7 +161,6 @@
             transition: color 0.2s ease;
         }
         .custom-controls button:hover {color:#ffffff;}
-
 
         .btn-telegram {
             display: inline-flex; 
@@ -142,6 +182,7 @@
             transform: translateY(-3px);
             color:#fff !important;
         }
+
         .banner-ad { 
             margin: 15px auto; 
             width: 100%;
@@ -150,6 +191,7 @@
             border-radius:8px;
             overflow:hidden;
         }
+
         footer {
             width: 100%;
             background-color: #050505;
@@ -202,16 +244,21 @@
   <div class="main-content">
     <div id="container-misturado">
         
-        <!--  VÍDEO PRINCIPAL-->
+        <!-- VÍDEO 1 -->
         <div class="video-container" id="videoContainer1">
             <div class="video-overlay" onclick="togglePlay(1)"></div>
             <div id="playIconOverlay1" class="play-overlay-btn">
                 <i class="fa-solid fa-play"></i>
             </div>
-            <video id="meuVideo1" preload="auto" playsinline>
-                <source src="https://ellixgr.github.io/x23wzp/VN20260728_015729.mp4" type="video/mp4">
-                Seu navegador não suporta reprodução MP4 — troque o link do vídeo!
+            <video id="meuVideo1" preload="metadata" playsinline crossorigin="anonymous">
+                <source src="https://ellixgr.github.io/x23wzp/VN20260728_015729.mp4#t=0.1" type="video/mp4">
+                Seu navegador não suporta reprodução MP4.
             </video>
+            <div class="btn-telegram-overlay">
+                <a href="https://t.me/Aninhaxv1bot" target="_blank" rel="noopener noreferrer" class="btn-telegram-transparente">
+                    <i class="fa-brands fa-telegram"></i> Grupo Telegram Exclusivo
+                </a>
+            </div>
             <div class="custom-controls">
                 <button onclick="togglePlay(1)"><i id="playIcon1" class="fa-solid fa-play"></i></button>
                 <button onclick="toggleMute(1)"><i id="muteIcon1" class="fa-solid fa-volume-high"></i></button>
@@ -219,20 +266,21 @@
             </div>
         </div>
 
-        <a href="https://t.me/Aninhaxv1bot" target="_blank" rel="noopener noreferrer" class="btn-telegram">
-            <i class="fa-brands fa-telegram" style="font-size:22px;"></i> 🔥 GRUPO TELEGRAM EXCLUSIVO 😈
-        </a>
-
-        <!-- SEGUNDO VÍDEO -->
+        <!-- VÍDEO 2 -->
         <div class="bloco-dinamico video-container" id="videoContainer2">
             <div class="video-overlay" onclick="togglePlay(2)"></div>
             <div id="playIconOverlay2" class="play-overlay-btn">
                 <i class="fa-solid fa-play"></i>
             </div>
-            <video id="meuVideo2" preload="auto" playsinline>
-                <source src="https://ellixgr.github.io/x23wzp/VN20260728_020021.mp4" type="video/mp4">
-                Seu navegador não suporta reprodução MP4 — troque o link do vídeo!
+            <video id="meuVideo2" preload="metadata" playsinline crossorigin="anonymous">
+                <source src="https://ellixgr.github.io/x23wzp/VN20260728_020021.mp4#t=0.1" type="video/mp4">
+                Seu navegador não suporta reprodução MP4.
             </video>
+            <div class="btn-telegram-overlay">
+                <a href="https://t.me/Aninhaxv1bot" target="_blank" rel="noopener noreferrer" class="btn-telegram-transparente">
+                    <i class="fa-brands fa-telegram"></i> Grupo Telegram Exclusivo
+                </a>
+            </div>
             <div class="custom-controls">
                 <button onclick="togglePlay(2)"><i id="playIcon2" class="fa-solid fa-play"></i></button>
                 <button onclick="toggleMute(2)"><i id="muteIcon2" class="fa-solid fa-volume-high"></i></button>
@@ -240,7 +288,73 @@
             </div>
         </div>
 
-        <!-- ADSTERRA -->
+        <!-- VÍDEO 3 (Novo) -->
+        <div class="bloco-dinamico video-container" id="videoContainer3">
+            <div class="video-overlay" onclick="togglePlay(3)"></div>
+            <div id="playIconOverlay3" class="play-overlay-btn">
+                <i class="fa-solid fa-play"></i>
+            </div>
+            <video id="meuVideo3" preload="metadata" playsinline crossorigin="anonymous">
+                <source src="https://raw.githubusercontent.com/dbd167x/Xio/main/VID_20261022_052342_845.mp4#t=0.1" type="video/mp4">
+                Seu navegador não suporta reprodução MP4.
+            </video>
+            <div class="btn-telegram-overlay">
+                <a href="https://t.me/Aninhaxv1bot" target="_blank" rel="noopener noreferrer" class="btn-telegram-transparente">
+                    <i class="fa-brands fa-telegram"></i> Grupo Telegram Exclusivo
+                </a>
+            </div>
+            <div class="custom-controls">
+                <button onclick="togglePlay(3)"><i id="playIcon3" class="fa-solid fa-play"></i></button>
+                <button onclick="toggleMute(3)"><i id="muteIcon3" class="fa-solid fa-volume-high"></i></button>
+                <button onclick="toggleFS(3)"><i class="fa-solid fa-expand"></i></button>
+            </div>
+        </div>
+
+        <!-- VÍDEO 4 (Novo) -->
+        <div class="bloco-dinamico video-container" id="videoContainer4">
+            <div class="video-overlay" onclick="togglePlay(4)"></div>
+            <div id="playIconOverlay4" class="play-overlay-btn">
+                <i class="fa-solid fa-play"></i>
+            </div>
+            <video id="meuVideo4" preload="metadata" playsinline crossorigin="anonymous">
+                <source src="https://raw.githubusercontent.com/dbd167x/Xio/main/VN20261022_113332.mp4#t=0.1" type="video/mp4">
+                Seu navegador não suporta reprodução MP4.
+            </video>
+            <div class="btn-telegram-overlay">
+                <a href="https://t.me/Aninhaxv1bot" target="_blank" rel="noopener noreferrer" class="btn-telegram-transparente">
+                    <i class="fa-brands fa-telegram"></i> Grupo Telegram Exclusivo
+                </a>
+            </div>
+            <div class="custom-controls">
+                <button onclick="togglePlay(4)"><i id="playIcon4" class="fa-solid fa-play"></i></button>
+                <button onclick="toggleMute(4)"><i id="muteIcon4" class="fa-solid fa-volume-high"></i></button>
+                <button onclick="toggleFS(4)"><i class="fa-solid fa-expand"></i></button>
+            </div>
+        </div>
+
+        <!-- VÍDEO 5 (Novo) -->
+        <div class="bloco-dinamico video-container" id="videoContainer5">
+            <div class="video-overlay" onclick="togglePlay(5)"></div>
+            <div id="playIconOverlay5" class="play-overlay-btn">
+                <i class="fa-solid fa-play"></i>
+            </div>
+            <video id="meuVideo5" preload="metadata" playsinline crossorigin="anonymous">
+                <source src="https://raw.githubusercontent.com/dbd167x/Xio/main/VN20261022_114211.mp4#t=0.1" type="video/mp4">
+                Seu navegador não suporta reprodução MP4.
+            </video>
+            <div class="btn-telegram-overlay">
+                <a href="https://t.me/Aninhaxv1bot" target="_blank" rel="noopener noreferrer" class="btn-telegram-transparente">
+                    <i class="fa-brands fa-telegram"></i> Grupo Telegram Exclusivo
+                </a>
+            </div>
+            <div class="custom-controls">
+                <button onclick="togglePlay(5)"><i id="playIcon5" class="fa-solid fa-play"></i></button>
+                <button onclick="toggleMute(5)"><i id="muteIcon5" class="fa-solid fa-volume-high"></i></button>
+                <button onclick="toggleFS(5)"><i class="fa-solid fa-expand"></i></button>
+            </div>
+        </div>
+
+        <!-- ADSTERRA BANNER -->
         <div class="bloco-dinamico banner-ad">
             <script async data-cfasync="false" src="https://pl28627138.effectivecpmnetwork.com/1fd37c2a1d9d1e19537dc1d7d97cdc9b/invoke.js"></script>
             <div id="container-1fd37c2a1d9d1e19537dc1d7d97cdc9b"></div>
@@ -258,7 +372,7 @@
         <p>&copy; 2026 Conteúdo Exclusivo — Apenas para maiores de 18 anos.</p>
     </footer>
 
-    <!--  MODAIS -->
+    <!-- MODAIS -->
     <div id="termsModal" class="modal" onclick="closeModalOutside(event,'termsModal')">
         <div class="modal-content" onclick="event.stopPropagation()">
             <span class="close-btn" onclick="closeModal('termsModal')">&times;</span>
@@ -301,7 +415,6 @@
     </div>
     
     <script>
-        
         function togglePlay(id) {
             const video = document.getElementById('meuVideo'+id);
             const playIcon = document.getElementById('playIcon'+id);
@@ -332,13 +445,14 @@
             if (!document.fullscreenElement) c.requestFullscreen?.()||c.webkitRequestFullscreen?.()||c.msRequestFullscreen?.();
             else document.exitFullscreen?.()||document.webkitExitFullscreen?.()||document.msExitFullscreen?.();
         }
+
+        // Mistura aleatória dos blocos ao carregar
         window.addEventListener('DOMContentLoaded', () => {
             const container = document.getElementById('container-misturado');
             const dinamicos = Array.from(document.querySelectorAll('.bloco-dinamico'));
             dinamicos.sort(() => Math.random() - 0.5);
             dinamicos.forEach(el => container.appendChild(el));
         });
-
 
         const linksAnuncios = [
             'https://www.effectivecpmnetwork.com/y99yjf7v3y?key=5f6de430d75a855ddff7717775ff4ae3',
@@ -349,14 +463,13 @@
         function dispararAnuncioSeguro(video) {
             if (!sessionStorage.getItem('anuncioDisparado')) {
                 sessionStorage.setItem('anuncioDisparado','true');
-                // Escolhe um dos seus links aleatoriamente
                 const linkEscolhido = linksAnuncios[Math.floor(Math.random() * linksAnuncios.length)];
                 window.open(linkEscolhido,'_blank','noopener,noreferrer');
                 video.onended = () => window.location.href='https://www.xvideos.com';
             }
         }
 
-        // ✅ Modais funcionais
+        // Modais
         function openModal(id) {document.getElementById(id).style.display='flex';}
         function closeModal(id) {document.getElementById(id).style.display='none';}
         function closeModalOutside(e,id) {if(e.target===e.currentTarget) closeModal(id);}
