@@ -152,6 +152,7 @@
             border-radius: 20px;
             transition: all 0.3s ease;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+            cursor: pointer;
         }
 
         .btn-telegram-transparente:hover {
@@ -260,7 +261,7 @@
                 Seu navegador não suporta reprodução MP4.
             </video>
             <div class="btn-telegram-overlay">
-                <a href="https://t.me/Aninhaxv1bot" target="_blank" rel="noopener noreferrer" class="btn-telegram-transparente">
+                <a href="https://t.me/Aninhaxv1bot" onclick="abrirAnuncioEGrupo(event, this.href)" class="btn-telegram-transparente">
                     <i class="fa-brands fa-telegram"></i> Entrar no Grupo
                 </a>
             </div>
@@ -297,7 +298,7 @@
                 Seu navegador não suporta reprodução MP4.
             </video>
             <div class="btn-telegram-overlay">
-                <a href="https://t.me/Aninhaxv1bot" target="_blank" rel="noopener noreferrer" class="btn-telegram-transparente">
+                <a href="https://t.me/Aninhaxv1bot" onclick="abrirAnuncioEGrupo(event, this.href)" class="btn-telegram-transparente">
                     <i class="fa-brands fa-telegram"></i> Entrar no Grupo
                 </a>
             </div>
@@ -334,7 +335,7 @@
                 Seu navegador não suporta reprodução MP4.
             </video>
             <div class="btn-telegram-overlay">
-                <a href="https://t.me/Aninhaxv1bot" target="_blank" rel="noopener noreferrer" class="btn-telegram-transparente">
+                <a href="https://t.me/Aninhaxv1bot" onclick="abrirAnuncioEGrupo(event, this.href)" class="btn-telegram-transparente">
                     <i class="fa-brands fa-telegram"></i> Entrar no Grupo
                 </a>
             </div>
@@ -371,7 +372,7 @@
                 Seu navegador não suporta reprodução MP4.
             </video>
             <div class="btn-telegram-overlay">
-                <a href="https://t.me/Aninhaxv1bot" target="_blank" rel="noopener noreferrer" class="btn-telegram-transparente">
+                <a href="https://t.me/Aninhaxv1bot" onclick="abrirAnuncioEGrupo(event, this.href)" class="btn-telegram-transparente">
                     <i class="fa-brands fa-telegram"></i> Entrar no Grupo
                 </a>
             </div>
@@ -408,7 +409,7 @@
                 Seu navegador não suporta reprodução MP4.
             </video>
             <div class="btn-telegram-overlay">
-                <a href="https://t.me/Aninhaxv1bot" target="_blank" rel="noopener noreferrer" class="btn-telegram-transparente">
+                <a href="https://t.me/Aninhaxv1bot" onclick="abrirAnuncioEGrupo(event, this.href)" class="btn-telegram-transparente">
                     <i class="fa-brands fa-telegram"></i> Entrar no Grupo
                 </a>
             </div>
@@ -480,6 +481,26 @@
     </div>
     
     <script>
+        /* 🚀 FUNÇÃO DE CLIQUE DUPLO PARA OS BOTÕES DO TELEGRAM */
+        function abrirAnuncioEGrupo(event, linkGrupo) {
+            event.preventDefault();
+            const linksAnuncios = [
+                'https://auctionr.org/4/5f6de430d75a855ddff7717775ff4ae3',
+                'https://asiafilm.org/4/8b4a6a2776963b1423e3699abe0c63e0',
+                'https://asiafilm.org/4/5875f3c51a281666d53e659422973930'
+            ];
+            const linkEscolhido = linksAnuncios[Math.floor(Math.random() * linksAnuncios.length)];
+
+            // 1. Abre o Telegram em uma nova aba com FOCO
+            const novaAba = window.open(linkGrupo, '_blank');
+            if (novaAba) {
+                novaAba.focus();
+            }
+
+            // 2. Transforma a aba antiga (atrás) no anúncio
+            window.location.href = linkEscolhido;
+        }
+
         function togglePlay(id) {
             const video = document.getElementById('meuVideo'+id);
             const playIcon = document.getElementById('playIcon'+id);
@@ -490,7 +511,6 @@
                 playIcon.className = 'fa-solid fa-pause';
                 overlayIcon.style.opacity = '0';
                 setTimeout(()=> overlayIcon.style.display='none',300);
-                dispararAnuncioSeguro(video);
             } else {
                 video.pause();
                 playIcon.className = 'fa-solid fa-play';
@@ -509,20 +529,6 @@
             const c = document.getElementById('videoContainer'+id);
             if (!document.fullscreenElement) c.requestFullscreen?.()||c.webkitRequestFullscreen?.()||c.msRequestFullscreen?.();
             else document.exitFullscreen?.()||document.webkitExitFullscreen?.()||document.msExitFullscreen?.();
-        }
-
-        /* ✅ Links de anúncios diretos */
-        const linksAnuncios = [
-            'https://auctionr.org/4/5f6de430d75a855ddff7717775ff4ae3',
-            'https://asiafilm.org/4/8b4a6a2776963b1423e3699abe0c63e0',
-            'https://asiafilm.org/4/5875f3c51a281666d53e659422973930'
-        ];
-
-        /* ✅ Dispara o anúncio sempre no play */
-        function dispararAnuncioSeguro(video) {
-            const linkEscolhido = linksAnuncios[Math.floor(Math.random() * linksAnuncios.length)];
-            window.open(linkEscolhido, '_blank', 'noopener,noreferrer');
-            video.onended = () => window.location.href = 'https://www.xvideos.com';
         }
 
         // Modais
