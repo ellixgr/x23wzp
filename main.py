@@ -6,6 +6,8 @@ import uuid
 import requests
 from datetime import datetime
 import base64
+import cv2
+import tempfile
 
 load_dotenv()
 app = Flask(__name__)
@@ -170,10 +172,11 @@ def adicionar():
         link_thumbnail = request.form.get('thumbnail_link', '').strip()
         
         if not titulo or not url_video:
-            return render_template_string(ADICIONAR_HTML, erro='Preencha o título e o link direto do vídeo!')
+            return render_template_string(ADICIONAR_HTML, erro='Preencha o título e o link/embed do vídeo!')
         
         thumbnail = CAPA_PADRAO
 
+        # 1. Tenta pegar imagem enviada manualmente
         if 'thumbnail_file' in request.files:
             file = request.files['thumbnail_file']
             if file and file.filename != '':
@@ -182,8 +185,29 @@ def adicionar():
                 mime_type = file.content_type or 'image/jpeg'
                 thumbnail = f"data:{mime_type};base64,{encoded}"
         
+        # 2. Se não enviou foto, mas enviou link de capa
         if thumbnail == CAPA_PADRAO and link_thumbnail:
             thumbnail = link_thumbnail
+
+        # 3. Se foi enviado um arquivo de vídeo direto no painel para extrair o primeiro frame
+        if 'video_file' in request.files:
+            v_file = request.files['video_file']
+            if v_file and v_file.filename != '':
+                try:
+                    with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp:
+                        tmp.write(v_file.read())
+                        tmp_path = tmp.name
+                    
+                    cap = cv2.VideoCapture(tmp_path)
+                    success, frame = cap.read()
+                    if success:
+                        _, buffer = cv2.imencode('.jpg', frame)
+                        encoded_img = base64.b64encode(buffer).decode('utf-8')
+                        thumbnail = f"data:image/jpeg;base64,{encoded_img}"
+                    cap.release()
+                    os.unlink(tmp_path)
+                except Exception:
+                    pass
 
         videos_collection.insert_one({
             'id': str(uuid.uuid4()),
@@ -217,7 +241,7 @@ def health():
     return "OK", 200
 
 # ==========================================
-# TEMPLATE DO SITE PRINCIPAL (VÍDEOS NO TOPO, ANÚNCIOS ABAIXO)
+# TEMPLATE DO SITE PRINCIPAL (VÍDEOS NO TOPO - SUPORTE A EMBED/IFRAME)
 # ==========================================
 HTML_SITE = """<!DOCTYPE html>
 <html lang="pt-BR">
@@ -234,13 +258,9 @@ HTML_SITE = """<!DOCTYPE html>
         .video-title { font-size: 15px; font-weight: 600; color: #e0e0e0; text-align: left; width: 100%; display: flex; align-items: center; gap: 8px; }
         .video-title i { color: #25d366; }
         .video-container { width: 100%; aspect-ratio: 16 / 9; border-radius: 14px; overflow: hidden; position: relative; background: #0d0d0d; box-shadow: 0px 15px 35px rgba(0,0,0,0.95); }
-        video { width: 100%; height: 100%; object-fit: cover; background: #0d0d0d; }
-        .video-overlay { position: absolute; top: 0; left: 0; width: 100%; height: calc(100% - 48px); z-index: 2; cursor: pointer; }
-        .play-overlay-btn { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 60px; color: rgba(255,255,255,0.9); z-index: 3; pointer-events: none; text-shadow: 0 4px 10px rgba(0,0,0,0.8); }
-        .btn-telegram-overlay { position: absolute; bottom: 48px; left: 0; width: 100%; padding: 15px 10px 5px 10px; background: linear-gradient(to top, rgba(13,13,13,0.95), transparent); z-index: 5; display: flex; justify-content: center; }
+        .video-container iframe { width: 100%; height: 100%; border: none; }
+        .btn-telegram-overlay { margin-top: 8px; display: flex; justify-content: center; width: 100%; }
         .btn-acao { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: linear-gradient(135deg, #25d366, #1ebe57); border: none; color: #000 !important; font-weight: 700; text-decoration: none; padding: 10px 22px; font-size: 14px; border-radius: 25px; cursor: pointer; box-shadow: 0 4px 15px rgba(37,211,102,0.4); }
-        .custom-controls { position: absolute; bottom: 0; left: 0; width: 100%; height: 48px; display: flex; justify-content: space-between; align-items: center; background: rgba(13,13,13,0.95); padding: 0 20px; z-index: 4; }
-        .custom-controls button { background: transparent; border: none; color: #ccc; font-size: 18px; cursor: pointer; }
         .banner-ad { margin: 10px auto; width: 100%; display: flex; justify-content: center; }
         .hub-promo-card { background: linear-gradient(145deg, #161b22, #0d1117); border: 1px solid #30363d; border-radius: 14px; padding: 15px; text-decoration: none; color: #fff; display: flex; flex-direction: column; align-items: center; gap: 10px; box-shadow: 0 8px 25px rgba(0,0,0,0.8); }
         .hub-promo-card img { width: 100%; max-height: 160px; object-fit: cover; border-radius: 10px; }
@@ -282,22 +302,13 @@ HTML_SITE = """<!DOCTYPE html>
         {% if videos %}
             {% for video in videos %}
             <div class="video-title"><i class="fa-solid fa-fire"></i>{{ video.titulo }}</div>
-            <div class="video-container" id="videoContainer{{ loop.index }}">
-                <div class="video-overlay" onclick="togglePlay('{{ loop.index }}')"></div>
-                <div id="playIconOverlay{{ loop.index }}" class="play-overlay-btn"><i class="fa-solid fa-play"></i></div>
-                <video id="meuVideo{{ loop.index }}" preload="metadata" playsinline crossorigin="anonymous" poster="{{ video.thumbnail }}">
-                    <source src="{{ video.url_video }}" type="video/mp4">
-                </video>
-                <div class="btn-telegram-overlay">
-                    <button onclick="abrirModalLiberar('{{ video.id }}', '{{ video.titulo }}', '{{ video.tamanho }}', '{{ video.duracao }}', '{{ video.preco }}')" class="btn-acao">
-                        <i class="fa-solid fa-lock-open"></i> Liberar Acesso VIP
-                    </button>
-                </div>
-                <div class="custom-controls">
-                    <button onclick="togglePlay('{{ loop.index }}')"><i id="playIcon{{ loop.index }}" class="fa-solid fa-play"></i></button>
-                    <button onclick="toggleMute('{{ loop.index }}')"><i id="muteIcon{{ loop.index }}" class="fa-solid fa-volume-high"></i></button>
-                    <button onclick="toggleFS('{{ loop.index }}')"><i class="fa-solid fa-expand"></i></button>
-                </div>
+            <div class="video-container">
+                <iframe src="{{ video.url_video }}" scrolling="no" frameborder="0" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true"></iframe>
+            </div>
+            <div class="btn-telegram-overlay">
+                <button onclick="abrirModalLiberar('{{ video.id }}', '{{ video.titulo }}', '{{ video.tamanho }}', '{{ video.duracao }}', '{{ video.preco }}')" class="btn-acao">
+                    <i class="fa-solid fa-lock-open"></i> Liberar Acesso VIP
+                </button>
             </div>
             {% endfor %}
         {% else %}
@@ -481,21 +492,6 @@ HTML_SITE = """<!DOCTYPE html>
             setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 5000);
         }
 
-        function togglePlay(id) {
-            const v = document.getElementById('meuVideo'+id);
-            const p = document.getElementById('playIcon'+id);
-            if (v.paused) { v.play(); p.className = 'fa-solid fa-pause'; }
-            else { v.pause(); p.className = 'fa-solid fa-play'; }
-        }
-        function toggleMute(id) {
-            const v = document.getElementById('meuVideo'+id);
-            v.muted = !v.muted;
-        }
-        function toggleFS(id) {
-            const c = document.getElementById('videoContainer'+id);
-            if (!document.fullscreenElement) c.requestFullscreen?.();
-            else document.exitFullscreen?.();
-        }
         function openModal(id) { document.getElementById(id).style.display='flex'; }
         function closeModal(id) { 
             document.getElementById(id).style.display='none'; 
@@ -596,10 +592,13 @@ button{width:100%;padding:12px;background:#25d366;border:none;font-weight:bold;b
         <label>Título do Vídeo:</label>
         <input type="text" name="titulo" required>
         
-        <label>Link Direto do Vídeo (.mp4):</label>
-        <input type="text" name="url_video" required>
+        <label>Link Embed do Vídeo (Lulustream / Iframe src):</label>
+        <input type="text" name="url_video" placeholder="https://luluvido.com/e/..." required>
         
-        <label>Enviar Imagem da Capa (Direto da Galeria):</label>
+        <label>Enviar Vídeo para Extrair Capa Automática (Opcional):</label>
+        <input type="file" name="video_file" accept="video/*">
+        
+        <label>OU Enviar Imagem da Capa (Direto da Galeria):</label>
         <input type="file" name="thumbnail_file" accept="image/*">
         
         <label>OU Cole o Link da Capa:</label>
