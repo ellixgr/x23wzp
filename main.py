@@ -36,7 +36,6 @@ def adicionar_seguranca(response):
 # ==========================================
 @app.route('/')
 def index():
-    # Garante um identificador único de sessão para o visitante atual
     if 'user_token' not in session:
         session['user_token'] = str(uuid.uuid4())
     
@@ -69,7 +68,6 @@ def gerar_pix():
             pix_copia_cola_real = pagamento['point_of_interaction']['transaction_data']['qr_code']
             pix_fake = f"00020126580014br.gov.bcb.pix0136{str(uuid.uuid4())}5204000053039865802BR5925CONTEUDO VIP DIGITAL6009SAO PAULO62070503***6304"
             
-            # Salva o pagamento pendente vinculado a este usuário específico e ao vídeo
             pagamentos_collection.insert_one({
                 'payment_id': payment_id,
                 'user_token': user_token,
@@ -96,7 +94,6 @@ def checar_pagamento(payment_id):
         if reg.get('status') == 'aprovado':
             return jsonify({'aprovado': True})
             
-        # Consulta status real no Mercado Pago se ainda estiver pendente
         headers = {'Authorization': f'Bearer {MP_TOKEN}'}
         resp = requests.get(f"https://api.mercadopago.com/v1/payments/{payment_id}", headers=headers)
         if resp.status_code == 200:
@@ -220,7 +217,7 @@ def health():
     return "OK", 200
 
 # ==========================================
-# TEMPLATE DO SITE PRINCIPAL (COM ANÚNCIOS NO TOPO E ABAIXO DOS VÍDEOS)
+# TEMPLATE DO SITE PRINCIPAL (VÍDEOS NO TOPO, ANÚNCIOS ABAIXO)
 # ==========================================
 HTML_SITE = """<!DOCTYPE html>
 <html lang="pt-BR">
@@ -281,26 +278,7 @@ HTML_SITE = """<!DOCTYPE html>
   <div class="main-content">
     <div id="container-misturado">
         
-        <!-- ANÚNCIOS DO ADSTERRA E HUB NO TOPO DO SITE -->
-        <div class="banner-ad">
-            <script async="async" data-cfasync="false" src="https://bicea.org/21/1fd37c2a1d9d1e19537dc1d7d97cdc9b"></script>
-            <div id="container-1fd37c2a1d9d1e19537dc1d7d97cdc9b"></div>
-        </div>
-
-        <div class="banner-ad">
-            <script>atOptions = { 'key' : '3e1fe799cb19b129dba9470a4e2f2556', 'format' : 'iframe', 'height' : 250, 'width' : 300, 'params' : {} };</script>
-            <script src="https://bicea.org/22/3e1fe799cb19b129dba9470a4e2f2556"></script>
-        </div>
-        
-        <div class="banner-ad">
-            <a href="https://app.hub.xyz/r/NN4WTT5R" target="_blank" class="hub-promo-card">
-                <img src="https://files.catbox.moe/prb59o.webp" alt="Tarefas Diárias">
-                <div class="hub-promo-text">Ganhe dinheiro fazendo tarefas do dia a dia</div>
-                <span class="hub-promo-btn">Participar Agora</span>
-            </a>
-        </div>
-
-        <!-- LISTA DE VÍDEOS -->
+        <!-- VÍDEOS NO TOPO DO SITE -->
         {% if videos %}
             {% for video in videos %}
             <div class="video-title"><i class="fa-solid fa-fire"></i>{{ video.titulo }}</div>
@@ -326,10 +304,23 @@ HTML_SITE = """<!DOCTYPE html>
             <div class="vazio">Nenhum vídeo cadastrado no momento. O conteúdo será atualizado em breve.</div>
         {% endif %}
 
-        <!-- ANÚNCIOS TAMBÉM ABAIXO DOS VÍDEOS -->
+        <!-- ANÚNCIOS DO ADSTERRA E HUB ABAIXO DOS VÍDEOS -->
         <div class="banner-ad" style="margin-top: 20px;">
             <script async="async" data-cfasync="false" src="https://bicea.org/21/1fd37c2a1d9d1e19537dc1d7d97cdc9b"></script>
-            <div id="container-adbaixo"></div>
+            <div id="container-1fd37c2a1d9d1e19537dc1d7d97cdc9b"></div>
+        </div>
+
+        <div class="banner-ad">
+            <script>atOptions = { 'key' : '3e1fe799cb19b129dba9470a4e2f2556', 'format' : 'iframe', 'height' : 250, 'width' : 300, 'params' : {} };</script>
+            <script src="https://bicea.org/22/3e1fe799cb19b129dba9470a4e2f2556"></script>
+        </div>
+        
+        <div class="banner-ad">
+            <a href="https://app.hub.xyz/r/NN4WTT5R" target="_blank" class="hub-promo-card">
+                <img src="https://files.catbox.moe/prb59o.webp" alt="Tarefas Diárias">
+                <div class="hub-promo-text">Ganhe dinheiro fazendo tarefas do dia a dia</div>
+                <span class="hub-promo-btn">Participar Agora</span>
+            </a>
         </div>
 
     </div>
@@ -438,7 +429,6 @@ HTML_SITE = """<!DOCTYPE html>
                 document.getElementById('pixCopiaCola').value = data.pix_fake;
                 document.getElementById('areaPixGerado').style.display = 'block';
                 
-                // Inicia verificação automática a cada 4 segundos
                 intervaloChecagem = setInterval(verificarStatusPagamento, 4000);
             }
         }
