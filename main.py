@@ -17,6 +17,8 @@ ADMIN_SENHA = os.getenv('ADMIN_SENHA', 'admin123')
 client = MongoClient(os.getenv('MONGO_URI'))
 db = client['video_site']
 videos_collection = db['videos']
+videos_gratis_collection = db['videos_gratis']
+envios_collection = db['envios_criadores']
 suporte_collection = db['suporte']
 pagamentos_collection = db['pagamentos']
 MP_TOKEN = os.getenv('MP_TOKEN')
@@ -47,7 +49,86 @@ def index():
     videos_pagos_ids = [p['video_id'] for p in pagos]
     
     videos = list(videos_collection.find({}, {'_id': 0}))
-    return render_template_string(HTML_SITE, videos=videos, videos_pagos_ids=videos_pagos_ids)
+    videos_gratis = list(videos_gratis_collection.find({}, {'_id': 0}))
+    
+    # Recupera likes do usuário na sessão
+    likes_usuario = session.get('likes_usuario', [])
+    desbloqueios_gratis = session.get('desbloqueios_gratis', [])
+    
+    return render_template_string(HTML_SITE, 
+                                  videos=videos, 
+                                  videos_gratis=videos_gratis,
+                                  videos_pagos_ids=videos_pagos_ids, 
+                                  likes_usuario=likes_usuario,
+                                  desbloqueios_gratis=desbloqueios_gratis)
+
+@app.route('/curtir-video/<tipo>/<video_id>', methods=['POST'])
+def curtir_video(tipo, video_id):
+    if 'likes_usuario' not in session:
+        session['likes_usuario'] = []
+    
+    # Segurança contra flood/spam de cliques rápidos
+    if video_id in session['likes_usuario']:
+        return jsonify({'sucesso': False, 'erro': 'Você já curtiu este vídeo!'}), 400
+    
+    collection = videos_collection if tipo == 'vip' else videos_gratis_collection
+    res = collection.update_one({'id': video_id}, {'$inc': {'likes': 1}})
+    
+    if res.modified_count > 0:
+        session['likes_usuario'].append(video_id)
+        session.modified = True
+        vid = collection.find_one({'id': video_id}, {'likes': 1, '_id': 0})
+        return jsonify({'sucesso': True, 'likes': vid.get('likes', 1)})
+    
+    return jsonify({'sucesso': False, 'erro': 'Vídeo não encontrado'}), 404
+
+@app.route('/incrementar-view/<tipo>/<video_id>', methods=['POST'])
+def incrementar_view(tipo, video_id):
+    collection = videos_collection if tipo == 'vip' else videos_gratis_collection
+    collection.update_one({'id': video_id}, {'$inc': {'views': 1}})
+    return jsonify({'sucesso': True})
+
+@app.route('/desbloquear-gratis/<video_id>', methods=['POST'])
+def desbloquear_gratis(video_id):
+    if 'desbloqueios_gratis' not in session:
+        session['desbloqueios_gratis'] = []
+    if video_id not in session['desbloqueios_gratis']:
+        session['desbloqueios_gratis'].append(video_id)
+        session.modified = True
+    return jsonify({'sucesso': True})
+
+@app.route('/enviar-video-criador', methods=['POST'])
+def enviar_video_criador():
+    try:
+        nome = request.form.get('nome', '').strip()
+        gmail = request.form.get('gmail', '').strip()
+        chave_pix = request.form.get('chave_pix', '').strip()
+        titulo = request.form.get('titulo', '').strip()
+        url_video = request.form.get('url_video', '').strip()
+        preco_original = float(request.form.get('preco', '10.00'))
+        
+        # O site cobra taxa de R$ 5,00 em cima do valor escolhido
+        preco_final = preco_original + 5.00
+        
+        termo_responsabilidade = request.form.get('termo')
+        if not termo_responsabilidade or not nome or not gmail or not chave_pix or not titulo or not url_video:
+            return jsonify({'sucesso': False, 'erro': 'Preencha todos os campos obrigatórios e aceite os termos!'}), 400
+
+        envios_collection.insert_one({
+            'id': str(uuid.uuid4()),
+            'nome': nome,
+            'gmail': gmail,
+            'chave_pix': chave_pix,
+            'titulo': titulo,
+            'url_video': url_video,
+            'preco_criador': preco_original,
+            'preco_final': preco_final,
+            'status': 'pendente',
+            'criado_em': datetime.utcnow()
+        })
+        return jsonify({'sucesso': True})
+    except Exception as e:
+        return jsonify({'sucesso': False, 'erro': str(e)}), 500
 
 @app.route('/gerar-pix', methods=['POST'])
 def gerar_pix():
@@ -59,12 +140,15 @@ def gerar_pix():
         if not video_id:
             return jsonify({'sucesso': False, 'erro': 'Vídeo não especificado'}), 400
         
+        video = videos_collection.find_one({'id': video_id})
+        valor = float(video.get('preco', 10.00)) if video else 10.00
+
         headers = {
             'Authorization': f'Bearer {MP_TOKEN}',
             'Content-Type': 'application/json'
         }
         payload = {
-            "transaction_amount": 10.00,
+            "transaction_amount": valor,
             "description": "Liberacao de Video Exclusivo VIP",
             "payment_method_id": "pix",
             "payer": {"email": f"cliente_{user_token[:8]}@tempmail.com"}
@@ -166,13 +250,16 @@ def requer_login(p):
 @requer_login
 def dashboard():
     videos = list(videos_collection.find().sort('criado_em', -1))
+    videos_gratis = list(videos_gratis_collection.find().sort('criado_em', -1))
+    envios = list(envios_collection.find().sort('criado_em', -1))
     mensagens = list(suporte_collection.find().sort('criado_em', -1))
-    return render_template_string(DASHBOARD_HTML, videos=videos, mensagens=mensagens)
+    return render_template_string(DASHBOARD_HTML, videos=videos, videos_gratis=videos_gratis, envios=envios, mensagens=mensagens)
 
 @app.route('/admin/adicionar', methods=['GET', 'POST'])
 @requer_login
 def adicionar():
     if request.method == 'POST':
+        tipo_video = request.form.get('tipo_video', 'vip')
         titulo = request.form.get('titulo')
         url_video = request.form.get('url_video')
         preco = request.form.get('preco', '10.00')
@@ -181,7 +268,7 @@ def adicionar():
         link_thumbnail = request.form.get('thumbnail_link', '').strip()
         
         if not titulo or not url_video:
-            return render_template_string(ADICIONAR_HTML, erro='Preencha o título e o link/embed do vídeo completo!')
+            return render_template_string(ADICIONAR_HTML, erro='Preencha o título e o link/embed do vídeo!')
         
         thumbnail = CAPA_PADRAO
 
@@ -222,7 +309,7 @@ def adicionar():
                 except Exception:
                     pass
 
-        videos_collection.insert_one({
+        novo_video = {
             'id': str(uuid.uuid4()),
             'titulo': titulo,
             'url_video': url_video,
@@ -230,17 +317,64 @@ def adicionar():
             'tamanho': tamanho,
             'duracao': duracao,
             'preco': preco,
+            'views': 0,
+            'likes': 0,
             'ativo': True,
             'criado_em': datetime.utcnow()
-        })
+        }
+
+        if tipo_video == 'gratis':
+            videos_gratis_collection.insert_one(novo_video)
+        else:
+            videos_collection.insert_one(novo_video)
+
         return redirect(url_for('dashboard'))
         
     return render_template_string(ADICIONAR_HTML, erro='')
 
-@app.route('/admin/excluir/<video_id>')
+@app.route('/admin/editar/<tipo>/<video_id>', methods=['GET', 'POST'])
 @requer_login
-def excluir(video_id):
-    videos_collection.delete_one({'id': video_id})
+def editar_video(tipo, video_id):
+    collection = videos_collection if tipo == 'vip' else videos_gratis_collection
+    video = collection.find_one({'id': video_id})
+    if not video:
+        return redirect(url_for('dashboard'))
+
+    if request.method == 'POST':
+        titulo = request.form.get('titulo')
+        url_video = request.form.get('url_video')
+        preco = request.form.get('preco', '10.00')
+        duracao = request.form.get('duracao', '').strip()
+        tamanho = request.form.get('tamanho', '').strip()
+        views = int(request.form.get('views', 0))
+        likes = int(request.form.get('likes', 0))
+        link_thumbnail = request.form.get('thumbnail_link', '').strip()
+
+        thumbnail = video.get('thumbnail', CAPA_PADRAO)
+        if link_thumbnail:
+            thumbnail = link_thumbnail
+
+        collection.update_one({'id': video_id}, {
+            '$set': {
+                'titulo': titulo,
+                'url_video': url_video,
+                'preco': preco,
+                'duracao': duracao,
+                'tamanho': tamanho,
+                'views': views,
+                'likes': likes,
+                'thumbnail': thumbnail
+            }
+        })
+        return redirect(url_for('dashboard'))
+
+    return render_template_string(EDITAR_HTML, video=video, tipo=tipo)
+
+@app.route('/admin/excluir/<tipo>/<video_id>')
+@requer_login
+def excluir_video(tipo, video_id):
+    collection = videos_collection if tipo == 'vip' else videos_gratis_collection
+    collection.delete_one({'id': video_id})
     return redirect(url_for('dashboard'))
 
 @app.route('/admin/excluir-suporte/<msg_id>')
@@ -254,127 +388,167 @@ def health():
     return "OK", 200
 
 # ==========================================
-# TEMPLATE DO SITE PRINCIPAL (COM MONETIZAÇÃO ADSTERRA AO CLICAR)
+# TEMPLATE DO SITE PRINCIPAL
 # ==========================================
 HTML_SITE = """<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vídeos Exclusivos e Conteúdos VIP | Acesso Imediato</title>
-    <meta name="description" content="Assista aos melhores vídeos exclusivos, conteúdos VIP atualizados diariamente com liberação instantânea via Pix.">
+    <title>Plataforma de Vídeos VIP e Gratuitos</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * {margin:0;padding:0;box-sizing:border-box;}
         body { background-color: #0d0d0d; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: space-between; min-height: 100vh; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; }
-        .main-content { flex: 1; width: 100%; padding: 20px 15px; display: flex; flex-direction: column; align-items: center; }
-        #container-misturado { width: 100%; max-width: 580px; display: flex; flex-direction: column; gap: 25px; }
-        .video-title { font-size: 15px; font-weight: 600; color: #e0e0e0; text-align: left; width: 100%; display: flex; align-items: center; justify-content: space-between; }
-        .video-title span.detalhes-info { font-size: 11px; color: #8b949e; font-weight: normal; }
+        header { width: 100%; background: #161b22; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #30363d; }
+        header h1 { font-size: 18px; color: #25d366; }
+        .btn-enviar-topo { background: #238636; color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: bold; text-decoration: none; cursor: pointer; }
+        
+        .main-content { flex: 1; width: 100%; padding: 25px 15px; display: flex; flex-direction: column; align-items: center; }
+        .secao-titulo { font-size: 18px; color: #25d366; margin: 25px 0 15px 0; font-weight: bold; width: 100%; max-width: 580px; text-align: left; border-left: 4px solid #25d366; padding-left: 8px; }
+        
+        #container-misturado { width: 100%; max-width: 580px; display: flex; flex-direction: column; gap: 30px; }
+        .video-title { font-size: 16px; font-weight: 600; color: #e0e0e0; text-align: left; width: 100%; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;}
+        .video-title span.detalhes-info { font-size: 12px; color: #8b949e; font-weight: normal; }
         .video-title i { color: #25d366; margin-right: 5px; }
         
         .video-container { width: 100%; aspect-ratio: 16 / 9; border-radius: 14px; overflow: hidden; position: relative; background: #0d0d0d; box-shadow: 0px 15px 35px rgba(0,0,0,0.95); }
         .video-container iframe { width: 100%; height: 100%; border: none; }
         
-        /* Estilo da Capa Bloqueada */
         .capa-bloqueada { width: 100%; height: 100%; position: absolute; top: 0; left: 0; background-size: cover; background-position: center; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(6px); z-index: 5; cursor: pointer; }
         .capa-bloqueada::before { content: ""; position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.75); }
-        .conteudo-bloqueio { position: relative; z-index: 6; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 0 15px; pointer-events: none; }
+        .conteudo-bloqueio { position: relative; z-index: 6; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 0 15px; pointer-events: none; }
         .conteudo-bloqueio i { font-size: 42px; color: #25d366; text-shadow: 0 0 15px rgba(37,211,102,0.6); }
-        .conteudo-bloqueio p { font-size: 14px; font-weight: 600; color: #fff; }
+        .conteudo-bloqueio p { font-size: 15px; font-weight: 600; color: #fff; }
 
-        .btn-acao { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: linear-gradient(135deg, #25d366, #1ebe57); border: none; color: #000 !important; font-weight: 700; text-decoration: none; padding: 10px 22px; font-size: 14px; border-radius: 25px; cursor: pointer; box-shadow: 0 4px 15px rgba(37,211,102,0.4); pointer-events: auto; }
+        .btn-acao { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: linear-gradient(135deg, #25d366, #1ebe57); border: none; color: #000 !important; font-weight: 700; text-decoration: none; padding: 12px 24px; font-size: 15px; border-radius: 25px; cursor: pointer; box-shadow: 0 4px 15px rgba(37,211,102,0.4); pointer-events: auto; }
+        .btn-desbloquear-gratis { background: linear-gradient(135deg, #229ED9, #1b85b8); color: #fff !important; }
+
+        .video-stats-bar { display: flex; justify-content: space-between; align-items: center; width: 100%; background: #161b22; padding: 10px 15px; border-radius: 0 0 14px 14px; border: 1px solid #30363d; border-top: none; font-size: 13px; color: #8b949e; }
+        .btn-like { background: transparent; border: none; color: #fff; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 6px; transition: color 0.2s; }
+        .btn-like:hover, .btn-like.curtido { color: #da3633; }
+        .btn-like i { font-size: 16px; }
+
+        .banner-ad { margin: 15px auto; width: 100%; display: flex; justify-content: center; }
         
-        .banner-ad { margin: 10px auto; width: 100%; display: flex; justify-content: center; }
-        .hub-promo-card { background: linear-gradient(145deg, #161b22, #0d1117); border: 1px solid #30363d; border-radius: 14px; padding: 15px; text-decoration: none; color: #fff; display: flex; flex-direction: column; align-items: center; gap: 10px; box-shadow: 0 8px 25px rgba(0,0,0,0.8); }
-        .hub-promo-card img { width: 100%; max-height: 160px; object-fit: cover; border-radius: 10px; }
-        .hub-promo-text { font-size: 14px; font-weight: 600; color: #f0f6fc; }
-        .hub-promo-btn { background: #238636; color: #fff; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: bold; }
-        
-        footer { width: 100%; background: #050505; border-top: 1px solid #1f1f1f; padding: 25px 15px; font-size: 13px; color: #777; margin-top: 30px; text-align: center; }
-        .footer-links { margin-bottom: 10px; display: flex; justify-content: center; flex-wrap: wrap; gap: 15px; }
-        footer a { color: #aaa; text-decoration: none; transition: color 0.2s; }
+        footer { width: 100%; background: #050505; border-top: 1px solid #1f1f1f; padding: 30px 15px; font-size: 14px; color: #777; margin-top: 40px; text-align: center; }
+        .footer-links { margin-bottom: 12px; display: flex; justify-content: center; flex-wrap: wrap; gap: 20px; }
+        footer a { color: #aaa; text-decoration: none; transition: color 0.2s; font-size: 14px; }
         footer a:hover { color: #25d366; }
         
-        .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); align-items: center; justify-content: center; padding: 20px; }
-        .modal-content { background: linear-gradient(160deg, #161b22, #0d1117); border: 1px solid #30363d; border-radius: 18px; max-width: 440px; width: 100%; padding: 30px; position: relative; text-align: left; box-shadow: 0 20px 40px rgba(0,0,0,0.9); }
-        .modal-content h2 { color: #fff; font-size: 18px; margin-bottom: 15px; border-bottom: 1px solid #21262d; padding-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+        .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); align-items: center; justify-content: center; padding: 20px; overflow-y: auto; }
+        .modal-content { background: linear-gradient(160deg, #161b22, #0d1117); border: 1px solid #30363d; border-radius: 18px; max-width: 480px; width: 100%; padding: 30px; position: relative; text-align: left; box-shadow: 0 20px 40px rgba(0,0,0,0.9); max-height: 90vh; overflow-y: auto; }
+        .modal-content h2 { color: #fff; font-size: 20px; margin-bottom: 15px; border-bottom: 1px solid #21262d; padding-bottom: 10px; display: flex; align-items: center; gap: 10px; }
         .modal-content h2 i { color: #25d366; }
-        .close-btn { position: absolute; top: 20px; right: 20px; font-size: 20px; color: #8b949e; cursor: pointer; background: #21262d; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .close-btn { position: absolute; top: 20px; right: 20px; font-size: 22px; color: #8b949e; cursor: pointer; background: #21262d; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
         .close-btn:hover { background: #da3633; color: #fff; }
-        .modal-info-box { background: #0d1117; border: 1px solid #21262d; border-radius: 10px; padding: 12px 15px; margin-bottom: 15px; }
-        .modal-info-box p { color: #8b949e; font-size: 13px; margin-bottom: 6px; display: flex; justify-content: space-between; }
-        .modal-info-box p span { color: #f0f6fc; font-weight: 600; }
-        .pix-textarea { width: 100%; height: 75px; background: #0d1117; color: #25d366; border: 1px solid #30363d; border-radius: 10px; padding: 10px; font-family: monospace; font-size: 11px; text-align: center; resize: none; margin-top: 10px; }
         
-        .form-group { margin-bottom: 12px; }
-        .form-group label { display: block; font-size: 12px; color: #8b949e; margin-bottom: 5px; }
-        .form-control { width: 100%; padding: 10px; background: #0d1117; border: 1px solid #30363d; color: #fff; border-radius: 8px; font-size: 13px; }
-        textarea.form-control { height: 70px; resize: none; }
-        .char-counter { font-size: 11px; color: #666; text-align: right; margin-top: 3px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 13px; color: #8b949e; margin-bottom: 6px; font-weight: 600; }
+        .form-control { width: 100%; padding: 12px; background: #0d1117; border: 1px solid #30363d; color: #fff; border-radius: 8px; font-size: 14px; }
+        textarea.form-control { height: 80px; resize: none; }
+        .instrucao-box { background: #0d1117; border-left: 3px solid #229ED9; padding: 10px; font-size: 12px; color: #8b949e; margin-bottom: 15px; border-radius: 0 8px 8px 0; line-height: 1.4; }
+        .checkbox-group { display: flex; align-items: flex-start; gap: 10px; font-size: 12px; color: #c9d1d9; margin: 15px 0; text-align: left; }
+        .checkbox-group input { margin-top: 3px; transform: scale(1.2); }
 
-        #toast-notificacao { visibility: hidden; min-width: 250px; background-color: #238636; color: #fff; text-align: center; border-radius: 12px; padding: 14px; position: fixed; z-index: 100000; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 14px; font-weight: 600; box-shadow: 0 5px 20px rgba(0,0,0,0.5); opacity: 0; transition: opacity 0.3s, bottom 0.3s; }
+        #toast-notificacao { visibility: hidden; min-width: 280px; background-color: #238636; color: #fff; text-align: center; border-radius: 12px; padding: 16px; position: fixed; z-index: 100000; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 15px; font-weight: 600; box-shadow: 0 5px 20px rgba(0,0,0,0.5); opacity: 0; transition: opacity 0.3s, bottom 0.3s; }
         #toast-notificacao.show { visibility: visible; opacity: 1; bottom: 50px; }
         .vazio { color: #888; font-size: 15px; padding: 30px; background: #161b22; border-radius: 12px; border: 1px solid #30363d; width: 100%; }
     </style>
 </head>
 <body oncontextmenu="return false;">
+  
+  <header>
+      <h1><i class="fa-solid fa-play-circle"></i> Vídeos VIP & Grátis</h1>
+      <button onclick="openModal('modalEnviarVideo')" class="btn-enviar-topo"><i class="fa-solid fa-cloud-arrow-up"></i> Enviar Meu Vídeo</button>
+  </header>
+
   <div class="main-content">
     <div id="container-misturado">
         
-        <!-- VÍDEOS NO TOPO DO SITE -->
-        {% if videos %}
-            {% for video in videos %}
-            <div class="video-title">
-                <span><i class="fa-solid fa-fire"></i>{{ video.titulo }}</span>
-                <span class="detalhes-info">
-                    {% if video.duracao %}⏱️ {{ video.duracao }}{% endif %} 
-                    {% if video.tamanho %} | 📦 {{ video.tamanho }}{% endif %}
-                </span>
-            </div>
-            
-            <div class="video-container" id="containerVideo_{{ video.id }}">
-                
-                <!-- O IFRAME DO VÍDEO COMPLETO SÓ APARECE SE O USUÁRIO JÁ PAGOU -->
-                {% if video.id in videos_pagos_ids %}
-                <iframe src="{{ video.url_video }}" scrolling="no" frameborder="0" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true"></iframe>
-                {% else %}
-                
-                <!-- CAPA BLOQUEADA COM GATILHO DE ANÚNCIO ADSTERRA AO CLICAR -->
-                <div class="capa-bloqueada" id="capa_{{ video.id }}" style="background-image: url('{{ video.thumbnail }}');" onclick="clicarCapaOuBotao('{{ video.id }}', '{{ video.titulo }}', '{{ video.tamanho }}', '{{ video.duracao }}', '{{ video.preco }}')">
-                    <div class="conteudo-bloqueio">
-                        <i class="fa-solid fa-lock"></i>
-                        <p>Vídeo Exclusivo Bloqueado</p>
-                        <button class="btn-acao">
-                            <i class="fa-solid fa-lock-open"></i> Liberar Acesso VIP (R$ {{ video.preco }})
-                        </button>
-                    </div>
+        <!-- VÍDEOS GRATUITOS -->
+        <div class="secao-titulo"><i class="fa-solid fa-gift"></i> Vídeos Gratuitos (Desbloqueie com Anúncio)</div>
+        {% if videos_gratis %}
+            {% for video in videos_gratis %}
+            <div>
+                <div class="video-title">
+                    <span><i class="fa-solid fa-video"></i>{{ video.titulo }}</span>
+                    <span class="detalhes-info">
+                        {% if video.duracao %}⏱️ {{ video.duracao }}{% endif %} 
+                        {% if video.tamanho %} | 📦 {{ video.tamanho }}{% endif %}
+                    </span>
                 </div>
-                <iframe id="iframe_{{ video.id }}" src="{{ video.url_video }}" scrolling="no" frameborder="0" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" style="display:none;"></iframe>
-                {% endif %}
-
+                
+                <div class="video-container" id="containerGratis_{{ video.id }}">
+                    {% if video.id in desbloqueios_gratis %}
+                    <iframe src="{{ video.url_video }}" scrolling="no" frameborder="0" allowfullscreen="true" onload="registrarView('gratis', '{{ video.id }}')"></iframe>
+                    {% else %}
+                    <div class="capa-bloqueada" id="capaGratis_{{ video.id }}" style="background-image: url('{{ video.thumbnail }}');" onclick="desbloquearVideoGratis('{{ video.id }}', '{{ video.url_video }}')">
+                        <div class="conteudo-bloqueio">
+                            <i class="fa-solid fa-play-circle"></i>
+                            <p>Vídeo Gratuito</p>
+                            <button class="btn-acao btn-desbloquear-gratis">
+                                <i class="fa-solid fa-unlock"></i> Assistir Vídeo (Ver Anúncio)
+                            </button>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="video-stats-bar">
+                    <span><i class="fa-solid fa-eye"></i> <span id="view_gratis_{{ video.id }}">{{ video.views }}</span> visualizações</span>
+                    <button class="btn-like {% if video.id in likes_usuario %}curtido{% endif %}" onclick="curtirVideo('gratis', '{{ video.id }}')">
+                        <i class="fa-solid fa-heart"></i> <span id="like_gratis_{{ video.id }}">{{ video.likes }}</span>
+                    </button>
+                </div>
             </div>
             {% endfor %}
         {% else %}
-            <div class="vazio">Nenhum vídeo cadastrado no momento. O conteúdo será atualizado em breve.</div>
+            <div class="vazio">Nenhum vídeo gratuito no momento.</div>
         {% endif %}
 
-        <!-- ANÚNCIOS DO ADSTERRA E HUB ABAIXO DOS VÍDEOS -->
-        <div class="banner-ad" style="margin-top: 20px;">
+        <!-- VÍDEOS VIP PAGOS -->
+        <div class="secao-titulo" style="margin-top: 20px;"><i class="fa-solid fa-crown" style="color: #ffd700;"></i> Vídeos Exclusivos VIP</div>
+        {% if videos %}
+            {% for video in videos %}
+            <div>
+                <div class="video-title">
+                    <span><i class="fa-solid fa-fire"></i>{{ video.titulo }}</span>
+                    <span class="detalhes-info">
+                        {% if video.duracao %}⏱️ {{ video.duracao }}{% endif %} 
+                        {% if video.tamanho %} | 📦 {{ video.tamanho }}{% endif %}
+                    </span>
+                </div>
+                
+                <div class="video-container" id="containerVideo_{{ video.id }}">
+                    {% if video.id in videos_pagos_ids %}
+                    <iframe src="{{ video.url_video }}" scrolling="no" frameborder="0" allowfullscreen="true" onload="registrarView('vip', '{{ video.id }}')"></iframe>
+                    {% else %}
+                    <div class="capa-bloqueada" id="capa_{{ video.id }}" style="background-image: url('{{ video.thumbnail }}');" onclick="abrirModalLiberar('{{ video.id }}', '{{ video.titulo }}', '{{ video.tamanho }}', '{{ video.duracao }}', '{{ video.preco }}')">
+                        <div class="conteudo-bloqueio">
+                            <i class="fa-solid fa-lock"></i>
+                            <p>Vídeo Exclusivo Bloqueado</p>
+                            <button class="btn-acao">
+                                <i class="fa-solid fa-lock-open"></i> Liberar Acesso VIP (R$ {{ video.preco }})
+                            </button>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="video-stats-bar">
+                    <span><i class="fa-solid fa-eye"></i> <span id="view_vip_{{ video.id }}">{{ video.views }}</span> visualizações</span>
+                    <button class="btn-like {% if video.id in likes_usuario %}curtido{% endif %}" onclick="curtirVideo('vip', '{{ video.id }}')">
+                        <i class="fa-solid fa-heart"></i> <span id="like_vip_{{ video.id }}">{{ video.likes }}</span>
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="vazio">Nenhum vídeo VIP cadastrado no momento.</div>
+        {% endif %}
+
+        <!-- ANÚNCIOS DO ADSTERRA -->
+        <div class="banner-ad">
             <script async="async" data-cfasync="false" src="https://bicea.org/21/1fd37c2a1d9d1e19537dc1d7d97cdc9b"></script>
             <div id="container-1fd37c2a1d9d1e19537dc1d7d97cdc9b"></div>
-        </div>
-
-        <div class="banner-ad">
-            <script>atOptions = { 'key' : '3e1fe799cb19b129dba9470a4e2f2556', 'format' : 'iframe', 'height' : 250, 'width' : 300, 'params' : {} };</script>
-            <script src="https://bicea.org/22/3e1fe799cb19b129dba9470a4e2f2556"></script>
-        </div>
-        
-        <div class="banner-ad">
-            <a href="https://app.hub.xyz/r/NN4WTT5R" target="_blank" class="hub-promo-card">
-                <img src="https://files.catbox.moe/prb59o.webp" alt="Tarefas Diárias">
-                <div class="hub-promo-text">Ganhe dinheiro fazendo tarefas do dia a dia</div>
-                <span class="hub-promo-btn">Participar Agora</span>
-            </a>
         </div>
 
     </div>
@@ -389,22 +563,72 @@ HTML_SITE = """<!DOCTYPE html>
         <p>2020 - 2027 &copy; Todos os direitos reservados</p>
     </footer>
 
+    <!-- MODAL DE ENVIO DE VÍDEO DO CRIADOR -->
+    <div id="modalEnviarVideo" class="modal" onclick="closeModalOutside(event,'modalEnviarVideo')">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <span class="close-btn" onclick="closeModal('modalEnviarVideo')">&times;</span>
+            <h2><i class="fa-solid fa-cloud-arrow-up"></i> Enviar Meu Vídeo</h2>
+            
+            <div class="instrucao-box">
+                <b>Como enviar:</b><br>
+                1. Hospede seu vídeo no <b>Lulustream</b>.<br>
+                2. Copie o <b>Link Embed</b> (ex: <i>https://luluvido.com/e/abc123xyz</i>).<br>
+                3. Preencha todos os campos abaixo corretamente. O site cobra uma taxa fixa de R$ 5,00 por venda.
+            </div>
+
+            <form id="formEnviarCriador" onsubmit="enviarVideoCriadorForm(event)">
+                <div class="form-group">
+                    <label>Seu Nome Completo *</label>
+                    <input type="text" name="nome" class="form-control" required placeholder="Digite seu nome">
+                </div>
+                <div class="form-group">
+                    <label>Seu Gmail (para contato) *</label>
+                    <input type="email" name="gmail" class="form-control" required placeholder="seuemail@gmail.com">
+                </div>
+                <div class="form-group">
+                    <label>Sua Chave Pix (para receber seus lucros) *</label>
+                    <input type="text" name="chave_pix" class="form-control" required placeholder="CPF, E-mail, Telefone ou Chave Aleatória">
+                </div>
+                <div class="form-group">
+                    <label>Título do Vídeo *</label>
+                    <input type="text" name="titulo" class="form-control" required placeholder="Título chamativo para o vídeo">
+                </div>
+                <div class="form-group">
+                    <label>Link Embed do Vídeo (Lulustream) *</label>
+                    <input type="text" name="url_video" class="form-control" required placeholder="https://luluvido.com/e/...">
+                </div>
+                <div class="form-group">
+                    <label>Quanto você quer cobrar pelo vídeo? (R$) *</label>
+                    <input type="number" step="0.01" min="1.00" name="preco" class="form-control" required placeholder="Ex: 10.00">
+                    <small style="color: #8b949e; font-size: 11px;">Taxa da plataforma: R$ 5,00. O preço final para o cliente será o valor escolhido + R$ 5,00.</small>
+                </div>
+                
+                <div class="checkbox-group">
+                    <input type="checkbox" name="termo" id="chkTermo" required>
+                    <label for="chkTermo" style="font-size:11px; color:#8b949e; margin:0; cursor:pointer;">Por sua conta em risco, você confirma que seus dados estão certos e o conteúdo é de sua pessoa ou tem autorização expressa para comercialização.</label>
+                </div>
+
+                <button type="submit" class="btn-acao" style="width:100%; padding:12px; font-size:14px; margin-top:10px;">Enviar Vídeo para Análise</button>
+            </form>
+        </div>
+    </div>
+
     <!-- MODAL DE LIBERAÇÃO PIX -->
     <div id="modalLiberar" class="modal" onclick="closeModalOutside(event,'modalLiberar')">
         <div class="modal-content" onclick="event.stopPropagation()">
             <span class="close-btn" onclick="closeModal('modalLiberar')">&times;</span>
             <h2><i class="fa-solid fa-shield-halved"></i> Liberação Instantânea</h2>
             <p id="modalTituloVid" style="color:#f0f6fc; font-weight:600; margin-bottom:12px; font-size:14px;"></p>
-            <div class="modal-info-box">
-                <p>Tamanho do arquivo: <span id="modalTamanho">Não informado</span></p>
-                <p>Duração total: <span id="modalDuracao">Não informada</span></p>
-                <p>Valor do acesso: <span style="color:#25d366; font-size:15px;">R$ <span id="modalPreco"></span></span></p>
+            <div class="modal-info-box" style="background:#0d1117; border:1px solid #21262d; border-radius:10px; padding:12px 15px; margin-bottom:15px; text-align:left;">
+                <p style="color:#8b949e; font-size:13px; margin-bottom:6px; display:flex; justify-content:space-between;">Tamanho: <span id="modalTamanho" style="color:#f0f6fc;">Não informado</span></p>
+                <p style="color:#8b949e; font-size:13px; margin-bottom:6px; display:flex; justify-content:space-between;">Duração: <span id="modalDuracao" style="color:#f0f6fc;">Não informada</span></p>
+                <p style="color:#8b949e; font-size:13px; display:flex; justify-content:space-between;">Valor: <span style="color:#25d366; font-size:15px; font-weight:bold;">R$ <span id="modalPreco"></span></span></p>
             </div>
-            <button onclick="gerarPixModal()" class="btn-acao" style="width:100%; padding:10px; font-size:14px;">Gerar Chave Pix de Pagamento</button>
+            <button onclick="gerarPixModal()" class="btn-acao" style="width:100%; padding:12px; font-size:14px;">Gerar Chave Pix de Pagamento</button>
             <div id="areaPixGerado" style="display:none; margin-top: 12px;">
                 <p style="font-size:11px; color:#8b949e; margin-bottom:4px;">Copie o código abaixo e pague no app do seu banco:</p>
-                <textarea id="pixCopiaCola" class="pix-textarea" readonly></textarea>
-                <button onclick="copiarPixReal()" class="btn-acao" style="width:100%; background: linear-gradient(135deg, #229ED9, #1b85b8); color:#fff !important; margin-top:8px; padding:8px;"><i class="fa-solid fa-copy"></i> Copiar Código Pix</button>
+                <textarea id="pixCopiaCola" style="width:100%; height:75px; background:#0d1117; color:#25d366; border:1px solid #30363d; border-radius:10px; padding:10px; font-family:monospace; font-size:11px; text-align:center; resize:none;" readonly></textarea>
+                <button onclick="copiarPixReal()" class="btn-acao" style="width:100%; background: linear-gradient(135deg, #229ED9, #1b85b8); color:#fff !important; margin-top:8px; padding:10px;"><i class="fa-solid fa-copy"></i> Copiar Código Pix</button>
                 <p id="statusPagamento" style="font-size:12px; color:#e3b341; margin-top:10px; text-align:center;"><i class="fa-solid fa-spinner fa-spin"></i> Aguardando confirmação do pagamento...</p>
             </div>
         </div>
@@ -417,19 +641,19 @@ HTML_SITE = """<!DOCTYPE html>
             <h2><i class="fa-solid fa-headset"></i> Central de Suporte</h2>
             <form id="formSuporte" onsubmit="enviarMensagemSuporte(event)">
                 <div class="form-group">
-                    <label>Seu Nome:</label>
+                    <label>Seu Nome *</label>
                     <input type="text" name="nome" class="form-control" required placeholder="Digite seu nome">
                 </div>
                 <div class="form-group">
-                    <label>Seu Gmail:</label>
+                    <label>Seu Gmail *</label>
                     <input type="email" name="gmail" class="form-control" required placeholder="seuemail@gmail.com">
                 </div>
                 <div class="form-group">
-                    <label>Qual o seu problema? (Máx. 50 caracteres):</label>
+                    <label>Qual o seu problema? (Máx. 50 caracteres) *</label>
                     <textarea name="mensagem" id="txtMensagem" class="form-control" maxlength="50" required placeholder="Descreva brevemente..." oninput="atualizarContador(this)"></textarea>
-                    <div class="char-counter"><span id="charCount">50</span> caracteres restantes</div>
+                    <div style="font-size: 11px; color: #666; text-align: right; margin-top: 3px;"><span id="charCount">50</span> caracteres restantes</div>
                 </div>
-                <button type="submit" class="btn-acao" style="width:100%; padding:10px; font-size:14px; margin-top:5px;">Enviar Mensagem</button>
+                <button type="submit" class="btn-acao" style="width:100%; padding:12px; font-size:14px; margin-top:5px;">Enviar Mensagem</button>
             </form>
         </div>
     </div>
@@ -439,7 +663,7 @@ HTML_SITE = """<!DOCTYPE html>
         <div class="modal-content" onclick="event.stopPropagation()">
             <span class="close-btn" onclick="closeModal('termsModal')">&times;</span>
             <h2><i class="fa-solid fa-file-contract"></i> Termos de Uso</h2>
-            <p style="color:#8b949e; font-size:13px; line-height:1.5;">Ao utilizar nosso site, você concorda com nossos termos e condições gerais de uso e acesso a mídias digitais.</p>
+            <p style="color:#8b949e; font-size:13px; line-height:1.5;">Ao utilizar nossa plataforma, você concorda estritamente com os termos de direitos autorais e transações financeiras.</p>
         </div>
     </div>
 
@@ -448,13 +672,13 @@ HTML_SITE = """<!DOCTYPE html>
         <div class="modal-content" onclick="event.stopPropagation()">
             <span class="close-btn" onclick="closeModal('privacyModal')">&times;</span>
             <h2><i class="fa-solid fa-user-shield"></i> Política de Privacidade</h2>
-            <p style="color:#8b949e; font-size:13px; line-height:1.5;">Garantimos a segurança e o sigilo de seus dados transacionais e de suporte prestado em nossa plataforma.</p>
+            <p style="color:#8b949e; font-size:13px; line-height:1.5;">Garantimos total segurança e sigilo dos seus dados de acesso e transações Pix.</p>
         </div>
     </div>
     
     <div id="toast-notificacao"><i class="fa-solid fa-circle-check"></i> <span id="toast-texto">Ação realizada com sucesso!</span></div>
 
-    <!-- SCRIPT DO ADSTERRA ONCLICK (POPUNDER) -->
+    <!-- SCRIPT DO ADSTERRA ONCLICK -->
     <script type="text/javascript" src="https://bicea.org/40/8568601"></script>
 
     <script>
@@ -463,11 +687,6 @@ HTML_SITE = """<!DOCTYPE html>
         let paymentIdGlobal = "";
         let intervaloChecagem = null;
         
-        function clicarCapaOuBotao(vidId, t, tam, dur, pre) {
-            // Abre o modal de liberação do Pix normalmente
-            abrirModalLiberar(vidId, t, tam, dur, pre);
-        }
-
         function abrirModalLiberar(vidId, t, tam, dur, pre) {
             videoIdGlobal = vidId;
             document.getElementById('modalTituloVid').innerText = t;
@@ -505,12 +724,72 @@ HTML_SITE = """<!DOCTYPE html>
                 
                 setTimeout(() => {
                     closeModal('modalLiberar');
-                    let capa = document.getElementById('capa_' + data.video_id);
-                    let iframe = document.getElementById('iframe_' + data.video_id);
-                    if(capa) capa.style.display = 'none';
-                    if(iframe) iframe.style.display = 'block';
-                    mostrarToast("Acesso liberado com sucesso!");
+                    location.reload();
                 }, 2000);
+            }
+        }
+
+        function desbloquearVideoGratis(videoId, urlVideo) {
+            // Abre o anúncio Adsterra em nova aba (ou redireciona popunder) e desbloqueia individualmente
+            window.open('https://bicea.org/40/8568601', '_blank');
+            
+            fetch(`/desbloquear-gratis/${videoId}`, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                if(data.sucesso) {
+                    let container = document.getElementById('containerGratis_' + videoId);
+                    container.innerHTML = `<iframe src="${urlVideo}" scrolling="no" frameborder="0" allowfullscreen="true" onload="registrarView('gratis', '${videoId}')"></iframe>`;
+                    mostrarToast("Vídeo gratuito desbloqueado com sucesso!");
+                }
+            });
+        }
+
+        function registrarView(tipo, videoId) {
+            fetch(`/incrementar-view/${tipo}/${videoId}`, { method: 'POST' });
+        }
+
+        function curtirVideo(tipo, videoId) {
+            fetch(`/curtir-video/${tipo}/${videoId}`, { method: 'POST' })
+            .then(async res => {
+                let data = await res.json();
+                if(res.ok && data.sucesso) {
+                    document.getElementById(`like_${tipo}_${videoId}`).innerText = data.likes;
+                    mostrarToast("Vídeo curtido com sucesso!");
+                } else {
+                    alert(data.erro || "Você já curtiu este vídeo.");
+                }
+            });
+        }
+
+        async function enviarVideoCriadorForm(e) {
+            e.preventDefault();
+            const form = document.getElementById('formEnviarCriador');
+            const formData = new FormData(form);
+            
+            let res = await fetch('/enviar-video-criador', { method: 'POST', body: formData });
+            let data = await res.json();
+            if(data.sucesso) {
+                closeModal('modalEnviarVideo');
+                form.reset();
+                mostrarToast("Seu vídeo foi enviado! Será analisado pela nossa equipe, responderemos em breve, fique de olho no seu Gmail.");
+            } else {
+                alert(data.erro || "Erro ao enviar vídeo.");
+            }
+        }
+
+        async function enviarMensagemSuporte(e) {
+            e.preventDefault();
+            const form = document.getElementById('formSuporte');
+            const formData = new FormData(form);
+            
+            let res = await fetch('/enviar-suporte', { method: 'POST', body: formData });
+            let data = await res.json();
+            if(data.sucesso) {
+                closeModal('supportModal');
+                form.reset();
+                mostrarToast("Mensagem enviada com sucesso! Retornaremos em até 1 dia útil.");
+            } else {
+                alert(data.erro || "Erro ao enviar mensagem.");
             }
         }
 
@@ -524,30 +803,11 @@ HTML_SITE = """<!DOCTYPE html>
             document.getElementById('charCount').innerText = restantes;
         }
 
-        async function enviarMensagemSuporte(e) {
-            e.preventDefault();
-            const form = document.getElementById('formSuporte');
-            const formData = new FormData(form);
-            
-            let res = await fetch('/enviar-suporte', { method: 'POST', body: formData });
-            let data = await res.json();
-            if(data.sucesso) {
-                closeModal('supportModal');
-                form.reset();
-                document.getElementById('charCount').innerText = '50';
-                mostrarToast("Sua msg foi enviada para o suporte fique de olho no seu gmail iremos respondê-lo em até 1 dia útil");
-            } else {
-                alert(data.erro || "Erro ao enviar mensagem.");
-            }
-        }
-
         function mostrarToast(texto) {
             const toast = document.getElementById("toast-notificacao");
             document.getElementById("toast-texto").innerText = texto;
             toast.className = "show";
-            setTimeout(function(){ 
-                toast.className = toast.className.replace("show", ""); 
-            }, 5000);
+            setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 5000);
         }
 
         function openModal(id) { document.getElementById(id).style.display='flex'; }
@@ -564,14 +824,14 @@ LOGIN_HTML = """<!DOCTYPE html>
 <html lang="pt-BR">
 <head><meta charset="UTF-8"><title>Login Admin</title>
 <style>body{background:#0d0d0d;color:#fff;font-family:sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;margin:0;}
-form{background:#161b22;padding:30px;border-radius:12px;border:1px solid #30363d;width:300px;text-align:center;}
-input{width:100%;padding:10px;margin:10px 0;background:#0d1117;border:1px solid #30363d;color:#fff;border-radius:6px;}
-button{width:100%;padding:10px;background:#25d366;border:none;font-weight:bold;border-radius:6px;cursor:pointer;}
+form{background:#161b22;padding:35px;border-radius:14px;border:1px solid #30363d;width:340px;text-align:center;}
+input{width:100%;padding:12px;margin:12px 0;background:#0d1117;border:1px solid #30363d;color:#fff;border-radius:8px;font-size:14px;}
+button{width:100%;padding:12px;background:#25d366;border:none;font-weight:bold;border-radius:8px;cursor:pointer;font-size:15px;}
 .erro{color:#ff4500;font-size:13px;margin-bottom:10px;}</style>
 </head>
 <body>
     <form method="POST">
-        <h2>Painel Admin</h2>
+        <h2 style="color:#25d366; margin-bottom:15px;">Painel Admin</h2>
         {% if erro %}<div class="erro">{{ erro }}</div>{% endif %}
         <input type="password" name="senha" placeholder="Senha do Administrador" required>
         <button type="submit">Entrar</button>
@@ -581,40 +841,85 @@ button{width:100%;padding:10px;background:#25d366;border:none;font-weight:bold;b
 DASHBOARD_HTML = """<!DOCTYPE html>
 <html lang="pt-BR">
 <head><meta charset="UTF-8"><title>Dashboard Admin</title>
-<style>body{background:#0d0d0d;color:#fff;font-family:sans-serif;padding:20px;max-width:900px;margin:auto;}
-table{width:100%;border-collapse:collapse;margin-top:10px;margin-bottom:30px;background:#161b22;}
-th,td{padding:10px;border:1px solid #30363d;text-align:left;font-size:13px;}
-th{background:#21262d;}
-a.btn{background:#25d366;color:#000;padding:8px 12px;text-decoration:none;border-radius:6px;font-weight:bold;font-size:13px;}
-a.btn-del{background:#da3633;color:#fff;padding:5px 8px;text-decoration:none;border-radius:4px;font-size:12px;}
-h2{color:#25d366;margin-top:20px;font-size:18px;}
+<style>
+    body{background:#0d0d0d;color:#fff;font-family:sans-serif;padding:25px;max-width:1100px;margin:auto;}
+    table{width:100%;border-collapse:collapse;margin-top:12px;margin-bottom:35px;background:#161b22;}
+    th,td{padding:12px 15px;border:1px solid #30363d;text-align:left;font-size:14px;}
+    th{background:#21262d;color:#f0f6fc;}
+    a.btn{background:#25d366;color:#000;padding:10px 16px;text-decoration:none;border-radius:8px;font-weight:bold;font-size:14px;display:inline-block;}
+    a.btn-del{background:#da3633;color:#fff;padding:6px 12px;text-decoration:none;border-radius:6px;font-size:13px;}
+    a.btn-edit{background:#229ED9;color:#fff;padding:6px 12px;text-decoration:none;border-radius:6px;font-size:13px;margin-right:5px;}
+    h2{color:#25d366;margin-top:30px;font-size:20px;border-bottom:1px solid #21262d;padding-bottom:8px;}
+    h1{font-size:24px;}
 </style>
 </head>
 <body>
-    <h1>Painel Administrativo</h1>
-    <div style="margin-top:15px; margin-bottom:20px;">
+    <h1>Painel Administrativo Completo</h1>
+    <div style="margin-top:20px; margin-bottom:25px; display:flex; gap:15px; align-items:center;">
         <a href="/admin/adicionar" class="btn">➕ Adicionar Novo Vídeo</a>
-        <a href="/admin/logout" style="color:#888;float:right;text-decoration:none;margin-top:5px;">Sair</a>
+        <a href="/admin/logout" style="color:#888;text-decoration:none;margin-left:auto;font-size:14px;font-weight:bold;">Sair do Painel</a>
     </div>
 
-    <h2>Gerenciar Vídeos</h2>
+    <h2>Envios de Vídeos Feitos por Criadores</h2>
     <table>
-        <tr><th>Título</th><th>Preço</th><th>Duração</th><th>Ações</th></tr>
+        <tr><th>Nome</th><th>Gmail</th><th>Pix</th><th>Título</th><th>Preço Final</th><th>Link Embed</th><th>Data</th></tr>
+        {% for e in envios %}
+        <tr>
+            <td>{{ e.nome }}</td>
+            <td>{{ e.gmail }}</td>
+            <td>{{ e.chave_pix }}</td>
+            <td>{{ e.titulo }}</td>
+            <td style="color:#25d366; font-weight:bold;">R$ {{ "%.2f"|format(e.preco_final) }}</td>
+            <td><a href="{{ e.url_video }}" target="_blank" style="color:#229ED9;">Abrir Link</a></td>
+            <td>{{ e.criado_em.strftime('%d/%m/%Y %H:%M') }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" style="text-align:center; color:#888;">Nenhum vídeo enviado por criadores.</td></tr>
+        {% endfor %}
+    </table>
+
+    <h2>Gerenciar Vídeos VIP (Pagos)</h2>
+    <table>
+        <tr><th>Título</th><th>Preço</th><th>Views</th><th>Likes</th><th>Duração</th><th>Ações</th></tr>
         {% for v in videos %}
         <tr>
             <td>{{ v.titulo }}</td>
             <td>R$ {{ v.preco }}</td>
+            <td>{{ v.views }}</td>
+            <td>{{ v.likes }}</td>
             <td>{{ v.duracao if v.duracao else 'N/A' }}</td>
-            <td><a href="/admin/excluir/{{ v.id }}" class="btn-del">Excluir</a></td>
+            <td>
+                <a href="/admin/editar/vip/{{ v.id }}" class="btn-edit">Editar</a>
+                <a href="/admin/excluir/vip/{{ v.id }}" class="btn-del">Excluir</a>
+            </td>
         </tr>
         {% else %}
-        <tr><td colspan="4" style="text-align:center; color:#888;">Nenhum vídeo cadastrado.</td></tr>
+        <tr><td colspan="6" style="text-align:center; color:#888;">Nenhum vídeo VIP cadastrado.</td></tr>
+        {% endfor %}
+    </table>
+
+    <h2>Gerenciar Vídeos Gratuitos</h2>
+    <table>
+        <tr><th>Título</th><th>Views</th><th>Likes</th><th>Duração</th><th>Ações</th></tr>
+        {% for v in videos_gratis %}
+        <tr>
+            <td>{{ v.titulo }}</td>
+            <td>{{ v.views }}</td>
+            <td>{{ v.likes }}</td>
+            <td>{{ v.duracao if v.duracao else 'N/A' }}</td>
+            <td>
+                <a href="/admin/editar/gratis/{{ v.id }}" class="btn-edit">Editar</a>
+                <a href="/admin/excluir/gratis/{{ v.id }}" class="btn-del">Excluir</a>
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" style="text-align:center; color:#888;">Nenhum vídeo gratuito cadastrado.</td></tr>
         {% endfor %}
     </table>
 
     <h2>Mensagens de Suporte Recebidas</h2>
     <table>
-        <tr><th>Nome</th><th>Gmail</th><th>Mensagem (Máx 50 char)</th><th>Data</th><th>Ação</th></tr>
+        <tr><th>Nome</th><th>Gmail</th><th>Mensagem</th><th>Data</th><th>Ação</th></tr>
         {% for m in mensagens %}
         <tr>
             <td>{{ m.nome }}</td>
@@ -624,7 +929,7 @@ h2{color:#25d366;margin-top:20px;font-size:18px;}
             <td><a href="/admin/excluir-suporte/{{ m.id }}" class="btn-del">Apagar</a></td>
         </tr>
         {% else %}
-        <tr><td colspan="5" style="text-align:center; color:#888;">Nenhuma mensagem de suporte no momento.</td></tr>
+        <tr><td colspan="5" style="text-align:center; color:#888;">Nenhuma mensagem de suporte.</td></tr>
         {% endfor %}
     </table>
 </body></html>"""
@@ -632,25 +937,31 @@ h2{color:#25d366;margin-top:20px;font-size:18px;}
 ADICIONAR_HTML = """<!DOCTYPE html>
 <html lang="pt-BR">
 <head><meta charset="UTF-8"><title>Adicionar Vídeo</title>
-<style>body{background:#0d0d0d;color:#fff;font-family:sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;padding:20px;}
-form{background:#161b22;padding:30px;border-radius:12px;border:1px solid #30363d;width:100%;max-width:420px;}
-input, label {display:block;width:100%;text-align:left;}
-label{font-size:13px;color:#8b949e;margin-top:10px;}
-input[type="text"]{padding:10px;margin-top:5px;background:#0d1117;border:1px solid #30363d;color:#fff;border-radius:6px;}
-input[type="file"]{margin-top:5px;color:#8b949e;font-size:13px;}
-button{width:100%;padding:12px;background:#25d366;border:none;font-weight:bold;border-radius:6px;cursor:pointer;margin-top:20px;}
-.erro{color:#ff4500;font-size:13px;margin-bottom:10px;text-align:center;}
+<style>body{background:#0d0d0d;color:#fff;font-family:sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;padding:25px;}
+form{background:#161b22;padding:35px;border-radius:14px;border:1px solid #30363d;width:100%;max-width:460px;}
+input, select, label {display:block;width:100%;text-align:left;}
+label{font-size:14px;color:#8b949e;margin-top:12px;font-weight:600;}
+input[type="text"], input[type="number"], select{padding:12px;margin-top:6px;background:#0d1117;border:1px solid #30363d;color:#fff;border-radius:8px;font-size:14px;}
+input[type="file"]{margin-top:6px;color:#8b949e;font-size:13px;}
+button{width:100%;padding:14px;background:#25d366;border:none;font-weight:bold;border-radius:8px;cursor:pointer;margin-top:25px;font-size:16px;color:#000;}
+.erro{color:#ff4500;font-size:14px;margin-bottom:12px;text-align:center;}
 </style>
 </head>
 <body>
     <form method="POST" enctype="multipart/form-data">
-        <h2>Cadastrar Vídeo VIP</h2>
+        <h2 style="color:#25d366; margin-bottom:15px;">Cadastrar Novo Vídeo</h2>
         {% if erro %}<div class="erro">{{ erro }}</div>{% endif %}
         
+        <label>Tipo de Vídeo:</label>
+        <select name="tipo_video">
+            <option value="vip">Vídeo VIP (Pago)</option>
+            <option value="gratis">Vídeo Gratuito (Desbloqueio com Anúncio)</option>
+        </select>
+
         <label>Título do Vídeo:</label>
         <input type="text" name="titulo" required>
         
-        <label>Link Embed do Vídeo COMPLETO (Lulustream / Iframe src):</label>
+        <label>Link Embed do Vídeo (Lulustream / Iframe src):</label>
         <input type="text" name="url_video" placeholder="https://luluvido.com/e/..." required>
 
         <label>Duração Real (Opcional - Ex: 05:40):</label>
@@ -659,19 +970,62 @@ button{width:100%;padding:12px;background:#25d366;border:none;font-weight:bold;b
         <label>Tamanho Real do Arquivo (Opcional - Ex: 120 MB):</label>
         <input type="text" name="tamanho" placeholder="Ex: 120 MB">
         
-        <label>Enviar Vídeo para Extrair o 20º Frame (Capa Exclusiva):</label>
+        <label>Enviar Vídeo para Extrair Capa Exclusiva (Opcional):</label>
         <input type="file" name="video_file" accept="video/*">
         
-        <label>OU Enviar Imagem da Capa (Direto da Galeria):</label>
+        <label>OU Enviar Imagem da Capa:</label>
         <input type="file" name="thumbnail_file" accept="image/*">
         
-        <label>OU Cole o Link da Capa:</label>
+        <label>OU Cole o Link Direto da Capa/Thumbnail:</label>
         <input type="text" name="thumbnail_link" placeholder="https://exemplo.com/foto.jpg">
         
-        <label>Preço (R$):</label>
+        <label>Preço em R$ (Apenas para Vídeo VIP):</label>
         <input type="text" name="preco" value="10.00" required>
         
         <button type="submit">Salvar Vídeo</button>
+    </form>
+</body></html>"""
+
+EDITAR_HTML = """<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="UTF-8"><title>Editar Vídeo</title>
+<style>body{background:#0d0d0d;color:#fff;font-family:sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;padding:25px;}
+form{background:#161b22;padding:35px;border-radius:14px;border:1px solid #30363d;width:100%;max-width:460px;}
+input, label {display:block;width:100%;text-align:left;}
+label{font-size:14px;color:#8b949e;margin-top:12px;font-weight:600;}
+input[type="text"], input[type="number"]{padding:12px;margin-top:6px;background:#0d1117;border:1px solid #30363d;color:#fff;border-radius:8px;font-size:14px;}
+button{width:100%;padding:14px;background:#25d366;border:none;font-weight:bold;border-radius:8px;cursor:pointer;margin-top:25px;font-size:16px;color:#000;}
+</style>
+</head>
+<body>
+    <form method="POST">
+        <h2 style="color:#25d366; margin-bottom:15px;">Editar Vídeo</h2>
+        
+        <label>Título do Vídeo:</label>
+        <input type="text" name="titulo" value="{{ video.titulo }}" required>
+        
+        <label>Link Embed do Vídeo (Lulustream):</label>
+        <input type="text" name="url_video" value="{{ video.url_video }}" required>
+
+        <label>Duração:</label>
+        <input type="text" name="duracao" value="{{ video.duracao }}">
+
+        <label>Tamanho:</label>
+        <input type="text" name="tamanho" value="{{ video.tamanho }}">
+
+        <label>Preço (R$):</label>
+        <input type="text" name="preco" value="{{ video.preco }}">
+
+        <label>Número de Visualizações (Views):</label>
+        <input type="number" name="views" value="{{ video.views }}" required>
+
+        <label>Número de Curtidas (Likes):</label>
+        <input type="number" name="likes" value="{{ video.likes }}" required>
+
+        <label>Link da Capa (Thumbnail):</label>
+        <input type="text" name="thumbnail_link" value="{{ video.thumbnail }}">
+        
+        <button type="submit">Salvar Alterações</button>
     </form>
 </body></html>"""
 
