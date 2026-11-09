@@ -1,11 +1,11 @@
-from flask import Flask, render_template_string, request, redirect, url_for, session
+from flask import Flask, render_template_string, jsonify, request, redirect, url_for, session
 from pymongo import MongoClient
 from dotenv import load_dotenv
 import os
 import uuid
+import requests
 from datetime import datetime
-import cv2
-import tempfile
+import base64
 
 load_dotenv()
 app = Flask(__name__)
@@ -15,6 +15,8 @@ ADMIN_SENHA = os.getenv('ADMIN_SENHA', 'admin123')
 client = MongoClient(os.getenv('MONGO_URI'))
 db = client['video_site']
 videos_collection = db['videos']
+
+CAPA_PADRAO = "https://files.catbox.moe/uw9r9l.png"
 
 # ==========================================
 # LOGIN DO ADMIN
@@ -51,7 +53,7 @@ def dashboard():
     return render_template_string(DASHBOARD_HTML, videos=videos)
 
 # ==========================================
-# ADICIONAR VÍDEO (COM CAPTURA AUTOMÁTICA DE FRAME)
+# ADICIONAR VÍDEO (COM UPLOAD DE ARQUIVO OU LINK)
 # ==========================================
 @app.route('/admin/adicionar', methods=['GET', 'POST'])
 @requer_login
@@ -60,30 +62,29 @@ def adicionar():
         titulo = request.form.get('titulo')
         url_video = request.form.get('url_video')
         preco = request.form.get('preco', '10.00')
+        link_thumbnail = request.form.get('thumbnail_link', '').strip()
         
         if not titulo or not url_video:
             return render_template_string(ADICIONAR_HTML, erro='Preencha o título e o link direto do vídeo!')
         
-        # Processando e capturando o primeiro frame do vídeo automaticamente via OpenCV
-        thumbnail = "https://i.postimg.cc/DzcFmFnN/Screenshot-20261021-165652-(1).jpg"
-        duracao_str = "01:30"
-        tamanho_str = "15 MB"
+        thumbnail = CAPA_PADRAO
+
+        # Verifica se o usuário enviou uma imagem direto da galeria
+        if 'thumbnail_file' in request.files:
+            file = request.files['thumbnail_file']
+            if file and file.filename != '':
+                # Converte a imagem da galeria para base64 para persistir com segurança no MongoDB
+                img_bytes = file.read()
+                encoded = base64.b64encode(img_bytes).decode('utf-8')
+                mime_type = file.content_type or 'image/jpeg'
+                thumbnail = f"data:{mime_type};base64,{encoded}"
         
-        try:
-            cap = cv2.VideoCapture(url_video)
-            fps = cap.get(cv2.CAP_PROP_FPS) or 30
-            total_frames = cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0
-            segundos = int(total_frames / fps) if fps > 0 else 90
-            minutos = f"{segundos // 60:02d}:{segundos % 60:02d}"
-            duracao_str = minutos
-            
-            success, frame = cap.read()
-            if success:
-                # Opcional: Se quiser salvar localmente ou usar URL padrão caso não hospede a imagem extraída
-                pass
-            cap.release()
-        except Exception as e:
-            print(f"Erro ao processar frame do vídeo: {e}")
+        # Se não enviou arquivo mas digitou um link de imagem, usa o link
+        if thumbnail == CAPA_PADRAO and link_thumbnail:
+            thumbnail = link_thumbnail
+
+        duracao_str = "01:30"
+        tamanho_str = "25 MB"
 
         videos_collection.insert_one({
             'id': str(uuid.uuid4()),
@@ -109,7 +110,7 @@ def excluir(video_id):
     videos_collection.delete_one({'id': video_id})
     return redirect(url_for('dashboard'))
 
-# Templates embutidos para rodar sem precisar criar pasta 'templates'
+# Templates embutidos
 LOGIN_HTML = """<!DOCTYPE html>
 <html lang="pt-BR">
 <head><meta charset="UTF-8"><title>Login Admin</title>
@@ -161,23 +162,37 @@ a.btn-del{background:#da3633;color:#fff;padding:6px 10px;text-decoration:none;bo
 ADICIONAR_HTML = """<!DOCTYPE html>
 <html lang="pt-BR">
 <head><meta charset="UTF-8"><title>Adicionar Vídeo</title>
-<style>body{background:#0d0d0d;color:#fff;font-family:sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;margin:0;}
-form{background:#161b22;padding:30px;border-radius:12px;border:1px solid #30363d;width:400px;}
-input{width:100%;padding:10px;margin:8px 0 15px 0;background:#0d1117;border:1px solid #30363d;color:#fff;border-radius:6px;}
-button{width:100%;padding:12px;background:#25d366;border:none;font-weight:bold;border-radius:6px;cursor:pointer;}
-.erro{color:#ff4500;font-size:13px;margin-bottom:10px;}</style>
+<style>body{background:#0d0d0d;color:#fff;font-family:sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;padding:20px;}
+form{background:#161b22;padding:30px;border-radius:12px;border:1px solid #30363d;width:100%;max-width:400px;}
+input, label {display:block;width:100%;text-align:left;}
+label{font-size:13px;color:#8b949e;margin-top:10px;}
+input[type="text"]{padding:10px;margin-top:5px;background:#0d1117;border:1px solid #30363d;color:#fff;border-radius:6px;}
+input[type="file"]{margin-top:5px;color:#8b949e;font-size:13px;}
+button{width:100%;padding:12px;background:#25d366;border:none;font-weight:bold;border-radius:6px;cursor:pointer;margin-top:20px;}
+.erro{color:#ff4500;font-size:13px;margin-bottom:10px;text-align:center;}
+</style>
 </head>
 <body>
-    <form method="POST">
+    <form method="POST" enctype="multipart/form-data">
         <h2>Cadastrar Vídeo</h2>
         {% if erro %}<div class="erro">{{ erro }}</div>{% endif %}
+        
         <label>Título do Vídeo:</label>
         <input type="text" name="titulo" required>
+        
         <label>Link Direto do Vídeo (.mp4):</label>
         <input type="text" name="url_video" required>
+        
+        <label>Enviar Imagem da Capa (Direto da Galeria):</label>
+        <input type="file" name="thumbnail_file" accept="image/*">
+        
+        <label>OU Cole o Link da Capa:</label>
+        <input type="text" name="thumbnail_link" placeholder="https://exemplo.com/foto.jpg">
+        
         <label>Preço (R$):</label>
         <input type="text" name="preco" value="10.00" required>
-        <button type="submit">Salvar e Processar Capa</button>
+        
+        <button type="submit">Salvar Vídeo</button>
     </form>
 </body></html>"""
 
