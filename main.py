@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify, request, session, redirect, url_for
+from flask import Flask, jsonify, request, session, redirect, url_for, render_template_string
 from pymongo import MongoClient
 from dotenv import load_dotenv
 import os
@@ -16,12 +16,28 @@ videos_collection = db['videos']
 compras_collection = db['compras']
 
 # ==========================================
-# PÁGINA PRINCIPAL
+# PÁGINA PRINCIPAL (SEM PRECISAR DE HTML SEPARADO)
 # ==========================================
 @app.route('/')
 def index():
     videos = list(videos_collection.find({}, {'_id': 0}).sort('criado_em', -1))
-    return render_template('index.html', videos=videos)
+    
+    # Cole o seu HTML completo aqui dentro dessa string se quiser que rode direto do Python:
+    html_direto = """
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+        <meta charset="utf-8">
+        <title>Meu Site Direto</title>
+    </head>
+    <body style="background:#000; color:#fff; font-family:sans-serif; text-align:center; padding-top:50px;">
+        <h1>Rodando direto do Python sem arquivos HTML!</h1>
+        <p>Total de itens no banco: {{ videos|length }}</p>
+    </body>
+    </html>
+    """
+    
+    return render_template_string(html_direto, videos=videos)
 
 # ==========================================
 # VERIFICAR SE USUÁRIO JÁ COMPROU
@@ -52,7 +68,6 @@ def iniciar_pagamento():
         session_id = str(uuid.uuid4())
         session['session_id'] = session_id
         
-        # Cria pedido no Mercado Pago
         mp_token = os.getenv('MP_TOKEN')
         headers = {
             'Authorization': f'Bearer {mp_token}',
