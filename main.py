@@ -41,8 +41,14 @@ def index():
     if 'user_token' not in session:
         session['user_token'] = str(uuid.uuid4())
     
+    user_token = session['user_token']
+    
+    # Verifica quais vídeos este usuário já pagou e teve o pagamento aprovado
+    pagos = list(pagamentos_collection.find({'user_token': user_token, 'status': 'aprovado'}, {'video_id': 1, '_id': 0}))
+    videos_pagos_ids = [p['video_id'] for p in pagos]
+    
     videos = list(videos_collection.find({}, {'_id': 0}))
-    return render_template_string(HTML_SITE, videos=videos)
+    return render_template_string(HTML_SITE, videos=videos, videos_pagos_ids=videos_pagos_ids)
 
 @app.route('/gerar-pix', methods=['POST'])
 def gerar_pix():
@@ -50,7 +56,9 @@ def gerar_pix():
         user_token = session.get('user_token', str(uuid.uuid4()))
         session['user_token'] = user_token
         
-        video_id = request.form.get('video_id', 'geral')
+        video_id = request.form.get('video_id', '')
+        if not video_id:
+            return jsonify({'sucesso': False, 'erro': 'Vídeo não especificado'}), 400
         
         headers = {
             'Authorization': f'Bearer {MP_TOKEN}',
@@ -94,7 +102,7 @@ def checar_pagamento(payment_id):
             return jsonify({'aprovado': False})
             
         if reg.get('status') == 'aprovado':
-            return jsonify({'aprovado': True})
+            return jsonify({'aprovado': True, 'video_id': reg.get('video_id')})
             
         headers = {'Authorization': f'Bearer {MP_TOKEN}'}
         resp = requests.get(f"https://api.mercadopago.com/v1/payments/{payment_id}", headers=headers)
@@ -102,7 +110,7 @@ def checar_pagamento(payment_id):
             dados = resp.json()
             if dados.get('status') == 'approved':
                 pagamentos_collection.update_one({'payment_id': payment_id}, {'$set': {'status': 'aprovado'}})
-                return jsonify({'aprovado': True})
+                return jsonify({'aprovado': True, 'video_id': reg.get('video_id')})
                 
         return jsonify({'aprovado': False})
     except Exception as e:
@@ -189,7 +197,7 @@ def adicionar():
         if thumbnail == CAPA_PADRAO and link_thumbnail:
             thumbnail = link_thumbnail
 
-        # 3. Se foi enviado um arquivo de vídeo direto no painel para extrair o primeiro frame
+        # 3. Se foi enviado um arquivo de vídeo direto para extrair exatamente o 20º frame
         if 'video_file' in request.files:
             v_file = request.files['video_file']
             if v_file and v_file.filename != '':
@@ -199,11 +207,20 @@ def adicionar():
                         tmp_path = tmp.name
                     
                     cap = cv2.VideoCapture(tmp_path)
+                    # Pula para o 20º frame (índice 19)
+                    cap.set(cv2.CAP_PROP_POS_FRAMES, 19)
                     success, frame = cap.read()
+                    
+                    # Se o vídeo for muito curto e não tiver 20 frames, pega o primeiro frame disponível
+                    if not success:
+                        cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                        success, frame = cap.read()
+
                     if success:
                         _, buffer = cv2.imencode('.jpg', frame)
                         encoded_img = base64.b64encode(buffer).decode('utf-8')
                         thumbnail = f"data:image/jpeg;base64,{encoded_img}"
+                    
                     cap.release()
                     os.unlink(tmp_path)
                 except Exception:
@@ -241,7 +258,7 @@ def health():
     return "OK", 200
 
 # ==========================================
-# TEMPLATE DO SITE PRINCIPAL (VÍDEOS NO TOPO - SUPORTE A EMBED/IFRAME)
+# TEMPLATE DO SITE PRINCIPAL (BLOQUEADO ATÉ O PAGAMENTO)
 # ==========================================
 HTML_SITE = """<!DOCTYPE html>
 <html lang="pt-BR">
@@ -257,10 +274,19 @@ HTML_SITE = """<!DOCTYPE html>
         #container-misturado { width: 100%; max-width: 580px; display: flex; flex-direction: column; gap: 25px; }
         .video-title { font-size: 15px; font-weight: 600; color: #e0e0e0; text-align: left; width: 100%; display: flex; align-items: center; gap: 8px; }
         .video-title i { color: #25d366; }
+        
         .video-container { width: 100%; aspect-ratio: 16 / 9; border-radius: 14px; overflow: hidden; position: relative; background: #0d0d0d; box-shadow: 0px 15px 35px rgba(0,0,0,0.95); }
         .video-container iframe { width: 100%; height: 100%; border: none; }
-        .btn-telegram-overlay { margin-top: 8px; display: flex; justify-content: center; width: 100%; }
+        
+        /* Estilo da Capa Bloqueada */
+        .capa-bloqueada { width: 100%; height: 100%; position: absolute; top: 0; left: 0; background-size: cover; background-position: center; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(6px); z-index: 5; }
+        .capa-bloqueada::before { content: ""; position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.75); }
+        .conteudo-bloqueio { position: relative; z-index: 6; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+        .conteudo-bloqueio i { font-size: 40px; color: #25d366; text-shadow: 0 0 15px rgba(37,211,102,0.6); }
+        .conteudo-bloqueio p { font-size: 14px; font-weight: 600; color: #fff; }
+
         .btn-acao { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: linear-gradient(135deg, #25d366, #1ebe57); border: none; color: #000 !important; font-weight: 700; text-decoration: none; padding: 10px 22px; font-size: 14px; border-radius: 25px; cursor: pointer; box-shadow: 0 4px 15px rgba(37,211,102,0.4); }
+        
         .banner-ad { margin: 10px auto; width: 100%; display: flex; justify-content: center; }
         .hub-promo-card { background: linear-gradient(145deg, #161b22, #0d1117); border: 1px solid #30363d; border-radius: 14px; padding: 15px; text-decoration: none; color: #fff; display: flex; flex-direction: column; align-items: center; gap: 10px; box-shadow: 0 8px 25px rgba(0,0,0,0.8); }
         .hub-promo-card img { width: 100%; max-height: 160px; object-fit: cover; border-radius: 10px; }
@@ -302,13 +328,25 @@ HTML_SITE = """<!DOCTYPE html>
         {% if videos %}
             {% for video in videos %}
             <div class="video-title"><i class="fa-solid fa-fire"></i>{{ video.titulo }}</div>
-            <div class="video-container">
+            <div class="video-container" id="containerVideo_{{ video.id }}">
+                
+                <!-- O IFRAME SÓ APARECE SE O USUÁRIO JÁ PAGOU ESTE VÍDEO -->
+                {% if video.id in videos_pagos_ids %}
                 <iframe src="{{ video.url_video }}" scrolling="no" frameborder="0" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true"></iframe>
-            </div>
-            <div class="btn-telegram-overlay">
-                <button onclick="abrirModalLiberar('{{ video.id }}', '{{ video.titulo }}', '{{ video.tamanho }}', '{{ video.duracao }}', '{{ video.preco }}')" class="btn-acao">
-                    <i class="fa-solid fa-lock-open"></i> Liberar Acesso VIP
-                </button>
+                {% else %}
+                <!-- CASO CONTRÁRIO, MOSTRA A CAPA BLOQUEADA COM O BOTÃO DE LIBERAÇÃO -->
+                <div class="capa-bloqueada" id="capa_{{ video.id }}" style="background-image: url('{{ video.thumbnail }}');">
+                    <div class="conteudo-bloqueio">
+                        <i class="fa-solid fa-lock"></i>
+                        <p>Conteúdo Exclusivo Bloqueado</p>
+                        <button onclick="abrirModalLiberar('{{ video.id }}', '{{ video.titulo }}', '{{ video.tamanho }}', '{{ video.duracao }}', '{{ video.preco }}')" class="btn-acao">
+                            <i class="fa-solid fa-lock-open"></i> Liberar Acesso VIP (R$ {{ video.preco }})
+                        </button>
+                    </div>
+                </div>
+                <iframe id="iframe_{{ video.id }}" src="{{ video.url_video }}" scrolling="no" frameborder="0" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" style="display:none;"></iframe>
+                {% endif %}
+
             </div>
             {% endfor %}
         {% else %}
@@ -450,9 +488,15 @@ HTML_SITE = """<!DOCTYPE html>
             let data = await res.json();
             if(data.aprovado) {
                 clearInterval(intervaloChecagem);
-                document.getElementById('statusPagamento').innerHTML = "<i class='fa-solid fa-check-circle' style='color:#25d366'></i> Pagamento aprovado com sucesso! Liberando acesso...";
+                document.getElementById('statusPagamento').innerHTML = "<i class='fa-solid fa-check-circle' style='color:#25d366'></i> Pagamento aprovado! Liberando vídeo...";
+                
                 setTimeout(() => {
                     closeModal('modalLiberar');
+                    // Remove a capa bloqueada e mostra o iframe do vídeo liberado na hora
+                    let capa = document.getElementById('capa_' + data.video_id);
+                    let iframe = document.getElementById('iframe_' + data.video_id);
+                    if(capa) capa.style.display = 'none';
+                    if(iframe) iframe.style.display = 'block';
                     mostrarToast("Acesso liberado com sucesso!");
                 }, 2000);
             }
@@ -595,7 +639,7 @@ button{width:100%;padding:12px;background:#25d366;border:none;font-weight:bold;b
         <label>Link Embed do Vídeo (Lulustream / Iframe src):</label>
         <input type="text" name="url_video" placeholder="https://luluvido.com/e/..." required>
         
-        <label>Enviar Vídeo para Extrair Capa Automática (Opcional):</label>
+        <label>Enviar Vídeo para Extrair o 20º Frame (Capa Automática):</label>
         <input type="file" name="video_file" accept="video/*">
         
         <label>OU Enviar Imagem da Capa (Direto da Galeria):</label>
