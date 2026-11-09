@@ -31,12 +31,67 @@ def adicionar_seguranca(response):
     return response
 
 # ==========================================
-# LOGIN DO ADMIN
+# SITE PRINCIPAL (CLIENTES) - ROTA RAIZ
+# ==========================================
+@app.route('/')
+def index():
+    videos = list(videos_collection.find({}, {'_id': 0}))
+    return render_template_string(HTML_SITE, videos=videos)
+
+@app.route('/gerar-pix', methods=['POST'])
+def gerar_pix():
+    try:
+        headers = {
+            'Authorization': f'Bearer {MP_TOKEN}',
+            'Content-Type': 'application/json'
+        }
+        payload = {
+            "transaction_amount": 10.00,
+            "description": "Liberacao de Video Exclusivo",
+            "payment_method_id": "pix",
+            "payer": {"email": "cliente@email.com"}
+        }
+        resp = requests.post("https://api.mercadopago.com/v1/payments", headers=headers, json=payload)
+        pagamento = resp.json()
+        
+        if resp.status_code == 201:
+            pix_copia_cola_real = pagamento['point_of_interaction']['transaction_data']['qr_code']
+            pix_fake = f"00020126580014br.gov.bcb.pix0136{str(uuid.uuid4())}5204000053039865802BR5925CONTEUDO VIP DIGITAL6009SAO PAULO62070503***6304"
+            return jsonify({'sucesso': True, 'pix_real': pix_copia_cola_real, 'pix_fake': pix_fake})
+        else:
+            return jsonify({'sucesso': False, 'erro': 'Falha na API'}), 500
+    except Exception as e:
+        return jsonify({'sucesso': False, 'erro': str(e)}), 500
+
+@app.route('/enviar-suporte', methods=['POST'])
+def enviar_suporte():
+    try:
+        nome = request.form.get('nome', '').strip()
+        gmail = request.form.get('gmail', '').strip()
+        mensagem = request.form.get('mensagem', '').strip()[:50]
+
+        if not nome or not gmail or not mensagem:
+            return jsonify({'sucesso': False, 'erro': 'Preencha todos os campos!'}), 400
+
+        suporte_collection.insert_one({
+            'id': str(uuid.uuid4()),
+            'nome': nome,
+            'gmail': gmail,
+            'mensagem': mensagem,
+            'criado_em': datetime.utcnow()
+        })
+        return jsonify({'sucesso': True})
+    except Exception as e:
+        return jsonify({'sucesso': False, 'erro': str(e)}), 500
+
+# ==========================================
+# LOGIN E PAINEL DO ADMIN
 # ==========================================
 @app.route('/admin/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        if request.form.get('senha') == ADMIN_SENHA:
+        senha_digitada = request.form.get('senha', '').strip()
+        if ADMIN_SENHA and senha_digitada == ADMIN_SENHA.strip():
             session['admin_logado'] = True
             return redirect(url_for('dashboard'))
         return render_template_string(LOGIN_HTML, erro='Senha incorreta')
@@ -55,9 +110,6 @@ def requer_login(p):
     verifica.__name__ = p.__name__
     return verifica
 
-# ==========================================
-# DASHBOARD DO PAINEL (VÍDEOS E SUPORTE)
-# ==========================================
 @app.route('/admin')
 @requer_login
 def dashboard():
@@ -65,9 +117,6 @@ def dashboard():
     mensagens = list(suporte_collection.find().sort('criado_em', -1))
     return render_template_string(DASHBOARD_HTML, videos=videos, mensagens=mensagens)
 
-# ==========================================
-# ADICIONAR VÍDEO
-# ==========================================
 @app.route('/admin/adicionar', methods=['GET', 'POST'])
 @requer_login
 def adicionar():
@@ -108,9 +157,6 @@ def adicionar():
         
     return render_template_string(ADICIONAR_HTML, erro='')
 
-# ==========================================
-# EXCLUIR VÍDEO E MENSAGEM DE SUPORTE
-# ==========================================
 @app.route('/admin/excluir/<video_id>')
 @requer_login
 def excluir(video_id):
@@ -122,55 +168,6 @@ def excluir(video_id):
 def excluir_suporte(msg_id):
     suporte_collection.delete_one({'id': msg_id})
     return redirect(url_for('dashboard'))
-
-# ==========================================
-# ROTA DE ENVIO DE SUPORTE (CLIENTE)
-# ==========================================
-@app.route('/enviar-suporte', methods=['POST'])
-def enviar_suporte():
-    try:
-        nome = request.form.get('nome', '').strip()
-        gmail = request.form.get('gmail', '').strip()
-        mensagem = request.form.get('mensagem', '').strip()[:50]  # Trava estrita de 50 caracteres
-
-        if not nome or not gmail or not mensagem:
-            return jsonify({'sucesso': False, 'erro': 'Preencha todos os campos!'}), 400
-
-        suporte_collection.insert_one({
-            'id': str(uuid.uuid4()),
-            'nome': nome,
-            'gmail': gmail,
-            'mensagem': mensagem,
-            'criado_em': datetime.utcnow()
-        })
-        return jsonify({'sucesso': True})
-    except Exception as e:
-        return jsonify({'sucesso': False, 'erro': str(e)}), 500
-
-@app.route('/gerar-pix', methods=['POST'])
-def gerar_pix():
-    try:
-        headers = {
-            'Authorization': f'Bearer {MP_TOKEN}',
-            'Content-Type': 'application/json'
-        }
-        payload = {
-            "transaction_amount": 10.00,
-            "description": "Liberacao de Video Exclusivo",
-            "payment_method_id": "pix",
-            "payer": {"email": "cliente@email.com"}
-        }
-        resp = requests.post("https://api.mercadopago.com/v1/payments", headers=headers, json=payload)
-        pagamento = resp.json()
-        
-        if resp.status_code == 201:
-            pix_copia_cola_real = pagamento['point_of_interaction']['transaction_data']['qr_code']
-            pix_fake = f"00020126580014br.gov.bcb.pix0136{str(uuid.uuid4())}5204000053039865802BR5925CONTEUDO VIP DIGITAL6009SAO PAULO62070503***6304"
-            return jsonify({'sucesso': True, 'pix_real': pix_copia_cola_real, 'pix_fake': pix_fake})
-        else:
-            return jsonify({'sucesso': False, 'erro': 'Falha na API'}), 500
-    except Exception as e:
-        return jsonify({'sucesso': False, 'erro': str(e)}), 500
 
 @app.route('/health')
 def health():
@@ -207,13 +204,11 @@ HTML_SITE = """<!DOCTYPE html>
         .hub-promo-text { font-size: 14px; font-weight: 600; color: #f0f6fc; }
         .hub-promo-btn { background: #238636; color: #fff; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: bold; }
         
-        /* Rodapé Completo */
         footer { width: 100%; background: #050505; border-top: 1px solid #1f1f1f; padding: 25px 15px; font-size: 13px; color: #777; margin-top: 30px; text-align: center; }
         .footer-links { margin-bottom: 10px; display: flex; justify-content: center; flex-wrap: wrap; gap: 15px; }
         footer a { color: #aaa; text-decoration: none; transition: color 0.2s; }
         footer a:hover { color: #25d366; }
         
-        /* Modais */
         .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); align-items: center; justify-content: center; padding: 20px; }
         .modal-content { background: linear-gradient(160deg, #161b22, #0d1117); border: 1px solid #30363d; border-radius: 18px; max-width: 440px; width: 100%; padding: 30px; position: relative; text-align: left; box-shadow: 0 20px 40px rgba(0,0,0,0.9); }
         .modal-content h2 { color: #fff; font-size: 18px; margin-bottom: 15px; border-bottom: 1px solid #21262d; padding-bottom: 10px; display: flex; align-items: center; gap: 10px; }
@@ -225,7 +220,6 @@ HTML_SITE = """<!DOCTYPE html>
         .modal-info-box p span { color: #f0f6fc; font-weight: 600; }
         .pix-textarea { width: 100%; height: 75px; background: #0d1117; color: #25d366; border: 1px solid #30363d; border-radius: 10px; padding: 10px; font-family: monospace; font-size: 11px; text-align: center; resize: none; margin-top: 10px; }
         
-        /* Formulário de Suporte no Modal */
         .form-group { margin-bottom: 12px; }
         .form-group label { display: block; font-size: 12px; color: #8b949e; margin-bottom: 5px; }
         .form-control { width: 100%; padding: 10px; background: #0d1117; border: 1px solid #30363d; color: #fff; border-radius: 8px; font-size: 13px; }
@@ -290,7 +284,6 @@ HTML_SITE = """<!DOCTYPE html>
     </div>
   </div>
 
-    <!-- RODAPÉ COMPLETO SOLICITADO -->
     <footer>
         <div class="footer-links">
             <a href="#" onclick="openModal('termsModal'); return false;">Termos de Uso</a>
@@ -300,7 +293,6 @@ HTML_SITE = """<!DOCTYPE html>
         <p>2020 - 2027 &copy; Todos os direitos reservados</p>
     </footer>
 
-    <!-- MODAL DE LIBERAÇÃO PIX -->
     <div id="modalLiberar" class="modal" onclick="closeModalOutside(event,'modalLiberar')">
         <div class="modal-content" onclick="event.stopPropagation()">
             <span class="close-btn" onclick="closeModal('modalLiberar')">&times;</span>
@@ -320,7 +312,6 @@ HTML_SITE = """<!DOCTYPE html>
         </div>
     </div>
 
-    <!-- MODAL DE SUPORTE -->
     <div id="supportModal" class="modal" onclick="closeModalOutside(event,'supportModal')">
         <div class="modal-content" onclick="event.stopPropagation()">
             <span class="close-btn" onclick="closeModal('supportModal')">&times;</span>
@@ -344,7 +335,6 @@ HTML_SITE = """<!DOCTYPE html>
         </div>
     </div>
 
-    <!-- MODAL TERMOS DE USO -->
     <div id="termsModal" class="modal" onclick="closeModalOutside(event,'termsModal')">
         <div class="modal-content" onclick="event.stopPropagation()">
             <span class="close-btn" onclick="closeModal('termsModal')">&times;</span>
@@ -353,7 +343,6 @@ HTML_SITE = """<!DOCTYPE html>
         </div>
     </div>
 
-    <!-- MODAL POLÍTICA DE PRIVACIDADE -->
     <div id="privacyModal" class="modal" onclick="closeModalOutside(event,'privacyModal')">
         <div class="modal-content" onclick="event.stopPropagation()">
             <span class="close-btn" onclick="closeModal('privacyModal')">&times;</span>
