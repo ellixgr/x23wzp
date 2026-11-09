@@ -18,7 +18,7 @@ videos_collection = db['videos']
 MP_TOKEN = os.getenv('MP_TOKEN')
 
 # ==========================================
-# SITE PRINCIPAL (EXIBE OS VÍDEOS E ANÚNCIOS)
+# SITE PRINCIPAL (EXIBE VÍDEOS E ANÚNCIOS)
 # ==========================================
 @app.route('/')
 def index():
@@ -51,7 +51,7 @@ def gerar_pix():
         return jsonify({'sucesso': False, 'erro': str(e)}), 500
 
 # ==========================================
-# PAINEL ADMINISTRATIVO (/admin/login)
+# PAINEL ADMINISTRATIVO (ATALHO EM /painel)
 # ==========================================
 def requer_login(p):
     def verifica(*args, **kwargs):
@@ -60,6 +60,10 @@ def requer_login(p):
         return p(*args, **kwargs)
     verifica.__name__ = p.__name__
     return verifica
+
+@app.route('/painel')
+def atalho_painel():
+    return redirect(url_for('login'))
 
 @app.route('/admin/login', methods=['GET', 'POST'])
 def login():
@@ -112,13 +116,13 @@ def excluir(video_id):
     videos_collection.delete_one({'id': video_id})
     return redirect(url_for('dashboard'))
 
-# Health Check para o UptimeRobot manter o Render acordado 24h
+# Health Check para o UptimeRobot
 @app.route('/health')
 def health():
     return "OK", 200
 
 # ==========================================
-# TEMPLATES HTML EMBUTIDOS (SITE + ANÚNCIOS + RODAPÉ + MODAIS)
+# TEMPLATES HTML EMBUTIDOS
 # ==========================================
 HTML_SITE = """<!DOCTYPE html>
 <html lang="pt-BR">
@@ -126,7 +130,7 @@ HTML_SITE = """<!DOCTYPE html>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vídeos e Conteúdo Exclusivo | Grupos Telegram</title>
-    <meta name="description" content="Acesse vídeos exclusivos, grupos Telegram ativos e conteúdo de qualidade. Rápido, seguro e atualizado diariamente!">
+    <meta name="description" content="Acesse vídeos exclusivos, grupos Telegram ativos e conteúdo de qualidade.">
     <meta name="robots" content="index, follow">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -151,16 +155,11 @@ HTML_SITE = """<!DOCTYPE html>
         .custom-controls { position: absolute; bottom: 0; left: 0; width: 100%; height: 48px; display: flex; justify-content: space-between; align-items: center; background: rgba(13, 13, 13, 0.95); padding: 0 20px; z-index: 4; }
         .custom-controls button { background: transparent; border: none; color: #cccccc; font-size: 18px; cursor: pointer; }
         .custom-controls button:hover { color: #ffffff; }
-        
-        /* Blocos de Anúncios Adsterra */
         .banner-ad { margin: 10px auto; width: 100%; display: flex; justify-content: center; align-items: center; border-radius: 8px; overflow: hidden; }
-        
         footer { width: 100%; background-color: #050505; border-top: 1px solid #1f1f1f; padding: 22px 15px; font-size: 14px; color: #777; margin-top: 30px; }
         footer a { color: #999; text-decoration: none; margin: 0 12px; transition: color 0.2s; }
         footer a:hover { color: #fff; }
         footer p { margin-top: 10px; }
-        
-        /* Modais */
         .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.96); align-items: center; justify-content: center; padding: 20px; }
         .modal-content { background: #121212; border: 1px solid #333; border-radius: 12px; max-width: 500px; width: 100%; max-height: 80vh; overflow-y: auto; padding: 30px; position: relative; text-align: left; }
         .modal-content h2 { color: #fff; margin-bottom: 15px; border-bottom: 1px solid #222; padding-bottom: 8px; }
@@ -210,7 +209,6 @@ HTML_SITE = """<!DOCTYPE html>
             </div>
 
             {% if loop.index == 1 %}
-            <!-- ANÚNCIO ADSTERRA (300x250) -->
             <div class="banner-ad">
                 <script>
                   atOptions = { 'key' : '3e1fe799cb19b129dba9470a4e2f2556', 'format' : 'iframe', 'height' : 250, 'width' : 300, 'params' : {} };
@@ -218,7 +216,6 @@ HTML_SITE = """<!DOCTYPE html>
                 <script src="https://bicea.org/22/3e1fe799cb19b129dba9470a4e2f2556"></script>
             </div>
             {% elif loop.index == 2 %}
-            <!-- ANÚNCIO ADSTERRA (320x50) -->
             <div class="banner-ad">
                 <script>
                   atOptions = { 'key' : 'e64f39c609130dc8030efa1e7737a3bd', 'format' : 'iframe', 'height' : 50, 'width' : 320, 'params' : {} };
@@ -232,7 +229,6 @@ HTML_SITE = """<!DOCTYPE html>
             <div class="vazio">Nenhum vídeo cadastrado no momento. O conteúdo será atualizado em breve. Volte mais tarde!</div>
         {% endif %}
 
-        <!-- OUTROS ANÚNCIOS ADSTERRA EXTRAS -->
         <div class="banner-ad">
             <script>
               atOptions = { 'key' : 'e64f39c609130dc8030efa1e7737a3bd', 'format' : 'iframe', 'height' : 50, 'width' : 320, 'params' : {} };
@@ -243,7 +239,6 @@ HTML_SITE = """<!DOCTYPE html>
     </div>
   </div>
 
-    <!-- RODAPÉ COMPLETO -->
     <footer>
         <div>
             <a href="#" onclick="openModal('termsModal');return false;">Termos de Uso</a> | 
@@ -253,7 +248,7 @@ HTML_SITE = """<!DOCTYPE html>
         <p>&copy; 2026 Conteúdo Exclusivo — Apenas para maiores de 18 anos.</p>
     </footer>
 
-    <!-- MODAIS DE TERMOS, PRIVACIDADE E DMCA -->
+    <!-- MODAIS -->
     <div id="termsModal" class="modal" onclick="closeModalOutside(event,'termsModal')">
         <div class="modal-content" onclick="event.stopPropagation()">
             <span class="close-btn" onclick="closeModal('termsModal')">&times;</span>
@@ -295,7 +290,6 @@ HTML_SITE = """<!DOCTYPE html>
         </div>
     </div>
 
-    <!-- MODAL DE LIBERAÇÃO DE VÍDEO / PIX -->
     <div id="modalLiberar" class="modal" onclick="closeModalOutside(event,'modalLiberar')">
         <div class="modal-content" onclick="event.stopPropagation()">
             <span class="close-btn" onclick="closeModal('modalLiberar')">&times;</span>
@@ -387,7 +381,7 @@ HTML_SITE = """<!DOCTYPE html>
         function toggleFS(id) {
             const c = document.getElementById('videoContainer'+id);
             if (!document.fullscreenElement) c.requestFullscreen?.()||c.webkitRequestFullscreen?.()||c.msRequestFullscreen?.();
-            else document.exitFullscreen?.()||document.webkitExitFullscreen?.()||document.msExitFullscreen?.();
+            else document.exitFullscreen?.()||c.webkitExitFullscreen?.()||c.msExitFullscreen?.();
         }
 
         function openModal(id) { document.getElementById(id).style.display='flex'; }
