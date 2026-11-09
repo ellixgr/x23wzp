@@ -5,7 +5,6 @@ import os
 import uuid
 import requests
 from datetime import datetime
-import cv2
 
 load_dotenv()
 app = Flask(__name__)
@@ -101,30 +100,23 @@ def adicionar():
     if request.method == 'POST':
         titulo = request.form.get('titulo')
         url_video = request.form.get('url_video')
+        thumbnail = request.form.get('thumbnail', '').strip()
         preco = request.form.get('preco', '10.00')
         
         if not titulo or not url_video:
-            return render_template_string(ADICIONAR_HTML, erro='Preencha todos os campos!')
+            return render_template_string(ADICIONAR_HTML, erro='Preencha o título e o link do vídeo!')
         
-        duracao_str = "01:30"
-        try:
-            cap = cv2.VideoCapture(url_video)
-            fps = cap.get(cv2.CAP_PROP_FPS) or 30
-            total_frames = cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0
-            segundos = int(total_frames / fps) if fps > 0 else 90
-            minutos = f"{segundos // 60:02d}:{segundos % 60:02d}"
-            duracao_str = minutos
-            cap.release()
-        except Exception as e:
-            print(f"Erro OpenCV: {e}")
+        # Se não colocar thumbnail, usa uma imagem padrão bonita ou o próprio vídeo
+        if not thumbnail:
+            thumbnail = "https://files.catbox.moe/prb59o.webp"
 
         videos_collection.insert_one({
             'id': str(uuid.uuid4()),
             'titulo': titulo,
             'url_video': url_video,
-            'thumbnail': url_video,
+            'thumbnail': thumbnail,
             'tamanho': '25 MB',
-            'duracao': duracao_str,
+            'duracao': '01:30',
             'preco': preco,
             'ativo': True,
             'criado_em': datetime.utcnow()
@@ -151,7 +143,6 @@ HTML_SITE = """<!DOCTYPE html>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vídeos Exclusivos e Conteúdos VIP | Acesso Imediato</title>
-    <!-- SEO Otimizado -->
     <meta name="description" content="Assista aos melhores vídeos exclusivos, conteúdos VIP atualizados diariamente com liberação instantânea via Pix.">
     <meta name="keywords" content="videos exclusivos, conteudos vip, midias, pix, entretenimento">
     <meta name="robots" content="index, follow">
@@ -169,11 +160,10 @@ HTML_SITE = """<!DOCTYPE html>
         .video-title { font-size: 15px; font-weight: 600; color: #e0e0e0; text-align: left; width: 100%; display: flex; align-items: center; gap: 8px; }
         .video-title i { color: #25d366; }
         .video-container { width: 100%; aspect-ratio: 16 / 9; border-radius: 14px; overflow: hidden; position: relative; background: #0d0d0d; box-shadow: 0px 15px 35px rgba(0,0,0,0.95); }
-        video { width: 100%; height: 100%; object-fit: contain; background: #0d0d0d; }
+        video { width: 100%; height: 100%; object-fit: cover; background: #0d0d0d; }
         .video-overlay { position: absolute; top: 0; left: 0; width: 100%; height: calc(100% - 48px); z-index: 2; cursor: pointer; }
-        .play-overlay-btn { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 60px; color: rgba(255,255,255,0.9); z-index: 3; pointer-events: none; }
+        .play-overlay-btn { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 60px; color: rgba(255,255,255,0.9); z-index: 3; pointer-events: none; text-shadow: 0 4px 10px rgba(0,0,0,0.8); }
         
-        /* Botão de Liberar Acesso Profissional */
         .btn-telegram-overlay { position: absolute; bottom: 48px; left: 0; width: 100%; padding: 15px 10px 5px 10px; background: linear-gradient(to top, rgba(13,13,13,0.95), transparent); z-index: 5; display: flex; justify-content: center; }
         .btn-acao { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: linear-gradient(135deg, #25d366, #1ebe57); border: none; color: #000 !important; font-weight: 700; text-decoration: none; padding: 10px 22px; font-size: 14px; border-radius: 25px; cursor: pointer; box-shadow: 0 4px 15px rgba(37,211,102,0.4); transition: transform 0.2s, box-shadow 0.2s; }
         .btn-acao:hover { transform: scale(1.03); box-shadow: 0 6px 20px rgba(37,211,102,0.6); }
@@ -182,7 +172,6 @@ HTML_SITE = """<!DOCTYPE html>
         .custom-controls button { background: transparent; border: none; color: #ccc; font-size: 18px; cursor: pointer; }
         .banner-ad { margin: 10px auto; width: 100%; display: flex; justify-content: center; }
         
-        /* Estilo do Banner Promocional Hub */
         .hub-promo-card { background: linear-gradient(145deg, #161b22, #0d1117); border: 1px solid #30363d; border-radius: 14px; padding: 15px; text-decoration: none; color: #fff; display: flex; flex-direction: column; align-items: center; gap: 10px; box-shadow: 0 8px 25px rgba(0,0,0,0.8); transition: transform 0.2s, border-color 0.2s; }
         .hub-promo-card:hover { transform: translateY(-2px); border-color: #25d366; }
         .hub-promo-card img { width: 100%; max-height: 160px; object-fit: cover; border-radius: 10px; }
@@ -192,7 +181,6 @@ HTML_SITE = """<!DOCTYPE html>
         footer { width: 100%; background: #050505; border-top: 1px solid #1f1f1f; padding: 22px 15px; font-size: 14px; color: #777; margin-top: 30px; }
         footer a { color: #999; text-decoration: none; margin: 0 10px; }
         
-        /* Modal Super Bonito e Profissional */
         .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); align-items: center; justify-content: center; padding: 20px; animation: fadeIn 0.3s ease; }
         .modal-content { background: linear-gradient(160deg, #161b22, #0d1117); border: 1px solid #30363d; border-radius: 18px; max-width: 440px; width: 100%; padding: 30px; position: relative; text-align: left; box-shadow: 0 20px 40px rgba(0,0,0,0.9); }
         .modal-content h2 { color: #fff; font-size: 20px; margin-bottom: 15px; border-bottom: 1px solid #21262d; padding-bottom: 10px; display: flex; align-items: center; gap: 10px; }
@@ -204,7 +192,6 @@ HTML_SITE = """<!DOCTYPE html>
         .close-btn:hover { background: #da3633; color: #fff; }
         .pix-textarea { width: 100%; height: 80px; background: #0d1117; color: #25d366; border: 1px solid #30363d; border-radius: 10px; padding: 12px; font-family: monospace; font-size: 12px; text-align: center; resize: none; margin-top: 10px; }
         
-        /* Notificação Toast Bonita e Personalizada */
         #toast-notificacao { visibility: hidden; min-width: 250px; background-color: #238636; color: #fff; text-align: center; border-radius: 12px; padding: 14px; position: fixed; z-index: 100000; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 14px; font-weight: 600; box-shadow: 0 5px 20px rgba(0,0,0,0.5); opacity: 0; transition: opacity 0.3s, bottom 0.3s; }
         #toast-notificacao.show { visibility: visible; opacity: 1; bottom: 50px; }
 
@@ -216,21 +203,20 @@ HTML_SITE = """<!DOCTYPE html>
   <div class="main-content">
     <div id="container-misturado">
         
-        <!-- ANÚNCIO ADSTERRA TOPO -->
         <div class="banner-ad">
             <script async="async" data-cfasync="false" src="https://bicea.org/21/1fd37c2a1d9d1e19537dc1d7d97cdc9b"></script>
             <div id="container-1fd37c2a1d9d1e19537dc1d7d97cdc9b"></div>
         </div>
 
-        <!-- LISTA DE VÍDEOS NO TOPO DO SITE -->
         {% if videos %}
             {% for video in videos %}
             <div class="video-title"><i class="fa-solid fa-fire"></i>{{ video.titulo }}</div>
             <div class="video-container" id="videoContainer{{ loop.index }}">
                 <div class="video-overlay" onclick="togglePlay('{{ loop.index }}')"></div>
                 <div id="playIconOverlay{{ loop.index }}" class="play-overlay-btn"><i class="fa-solid fa-play"></i></div>
-                <video id="meuVideo{{ loop.index }}" preload="metadata" playsinline crossorigin="anonymous">
-                    <source src="{{ video.url_video }}#t=0.1" type="video/mp4">
+                <!-- Usando o poster configurado para garantir a capa perfeita -->
+                <video id="meuVideo{{ loop.index }}" preload="metadata" playsinline crossorigin="anonymous" poster="{{ video.thumbnail }}">
+                    <source src="{{ video.url_video }}" type="video/mp4">
                 </video>
                 <div class="btn-telegram-overlay">
                     <button onclick="abrirModalLiberar('{{ video.titulo }}', '{{ video.tamanho }}', '{{ video.duracao }}', '{{ video.preco }}')" class="btn-acao">
@@ -245,13 +231,11 @@ HTML_SITE = """<!DOCTYPE html>
             </div>
 
             {% if loop.index == 1 %}
-            <!-- BANNER ADSTERRA MISTURADO -->
             <div class="banner-ad">
                 <script>atOptions = { 'key' : '3e1fe799cb19b129dba9470a4e2f2556', 'format' : 'iframe', 'height' : 250, 'width' : 300, 'params' : {} };</script>
                 <script src="https://bicea.org/22/3e1fe799cb19b129dba9470a4e2f2556"></script>
             </div>
             
-            <!-- BANNER PROMOCIONAL HUB SOLICITADO -->
             <div class="banner-ad">
                 <a href="https://app.hub.xyz/r/NN4WTT5R" target="_blank" class="hub-promo-card">
                     <img src="https://files.catbox.moe/prb59o.webp" alt="Tarefas Diárias">
@@ -274,7 +258,6 @@ HTML_SITE = """<!DOCTYPE html>
         <p>&copy; 2026 Conteúdo Exclusivo</p>
     </footer>
 
-    <!-- MODAL DE LIBERAÇÃO PIX SUPER PROFISSIONAL -->
     <div id="modalLiberar" class="modal" onclick="closeModalOutside(event,'modalLiberar')">
         <div class="modal-content" onclick="event.stopPropagation()">
             <span class="close-btn" onclick="closeModal('modalLiberar')">&times;</span>
@@ -297,7 +280,6 @@ HTML_SITE = """<!DOCTYPE html>
         </div>
     </div>
     
-    <!-- NOTIFICAÇÃO TOAST PERSONALIZADA -->
     <div id="toast-notificacao"><i class="fa-solid fa-circle-check"></i> Código Pix copiado com sucesso!</div>
 
     <script>
@@ -383,8 +365,9 @@ button{width:100%;padding:12px;background:#25d366;border:none;font-weight:bold;b
 <body><form method="POST"><h2>Novo Vídeo</h2>
 {% if erro %}<div class="erro">{{ erro }}</div>{% endif %}
 <label>Título:</label><input type="text" name="titulo" required>
-<label>Link MP4:</label><input type="text" name="url_video" required>
-<label>Preço:</label><input type="text" name="preco" value="10.00" required>
+<label>Link Direto do Vídeo (.mp4):</label><input type="text" name="url_video" required>
+<label>Link da Capa / Thumbnail (Opcional):</label><input type="text" name="thumbnail" placeholder="Cole o link da imagem ou deixe vazio">
+<label>Preço (R$):</label><input type="text" name="preco" value="10.00" required>
 <button type="submit">Salvar Vídeo</button></form></body></html>"""
 
 if __name__ == '__main__':
