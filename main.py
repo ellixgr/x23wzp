@@ -19,6 +19,16 @@ videos_collection = db['videos']
 MP_TOKEN = os.getenv('MP_TOKEN')
 
 # ==========================================
+# HEADERS DE SEGURANÇA E PROTEÇÃO CONTRA ATAQUES
+# ==========================================
+@app.after_request
+def adicionar_seguranca(response):
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    return response
+
+# ==========================================
 # SITE PRINCIPAL (CLIENTES)
 # ==========================================
 @app.route('/')
@@ -96,7 +106,6 @@ def adicionar():
         if not titulo or not url_video:
             return render_template_string(ADICIONAR_HTML, erro='Preencha todos os campos!')
         
-        # Processando duração real com OpenCV
         duracao_str = "01:30"
         try:
             cap = cv2.VideoCapture(url_video)
@@ -113,7 +122,7 @@ def adicionar():
             'id': str(uuid.uuid4()),
             'titulo': titulo,
             'url_video': url_video,
-            'thumbnail': url_video,  # Usa o próprio link do vídeo para renderizar o frame inicial nativamente
+            'thumbnail': url_video,
             'tamanho': '25 MB',
             'duracao': duracao_str,
             'preco': preco,
@@ -134,63 +143,98 @@ def health():
     return "OK", 200
 
 # ==========================================
-# TEMPLATES HTML EMBUTIDOS
+# TEMPLATES HTML EMBUTIDOS (SEO, SEGURANÇA E DESIGN PROFISSIONAL)
 # ==========================================
 HTML_SITE = """<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vídeos e Conteúdo Exclusivo</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vídeos Exclusivos e Conteúdos VIP | Acesso Imediato</title>
+    <!-- SEO Otimizado -->
+    <meta name="description" content="Assista aos melhores vídeos exclusivos, conteúdos VIP atualizados diariamente com liberação instantânea via Pix.">
+    <meta name="keywords" content="videos exclusivos, conteudos vip, midias, pix, entretenimento">
+    <meta name="robots" content="index, follow">
+    <meta property="og:title" content="Vídeos Exclusivos e Conteúdos VIP">
+    <meta property="og:description" content="Acesse vídeos exclusivos e libere seu conteúdo instantaneamente.">
+    <meta property="og:type" content="website">
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * {margin:0;padding:0;box-sizing:border-box;}
-        body { background-color: #0d0d0d; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: space-between; min-height: 100vh; font-family: sans-serif; text-align: center; }
+        body { background-color: #0d0d0d; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: space-between; min-height: 100vh; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; }
         .main-content { flex: 1; width: 100%; padding: 20px 15px; display: flex; flex-direction: column; align-items: center; }
         #container-misturado { width: 100%; max-width: 580px; display: flex; flex-direction: column; gap: 25px; }
+        
         .video-title { font-size: 15px; font-weight: 600; color: #e0e0e0; text-align: left; width: 100%; display: flex; align-items: center; gap: 8px; }
-        .video-title i { color: #229ED9; }
+        .video-title i { color: #25d366; }
         .video-container { width: 100%; aspect-ratio: 16 / 9; border-radius: 14px; overflow: hidden; position: relative; background: #0d0d0d; box-shadow: 0px 15px 35px rgba(0,0,0,0.95); }
         video { width: 100%; height: 100%; object-fit: contain; background: #0d0d0d; }
         .video-overlay { position: absolute; top: 0; left: 0; width: 100%; height: calc(100% - 48px); z-index: 2; cursor: pointer; }
         .play-overlay-btn { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 60px; color: rgba(255,255,255,0.9); z-index: 3; pointer-events: none; }
-        .btn-telegram-overlay { position: absolute; bottom: 48px; left: 0; width: 100%; padding: 15px 10px 5px 10px; background: linear-gradient(to top, rgba(13,13,13,0.95), transparent); z-index: 5; display: flex; justify-content: center; gap: 10px; }
-        .btn-acao { display: inline-flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.65); border: 1px solid rgba(255,255,255,0.2); color: #fff !important; text-decoration: none; padding: 6px 14px; font-size: 13px; border-radius: 20px; cursor: pointer; }
+        
+        /* Botão de Liberar Acesso Profissional */
+        .btn-telegram-overlay { position: absolute; bottom: 48px; left: 0; width: 100%; padding: 15px 10px 5px 10px; background: linear-gradient(to top, rgba(13,13,13,0.95), transparent); z-index: 5; display: flex; justify-content: center; }
+        .btn-acao { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: linear-gradient(135deg, #25d366, #1ebe57); border: none; color: #000 !important; font-weight: 700; text-decoration: none; padding: 10px 22px; font-size: 14px; border-radius: 25px; cursor: pointer; box-shadow: 0 4px 15px rgba(37,211,102,0.4); transition: transform 0.2s, box-shadow 0.2s; }
+        .btn-acao:hover { transform: scale(1.03); box-shadow: 0 6px 20px rgba(37,211,102,0.6); }
+        
         .custom-controls { position: absolute; bottom: 0; left: 0; width: 100%; height: 48px; display: flex; justify-content: space-between; align-items: center; background: rgba(13,13,13,0.95); padding: 0 20px; z-index: 4; }
         .custom-controls button { background: transparent; border: none; color: #ccc; font-size: 18px; cursor: pointer; }
         .banner-ad { margin: 10px auto; width: 100%; display: flex; justify-content: center; }
+        
+        /* Estilo do Banner Promocional Hub */
+        .hub-promo-card { background: linear-gradient(145deg, #161b22, #0d1117); border: 1px solid #30363d; border-radius: 14px; padding: 15px; text-decoration: none; color: #fff; display: flex; flex-direction: column; align-items: center; gap: 10px; box-shadow: 0 8px 25px rgba(0,0,0,0.8); transition: transform 0.2s, border-color 0.2s; }
+        .hub-promo-card:hover { transform: translateY(-2px); border-color: #25d366; }
+        .hub-promo-card img { width: 100%; max-height: 160px; object-fit: cover; border-radius: 10px; }
+        .hub-promo-text { font-size: 14px; font-weight: 600; color: #f0f6fc; }
+        .hub-promo-btn { background: #238636; color: #fff; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+
         footer { width: 100%; background: #050505; border-top: 1px solid #1f1f1f; padding: 22px 15px; font-size: 14px; color: #777; margin-top: 30px; }
         footer a { color: #999; text-decoration: none; margin: 0 10px; }
-        .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.96); align-items: center; justify-content: center; padding: 20px; }
-        .modal-content { background: #121212; border: 1px solid #333; border-radius: 12px; max-width: 500px; width: 100%; padding: 30px; position: relative; text-align: left; }
-        .close-btn { position: absolute; top: 15px; right: 20px; font-size: 26px; color: #888; cursor: pointer; }
-        .pix-textarea { width: 100%; height: 70px; background: #0d1117; color: #25d366; border: 1px solid #30363d; border-radius: 8px; padding: 10px; font-family: monospace; font-size: 12px; text-align: center; resize: none; margin-top: 10px; }
+        
+        /* Modal Super Bonito e Profissional */
+        .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); align-items: center; justify-content: center; padding: 20px; animation: fadeIn 0.3s ease; }
+        .modal-content { background: linear-gradient(160deg, #161b22, #0d1117); border: 1px solid #30363d; border-radius: 18px; max-width: 440px; width: 100%; padding: 30px; position: relative; text-align: left; box-shadow: 0 20px 40px rgba(0,0,0,0.9); }
+        .modal-content h2 { color: #fff; font-size: 20px; margin-bottom: 15px; border-bottom: 1px solid #21262d; padding-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+        .modal-content h2 i { color: #25d366; }
+        .modal-info-box { background: #0d1117; border: 1px solid #21262d; border-radius: 10px; padding: 12px 15px; margin-bottom: 15px; }
+        .modal-info-box p { color: #8b949e; font-size: 14px; margin-bottom: 6px; display: flex; justify-content: space-between; }
+        .modal-info-box p span { color: #f0f6fc; font-weight: 600; }
+        .close-btn { position: absolute; top: 20px; right: 20px; font-size: 22px; color: #8b949e; cursor: pointer; background: #21262d; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: background 0.2s, color 0.2s; }
+        .close-btn:hover { background: #da3633; color: #fff; }
+        .pix-textarea { width: 100%; height: 80px; background: #0d1117; color: #25d366; border: 1px solid #30363d; border-radius: 10px; padding: 12px; font-family: monospace; font-size: 12px; text-align: center; resize: none; margin-top: 10px; }
+        
+        /* Notificação Toast Bonita e Personalizada */
+        #toast-notificacao { visibility: hidden; min-width: 250px; background-color: #238636; color: #fff; text-align: center; border-radius: 12px; padding: 14px; position: fixed; z-index: 100000; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 14px; font-weight: 600; box-shadow: 0 5px 20px rgba(0,0,0,0.5); opacity: 0; transition: opacity 0.3s, bottom 0.3s; }
+        #toast-notificacao.show { visibility: visible; opacity: 1; bottom: 50px; }
+
         .vazio { color: #888; font-size: 15px; padding: 30px; background: #161b22; border-radius: 12px; border: 1px solid #30363d; width: 100%; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
     </style>
 </head>
 <body oncontextmenu="return false;">
   <div class="main-content">
     <div id="container-misturado">
+        
+        <!-- ANÚNCIO ADSTERRA TOPO -->
         <div class="banner-ad">
             <script async="async" data-cfasync="false" src="https://bicea.org/21/1fd37c2a1d9d1e19537dc1d7d97cdc9b"></script>
             <div id="container-1fd37c2a1d9d1e19537dc1d7d97cdc9b"></div>
         </div>
 
+        <!-- LISTA DE VÍDEOS NO TOPO DO SITE -->
         {% if videos %}
             {% for video in videos %}
             <div class="video-title"><i class="fa-solid fa-fire"></i>{{ video.titulo }}</div>
             <div class="video-container" id="videoContainer{{ loop.index }}">
                 <div class="video-overlay" onclick="togglePlay('{{ loop.index }}')"></div>
                 <div id="playIconOverlay{{ loop.index }}" class="play-overlay-btn"><i class="fa-solid fa-play"></i></div>
-                <!-- O player carrega automaticamente o frame inicial do próprio vídeo usando #t=0.1 -->
                 <video id="meuVideo{{ loop.index }}" preload="metadata" playsinline crossorigin="anonymous">
                     <source src="{{ video.url_video }}#t=0.1" type="video/mp4">
                 </video>
                 <div class="btn-telegram-overlay">
-                    <a href="https://t.me/Aninhaxv1bot" onclick="abrirAnuncioEGrupo(event, this.href)" class="btn-acao">
-                        <i class="fa-brands fa-telegram"></i> Entrar no Grupo
-                    </a>
-                    <button onclick="abrirModalLiberar('{{ video.titulo }}', '{{ video.tamanho }}', '{{ video.duracao }}', '{{ video.preco }}')" class="btn-acao" style="background: rgba(37,211,102,0.6);">
-                        <i class="fa-solid fa-lock-open"></i> Liberar Vídeo
+                    <button onclick="abrirModalLiberar('{{ video.titulo }}', '{{ video.tamanho }}', '{{ video.duracao }}', '{{ video.preco }}')" class="btn-acao">
+                        <i class="fa-solid fa-lock-open"></i> Liberar Acesso VIP
                     </button>
                 </div>
                 <div class="custom-controls">
@@ -199,10 +243,29 @@ HTML_SITE = """<!DOCTYPE html>
                     <button onclick="toggleFS('{{ loop.index }}')"><i class="fa-solid fa-expand"></i></button>
                 </div>
             </div>
+
+            {% if loop.index == 1 %}
+            <!-- BANNER ADSTERRA MISTURADO -->
+            <div class="banner-ad">
+                <script>atOptions = { 'key' : '3e1fe799cb19b129dba9470a4e2f2556', 'format' : 'iframe', 'height' : 250, 'width' : 300, 'params' : {} };</script>
+                <script src="https://bicea.org/22/3e1fe799cb19b129dba9470a4e2f2556"></script>
+            </div>
+            
+            <!-- BANNER PROMOCIONAL HUB SOLICITADO -->
+            <div class="banner-ad">
+                <a href="https://app.hub.xyz/r/NN4WTT5R" target="_blank" class="hub-promo-card">
+                    <img src="https://files.catbox.moe/prb59o.webp" alt="Tarefas Diárias">
+                    <div class="hub-promo-text">Ganhe dinheiro fazendo tarefas do dia a dia</div>
+                    <span class="hub-promo-btn">Participar Agora</span>
+                </a>
+            </div>
+            {% endif %}
+
             {% endfor %}
         {% else %}
-            <div class="vazio">Nenhum vídeo cadastrado no momento. Acesse /painel para cadastrar.</div>
+            <div class="vazio">Nenhum vídeo cadastrado no momento. O conteúdo será atualizado em breve.</div>
         {% endif %}
+
     </div>
   </div>
 
@@ -211,28 +274,35 @@ HTML_SITE = """<!DOCTYPE html>
         <p>&copy; 2026 Conteúdo Exclusivo</p>
     </footer>
 
+    <!-- MODAL DE LIBERAÇÃO PIX SUPER PROFISSIONAL -->
     <div id="modalLiberar" class="modal" onclick="closeModalOutside(event,'modalLiberar')">
         <div class="modal-content" onclick="event.stopPropagation()">
             <span class="close-btn" onclick="closeModal('modalLiberar')">&times;</span>
-            <h2 id="modalTituloVid">Detalhes</h2>
-            <p><strong>Tamanho:</strong> <span id="modalTamanho"></span></p>
-            <p><strong>Duração:</strong> <span id="modalDuracao"></span></p>
-            <p><strong>Preço:</strong> R$ <span id="modalPreco"></span></p>
-            <button onclick="gerarPixModal()" class="btn-acao" style="width:100%; background:#25d366; color:#000; font-weight:bold; padding:12px; margin-top:10px;">Liberar Vídeo Agora</button>
+            <h2><i class="fa-solid fa-shield-halved"></i> Liberação Instantânea</h2>
+            <p id="modalTituloVid" style="color:#f0f6fc; font-weight:600; margin-bottom:15px; font-size:15px;"></p>
+            
+            <div class="modal-info-box">
+                <p>Tamanho do arquivo: <span id="modalTamanho"></span></p>
+                <p>Duração total: <span id="modalDuracao"></span></p>
+                <p>Valor do acesso: <span style="color:#25d366; font-size:16px;">R$ <span id="modalPreco"></span></span></p>
+            </div>
+
+            <button onclick="gerarPixModal()" class="btn-acao" style="width:100%; padding:12px; font-size:15px;">Gerar Chave Pix de Pagamento</button>
+            
             <div id="areaPixGerado" style="display:none; margin-top: 15px;">
+                <p style="font-size:12px; color:#8b949e; margin-bottom:5px;">Copie o código abaixo e pague no app do seu banco:</p>
                 <textarea id="pixCopiaCola" class="pix-textarea" readonly></textarea>
-                <button onclick="copiarPixReal()" class="btn-acao" style="width:100%; background:#229ED9; margin-top:8px;">📋 Copiar Pix</button>
+                <button onclick="copiarPixReal()" class="btn-acao" style="width:100%; background: linear-gradient(135deg, #229ED9, #1b85b8); color:#fff !important; margin-top:10px; padding:10px;"><i class="fa-solid fa-copy"></i> Copiar Código Pix</button>
             </div>
         </div>
     </div>
     
+    <!-- NOTIFICAÇÃO TOAST PERSONALIZADA -->
+    <div id="toast-notificacao"><i class="fa-solid fa-circle-check"></i> Código Pix copiado com sucesso!</div>
+
     <script>
         let pixRealGlobal = "";
-        function abrirAnuncioEGrupo(e, link) {
-            e.preventDefault();
-            window.open(link, '_blank');
-            window.location.href = 'https://auctionr.org/4/5f6de430d75a855ddff7717775ff4ae3';
-        }
+        
         function abrirModalLiberar(t, tam, dur, pre) {
             document.getElementById('modalTituloVid').innerText = t;
             document.getElementById('modalTamanho').innerText = tam;
@@ -241,6 +311,7 @@ HTML_SITE = """<!DOCTYPE html>
             document.getElementById('areaPixGerado').style.display = 'none';
             document.getElementById('modalLiberar').style.display = 'flex';
         }
+
         async function gerarPixModal() {
             let res = await fetch('/gerar-pix', { method: 'POST' });
             let data = await res.json();
@@ -250,10 +321,18 @@ HTML_SITE = """<!DOCTYPE html>
                 document.getElementById('areaPixGerado').style.display = 'block';
             }
         }
+
         function copiarPixReal() {
             navigator.clipboard.writeText(pixRealGlobal);
-            alert('✅ Pix copiado!');
+            mostrarToast();
         }
+
+        function mostrarToast() {
+            const toast = document.getElementById("toast-notificacao");
+            toast.className = "show";
+            setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 3500);
+        }
+
         function togglePlay(id) {
             const v = document.getElementById('meuVideo'+id);
             const p = document.getElementById('playIcon'+id);
@@ -271,6 +350,7 @@ HTML_SITE = """<!DOCTYPE html>
         }
         function openModal(id) { document.getElementById(id).style.display='flex'; }
         function closeModal(id) { document.getElementById(id).style.display='none'; }
+        function closeModalOutside(e,id) { if(e.target===e.currentTarget) closeModal(id); }
     </script>
 </body>
 </html>"""
