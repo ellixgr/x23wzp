@@ -1,5 +1,6 @@
-Flask
+flask
 pymongo
 python-dotenv
 requests
 opencv-python-headless
+gunicorn
