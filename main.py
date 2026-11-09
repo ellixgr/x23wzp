@@ -5,14 +5,14 @@ import os
 import uuid
 import requests
 from datetime import datetime
+import cv2
 
 load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
-
-# Configuração segura: se não achar a variável no Render, o login fica bloqueado por segurança
 ADMIN_SENHA = os.getenv('ADMIN_SENHA')
 
+# Conexão MongoDB
 client = MongoClient(os.getenv('MONGO_URI'))
 db = client['video_site']
 videos_collection = db['videos']
@@ -52,7 +52,7 @@ def gerar_pix():
         return jsonify({'sucesso': False, 'erro': str(e)}), 500
 
 # ==========================================
-# PAINEL ADMINISTRATIVO SEGURO
+# PAINEL ADMINISTRATIVO
 # ==========================================
 def requer_login(f):
     def decorada(*args, **kwargs):
@@ -71,7 +71,7 @@ def login():
             session['admin_logado'] = True
             return redirect('/admin/dashboard')
         else:
-            erro = 'Senha incorreta ou configuração ausente!'
+            erro = 'Senha incorreta!'
     return render_template_string(LOGIN_HTML, erro=erro)
 
 @app.route('/admin/logout')
@@ -96,13 +96,26 @@ def adicionar():
         if not titulo or not url_video:
             return render_template_string(ADICIONAR_HTML, erro='Preencha todos os campos!')
         
+        # Processando duração real com OpenCV
+        duracao_str = "01:30"
+        try:
+            cap = cv2.VideoCapture(url_video)
+            fps = cap.get(cv2.CAP_PROP_FPS) or 30
+            total_frames = cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0
+            segundos = int(total_frames / fps) if fps > 0 else 90
+            minutos = f"{segundos // 60:02d}:{segundos % 60:02d}"
+            duracao_str = minutos
+            cap.release()
+        except Exception as e:
+            print(f"Erro OpenCV: {e}")
+
         videos_collection.insert_one({
             'id': str(uuid.uuid4()),
             'titulo': titulo,
             'url_video': url_video,
-            'thumbnail': 'https://i.postimg.cc/DzcFmFnN/Screenshot-20261021-165652-(1).jpg',
+            'thumbnail': url_video,  # Usa o próprio link do vídeo para renderizar o frame inicial nativamente
             'tamanho': '25 MB',
-            'duracao': '01:30',
+            'duracao': duracao_str,
             'preco': preco,
             'ativo': True,
             'criado_em': datetime.utcnow()
@@ -137,7 +150,7 @@ HTML_SITE = """<!DOCTYPE html>
         .video-title { font-size: 15px; font-weight: 600; color: #e0e0e0; text-align: left; width: 100%; display: flex; align-items: center; gap: 8px; }
         .video-title i { color: #229ED9; }
         .video-container { width: 100%; aspect-ratio: 16 / 9; border-radius: 14px; overflow: hidden; position: relative; background: #0d0d0d; box-shadow: 0px 15px 35px rgba(0,0,0,0.95); }
-        video { width: 100%; height: 100%; object-fit: contain; }
+        video { width: 100%; height: 100%; object-fit: contain; background: #0d0d0d; }
         .video-overlay { position: absolute; top: 0; left: 0; width: 100%; height: calc(100% - 48px); z-index: 2; cursor: pointer; }
         .play-overlay-btn { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 60px; color: rgba(255,255,255,0.9); z-index: 3; pointer-events: none; }
         .btn-telegram-overlay { position: absolute; bottom: 48px; left: 0; width: 100%; padding: 15px 10px 5px 10px; background: linear-gradient(to top, rgba(13,13,13,0.95), transparent); z-index: 5; display: flex; justify-content: center; gap: 10px; }
@@ -168,7 +181,8 @@ HTML_SITE = """<!DOCTYPE html>
             <div class="video-container" id="videoContainer{{ loop.index }}">
                 <div class="video-overlay" onclick="togglePlay('{{ loop.index }}')"></div>
                 <div id="playIconOverlay{{ loop.index }}" class="play-overlay-btn"><i class="fa-solid fa-play"></i></div>
-                <video id="meuVideo{{ loop.index }}" preload="metadata" playsinline crossorigin="anonymous" poster="{{ video.thumbnail }}">
+                <!-- O player carrega automaticamente o frame inicial do próprio vídeo usando #t=0.1 -->
+                <video id="meuVideo{{ loop.index }}" preload="metadata" playsinline crossorigin="anonymous">
                     <source src="{{ video.url_video }}#t=0.1" type="video/mp4">
                 </video>
                 <div class="btn-telegram-overlay">
