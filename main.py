@@ -43,7 +43,6 @@ def index():
     
     user_token = session['user_token']
     
-    # Verifica quais vídeos este usuário já pagou e teve o pagamento aprovado
     pagos = list(pagamentos_collection.find({'user_token': user_token, 'status': 'aprovado'}, {'video_id': 1, '_id': 0}))
     videos_pagos_ids = [p['video_id'] for p in pagos]
     
@@ -176,7 +175,6 @@ def adicionar():
     if request.method == 'POST':
         titulo = request.form.get('titulo')
         url_video = request.form.get('url_video')
-        url_amostra = request.form.get('url_amostra', '').strip()
         preco = request.form.get('preco', '10.00')
         duracao = request.form.get('duracao', '').strip()
         tamanho = request.form.get('tamanho', '').strip()
@@ -187,7 +185,6 @@ def adicionar():
         
         thumbnail = CAPA_PADRAO
 
-        # 1. Tenta pegar imagem enviada manualmente para este vídeo específico
         if 'thumbnail_file' in request.files:
             file = request.files['thumbnail_file']
             if file and file.filename != '':
@@ -196,11 +193,9 @@ def adicionar():
                 mime_type = file.content_type or 'image/jpeg'
                 thumbnail = f"data:{mime_type};base64,{encoded}"
         
-        # 2. Se não enviou arquivo de imagem, verifica se enviou link de capa
         if thumbnail == CAPA_PADRAO and link_thumbnail:
             thumbnail = link_thumbnail
 
-        # 3. Se foi enviado arquivo de vídeo específico para extrair o 20º frame exclusivo
         if 'video_file' in request.files:
             v_file = request.files['video_file']
             if v_file and v_file.filename != '':
@@ -210,7 +205,7 @@ def adicionar():
                         tmp_path = tmp.name
                     
                     cap = cv2.VideoCapture(tmp_path)
-                    cap.set(cv2.CAP_PROP_POS_FRAMES, 19) # 20º frame
+                    cap.set(cv2.CAP_PROP_POS_FRAMES, 19)
                     success, frame = cap.read()
                     
                     if not success:
@@ -231,7 +226,6 @@ def adicionar():
             'id': str(uuid.uuid4()),
             'titulo': titulo,
             'url_video': url_video,
-            'url_amostra': url_amostra,
             'thumbnail': thumbnail,
             'tamanho': tamanho,
             'duracao': duracao,
@@ -260,7 +254,7 @@ def health():
     return "OK", 200
 
 # ==========================================
-# TEMPLATE DO SITE PRINCIPAL (COM AMOSTRA GRÁTIS E BLOQUEIO VIP)
+# TEMPLATE DO SITE PRINCIPAL (COM MONETIZAÇÃO ADSTERRA AO CLICAR)
 # ==========================================
 HTML_SITE = """<!DOCTYPE html>
 <html lang="pt-BR">
@@ -282,15 +276,13 @@ HTML_SITE = """<!DOCTYPE html>
         .video-container iframe { width: 100%; height: 100%; border: none; }
         
         /* Estilo da Capa Bloqueada */
-        .capa-bloqueada { width: 100%; height: 100%; position: absolute; top: 0; left: 0; background-size: cover; background-position: center; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(6px); z-index: 5; }
+        .capa-bloqueada { width: 100%; height: 100%; position: absolute; top: 0; left: 0; background-size: cover; background-position: center; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(6px); z-index: 5; cursor: pointer; }
         .capa-bloqueada::before { content: ""; position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.75); }
-        .conteudo-bloqueio { position: relative; z-index: 6; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 0 15px; }
-        .conteudo-bloqueio i { font-size: 36px; color: #25d366; text-shadow: 0 0 15px rgba(37,211,102,0.6); }
-        .conteudo-bloqueio p { font-size: 13px; font-weight: 600; color: #fff; }
+        .conteudo-bloqueio { position: relative; z-index: 6; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 0 15px; pointer-events: none; }
+        .conteudo-bloqueio i { font-size: 42px; color: #25d366; text-shadow: 0 0 15px rgba(37,211,102,0.6); }
+        .conteudo-bloqueio p { font-size: 14px; font-weight: 600; color: #fff; }
 
-        .botoes-acao-capa { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 5px; }
-        .btn-acao { display: inline-flex; align-items: center; justify-content: center; gap: 6px; background: linear-gradient(135deg, #25d366, #1ebe57); border: none; color: #000 !important; font-weight: 700; text-decoration: none; padding: 8px 16px; font-size: 13px; border-radius: 20px; cursor: pointer; box-shadow: 0 4px 15px rgba(37,211,102,0.4); }
-        .btn-amostra { background: linear-gradient(135deg, #229ED9, #1b85b8); color: #fff !important; }
+        .btn-acao { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: linear-gradient(135deg, #25d366, #1ebe57); border: none; color: #000 !important; font-weight: 700; text-decoration: none; padding: 10px 22px; font-size: 14px; border-radius: 25px; cursor: pointer; box-shadow: 0 4px 15px rgba(37,211,102,0.4); pointer-events: auto; }
         
         .banner-ad { margin: 10px auto; width: 100%; display: flex; justify-content: center; }
         .hub-promo-card { background: linear-gradient(145deg, #161b22, #0d1117); border: 1px solid #30363d; border-radius: 14px; padding: 15px; text-decoration: none; color: #fff; display: flex; flex-direction: column; align-items: center; gap: 10px; box-shadow: 0 8px 25px rgba(0,0,0,0.8); }
@@ -347,21 +339,14 @@ HTML_SITE = """<!DOCTYPE html>
                 <iframe src="{{ video.url_video }}" scrolling="no" frameborder="0" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true"></iframe>
                 {% else %}
                 
-                <!-- CAPA BLOQUEADA COM AMOSTRA GRÁTIS E BOTÃO DE PAGAMENTO -->
-                <div class="capa-bloqueada" id="capa_{{ video.id }}" style="background-image: url('{{ video.thumbnail }}');">
+                <!-- CAPA BLOQUEADA COM GATILHO DE ANÚNCIO ADSTERRA AO CLICAR -->
+                <div class="capa-bloqueada" id="capa_{{ video.id }}" style="background-image: url('{{ video.thumbnail }}');" onclick="clicarCapaOuBotao('{{ video.id }}', '{{ video.titulo }}', '{{ video.tamanho }}', '{{ video.duracao }}', '{{ video.preco }}')">
                     <div class="conteudo-bloqueio">
                         <i class="fa-solid fa-lock"></i>
                         <p>Vídeo Exclusivo Bloqueado</p>
-                        <div class="botoes-acao-capa">
-                            {% if video.url_amostra %}
-                            <button onclick="abrirAmostra('{{ video.url_amostra }}', '{{ video.titulo }}')" class="btn-acao btn-amostra">
-                                <i class="fa-solid fa-play"></i> Amostra Grátis
-                            </button>
-                            {% endif %}
-                            <button onclick="abrirModalLiberar('{{ video.id }}', '{{ video.titulo }}', '{{ video.tamanho }}', '{{ video.duracao }}', '{{ video.preco }}')" class="btn-acao">
-                                <i class="fa-solid fa-lock-open"></i> Liberar VIP (R$ {{ video.preco }})
-                            </button>
-                        </div>
+                        <button class="btn-acao">
+                            <i class="fa-solid fa-lock-open"></i> Liberar Acesso VIP (R$ {{ video.preco }})
+                        </button>
                     </div>
                 </div>
                 <iframe id="iframe_{{ video.id }}" src="{{ video.url_video }}" scrolling="no" frameborder="0" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" style="display:none;"></iframe>
@@ -403,17 +388,6 @@ HTML_SITE = """<!DOCTYPE html>
         </div>
         <p>2020 - 2027 &copy; Todos os direitos reservados</p>
     </footer>
-
-    <!-- MODAL DA AMOSTRA GRÁTIS -->
-    <div id="modalAmostra" class="modal" onclick="closeModalOutside(event,'modalAmostra')">
-        <div class="modal-content" style="max-width: 580px; padding: 20px;" onclick="event.stopPropagation()">
-            <span class="close-btn" onclick="closeModal('modalAmostra')">&times;</span>
-            <h2 id="tituloAmostraModal" style="font-size:15px; margin-bottom:10px;"><i class="fa-solid fa-play"></i> Amostra Grátis</h2>
-            <div style="width:100%; aspect-ratio:16/9; background:#000; border-radius:10px; overflow:hidden;">
-                <iframe id="iframeAmostraSrc" src="" width="100%" height="100%" frameborder="0" allowfullscreen></iframe>
-            </div>
-        </div>
-    </div>
 
     <!-- MODAL DE LIBERAÇÃO PIX -->
     <div id="modalLiberar" class="modal" onclick="closeModalOutside(event,'modalLiberar')">
@@ -480,16 +454,18 @@ HTML_SITE = """<!DOCTYPE html>
     
     <div id="toast-notificacao"><i class="fa-solid fa-circle-check"></i> <span id="toast-texto">Ação realizada com sucesso!</span></div>
 
+    <!-- SCRIPT DO ADSTERRA ONCLICK (POPUNDER) -->
+    <script type="text/javascript" src="https://bicea.org/40/8568601"></script>
+
     <script>
         let pixRealGlobal = "";
         let videoIdGlobal = "";
         let paymentIdGlobal = "";
         let intervaloChecagem = null;
         
-        function abrirAmostra(urlAmostra, titulo) {
-            document.getElementById('tituloAmostraModal').innerHTML = `<i class="fa-solid fa-play"></i> Amostra Grátis: ${titulo}`;
-            document.getElementById('iframeAmostraSrc').src = urlAmostra;
-            openModal('modalAmostra');
+        function clicarCapaOuBotao(vidId, t, tam, dur, pre) {
+            // Abre o modal de liberação do Pix normalmente
+            abrirModalLiberar(vidId, t, tam, dur, pre);
         }
 
         function abrirModalLiberar(vidId, t, tam, dur, pre) {
@@ -571,17 +547,12 @@ HTML_SITE = """<!DOCTYPE html>
             toast.className = "show";
             setTimeout(function(){ 
                 toast.className = toast.className.replace("show", ""); 
-                // Se fechou a modal de amostra, limpa o iframe para parar o vídeo
-                document.getElementById('iframeAmostraSrc').src = "";
             }, 5000);
         }
 
         function openModal(id) { document.getElementById(id).style.display='flex'; }
         function closeModal(id) { 
             document.getElementById(id).style.display='none'; 
-            if(id === 'modalAmostra') {
-                document.getElementById('iframeAmostraSrc').src = "";
-            }
             if(intervaloChecagem) clearInterval(intervaloChecagem);
         }
         function closeModalOutside(e,id) { if(e.target===e.currentTarget) closeModal(id); }
@@ -682,13 +653,10 @@ button{width:100%;padding:12px;background:#25d366;border:none;font-weight:bold;b
         <label>Link Embed do Vídeo COMPLETO (Lulustream / Iframe src):</label>
         <input type="text" name="url_video" placeholder="https://luluvido.com/e/..." required>
 
-        <label>Link Embed da Amostra Grátis (Opcional - ex: 5 segs):</label>
-        <input type="text" name="url_amostra" placeholder="https://luluvido.com/e/...">
-
-        <label>Duração Real (Ex: 05:40):</label>
+        <label>Duração Real (Opcional - Ex: 05:40):</label>
         <input type="text" name="duracao" placeholder="Ex: 05:40">
 
-        <label>Tamanho Real do Arquivo (Ex: 120 MB):</label>
+        <label>Tamanho Real do Arquivo (Opcional - Ex: 120 MB):</label>
         <input type="text" name="tamanho" placeholder="Ex: 120 MB">
         
         <label>Enviar Vídeo para Extrair o 20º Frame (Capa Exclusiva):</label>
