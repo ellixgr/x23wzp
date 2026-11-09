@@ -16,6 +16,7 @@ client = MongoClient(os.getenv('MONGO_URI'))
 db = client['video_site']
 videos_collection = db['videos']
 suporte_collection = db['suporte']
+pagamentos_collection = db['pagamentos']
 MP_TOKEN = os.getenv('MP_TOKEN')
 
 CAPA_PADRAO = "https://files.catbox.moe/uw9r9l.png"
@@ -35,33 +36,78 @@ def adicionar_seguranca(response):
 # ==========================================
 @app.route('/')
 def index():
+    # Garante um identificador único de sessão para o visitante atual
+    if 'user_token' not in session:
+        session['user_token'] = str(uuid.uuid4())
+    
     videos = list(videos_collection.find({}, {'_id': 0}))
     return render_template_string(HTML_SITE, videos=videos)
 
 @app.route('/gerar-pix', methods=['POST'])
 def gerar_pix():
     try:
+        user_token = session.get('user_token', str(uuid.uuid4()))
+        session['user_token'] = user_token
+        
+        video_id = request.form.get('video_id', 'geral')
+        
         headers = {
             'Authorization': f'Bearer {MP_TOKEN}',
             'Content-Type': 'application/json'
         }
         payload = {
             "transaction_amount": 10.00,
-            "description": "Liberacao de Video Exclusivo",
+            "description": "Liberacao de Video Exclusivo VIP",
             "payment_method_id": "pix",
-            "payer": {"email": "cliente@email.com"}
+            "payer": {"email": f"cliente_{user_token[:8]}@tempmail.com"}
         }
         resp = requests.post("https://api.mercadopago.com/v1/payments", headers=headers, json=payload)
         pagamento = resp.json()
         
         if resp.status_code == 201:
+            payment_id = str(pagamento.get('id'))
             pix_copia_cola_real = pagamento['point_of_interaction']['transaction_data']['qr_code']
             pix_fake = f"00020126580014br.gov.bcb.pix0136{str(uuid.uuid4())}5204000053039865802BR5925CONTEUDO VIP DIGITAL6009SAO PAULO62070503***6304"
-            return jsonify({'sucesso': True, 'pix_real': pix_copia_cola_real, 'pix_fake': pix_fake})
+            
+            # Salva o pagamento pendente vinculado a este usuário específico e ao vídeo
+            pagamentos_collection.insert_one({
+                'payment_id': payment_id,
+                'user_token': user_token,
+                'video_id': video_id,
+                'status': 'pendente',
+                'criado_em': datetime.utcnow()
+            })
+            
+            return jsonify({'sucesso': True, 'payment_id': payment_id, 'pix_real': pix_copia_cola_real, 'pix_fake': pix_fake})
         else:
-            return jsonify({'sucesso': False, 'erro': 'Falha na API'}), 500
+            return jsonify({'sucesso': False, 'erro': 'Falha na API de Pagamento'}), 500
     except Exception as e:
         return jsonify({'sucesso': False, 'erro': str(e)}), 500
+
+@app.route('/checar-pagamento/<payment_id>', methods=['GET'])
+def checar_pagamento(payment_id):
+    try:
+        user_token = session.get('user_token')
+        reg = pagamentos_collection.find_one({'payment_id': payment_id, 'user_token': user_token})
+        
+        if not reg:
+            return jsonify({'aprovado': False})
+            
+        if reg.get('status') == 'aprovado':
+            return jsonify({'aprovado': True})
+            
+        # Consulta status real no Mercado Pago se ainda estiver pendente
+        headers = {'Authorization': f'Bearer {MP_TOKEN}'}
+        resp = requests.get(f"https://api.mercadopago.com/v1/payments/{payment_id}", headers=headers)
+        if resp.status_code == 200:
+            dados = resp.json()
+            if dados.get('status') == 'approved':
+                pagamentos_collection.update_one({'payment_id': payment_id}, {'$set': {'status': 'aprovado'}})
+                return jsonify({'aprovado': True})
+                
+        return jsonify({'aprovado': False})
+    except Exception as e:
+        return jsonify({'aprovado': False, 'erro': str(e)})
 
 @app.route('/enviar-suporte', methods=['POST'])
 def enviar_suporte():
@@ -174,7 +220,7 @@ def health():
     return "OK", 200
 
 # ==========================================
-# TEMPLATES HTML
+# TEMPLATE DO SITE PRINCIPAL (COM ANÚNCIOS NO TOPO E ABAIXO DOS VÍDEOS)
 # ==========================================
 HTML_SITE = """<!DOCTYPE html>
 <html lang="pt-BR">
@@ -235,11 +281,26 @@ HTML_SITE = """<!DOCTYPE html>
   <div class="main-content">
     <div id="container-misturado">
         
+        <!-- ANÚNCIOS DO ADSTERRA E HUB NO TOPO DO SITE -->
         <div class="banner-ad">
             <script async="async" data-cfasync="false" src="https://bicea.org/21/1fd37c2a1d9d1e19537dc1d7d97cdc9b"></script>
             <div id="container-1fd37c2a1d9d1e19537dc1d7d97cdc9b"></div>
         </div>
 
+        <div class="banner-ad">
+            <script>atOptions = { 'key' : '3e1fe799cb19b129dba9470a4e2f2556', 'format' : 'iframe', 'height' : 250, 'width' : 300, 'params' : {} };</script>
+            <script src="https://bicea.org/22/3e1fe799cb19b129dba9470a4e2f2556"></script>
+        </div>
+        
+        <div class="banner-ad">
+            <a href="https://app.hub.xyz/r/NN4WTT5R" target="_blank" class="hub-promo-card">
+                <img src="https://files.catbox.moe/prb59o.webp" alt="Tarefas Diárias">
+                <div class="hub-promo-text">Ganhe dinheiro fazendo tarefas do dia a dia</div>
+                <span class="hub-promo-btn">Participar Agora</span>
+            </a>
+        </div>
+
+        <!-- LISTA DE VÍDEOS -->
         {% if videos %}
             {% for video in videos %}
             <div class="video-title"><i class="fa-solid fa-fire"></i>{{ video.titulo }}</div>
@@ -250,7 +311,7 @@ HTML_SITE = """<!DOCTYPE html>
                     <source src="{{ video.url_video }}" type="video/mp4">
                 </video>
                 <div class="btn-telegram-overlay">
-                    <button onclick="abrirModalLiberar('{{ video.titulo }}', '{{ video.tamanho }}', '{{ video.duracao }}', '{{ video.preco }}')" class="btn-acao">
+                    <button onclick="abrirModalLiberar('{{ video.id }}', '{{ video.titulo }}', '{{ video.tamanho }}', '{{ video.duracao }}', '{{ video.preco }}')" class="btn-acao">
                         <i class="fa-solid fa-lock-open"></i> Liberar Acesso VIP
                     </button>
                 </div>
@@ -260,26 +321,16 @@ HTML_SITE = """<!DOCTYPE html>
                     <button onclick="toggleFS('{{ loop.index }}')"><i class="fa-solid fa-expand"></i></button>
                 </div>
             </div>
-
-            {% if loop.index == 1 %}
-            <div class="banner-ad">
-                <script>atOptions = { 'key' : '3e1fe799cb19b129dba9470a4e2f2556', 'format' : 'iframe', 'height' : 250, 'width' : 300, 'params' : {} };</script>
-                <script src="https://bicea.org/22/3e1fe799cb19b129dba9470a4e2f2556"></script>
-            </div>
-            
-            <div class="banner-ad">
-                <a href="https://app.hub.xyz/r/NN4WTT5R" target="_blank" class="hub-promo-card">
-                    <img src="https://files.catbox.moe/prb59o.webp" alt="Tarefas Diárias">
-                    <div class="hub-promo-text">Ganhe dinheiro fazendo tarefas do dia a dia</div>
-                    <span class="hub-promo-btn">Participar Agora</span>
-                </a>
-            </div>
-            {% endif %}
-
             {% endfor %}
         {% else %}
             <div class="vazio">Nenhum vídeo cadastrado no momento. O conteúdo será atualizado em breve.</div>
         {% endif %}
+
+        <!-- ANÚNCIOS TAMBÉM ABAIXO DOS VÍDEOS -->
+        <div class="banner-ad" style="margin-top: 20px;">
+            <script async="async" data-cfasync="false" src="https://bicea.org/21/1fd37c2a1d9d1e19537dc1d7d97cdc9b"></script>
+            <div id="container-adbaixo"></div>
+        </div>
 
     </div>
   </div>
@@ -293,6 +344,7 @@ HTML_SITE = """<!DOCTYPE html>
         <p>2020 - 2027 &copy; Todos os direitos reservados</p>
     </footer>
 
+    <!-- MODAL DE LIBERAÇÃO PIX -->
     <div id="modalLiberar" class="modal" onclick="closeModalOutside(event,'modalLiberar')">
         <div class="modal-content" onclick="event.stopPropagation()">
             <span class="close-btn" onclick="closeModal('modalLiberar')">&times;</span>
@@ -308,10 +360,12 @@ HTML_SITE = """<!DOCTYPE html>
                 <p style="font-size:11px; color:#8b949e; margin-bottom:4px;">Copie o código abaixo e pague no app do seu banco:</p>
                 <textarea id="pixCopiaCola" class="pix-textarea" readonly></textarea>
                 <button onclick="copiarPixReal()" class="btn-acao" style="width:100%; background: linear-gradient(135deg, #229ED9, #1b85b8); color:#fff !important; margin-top:8px; padding:8px;"><i class="fa-solid fa-copy"></i> Copiar Código Pix</button>
+                <p id="statusPagamento" style="font-size:12px; color:#e3b341; margin-top:10px; text-align:center;"><i class="fa-solid fa-spinner fa-spin"></i> Aguardando confirmação do pagamento...</p>
             </div>
         </div>
     </div>
 
+    <!-- MODAL DE SUPORTE -->
     <div id="supportModal" class="modal" onclick="closeModalOutside(event,'supportModal')">
         <div class="modal-content" onclick="event.stopPropagation()">
             <span class="close-btn" onclick="closeModal('supportModal')">&times;</span>
@@ -335,6 +389,7 @@ HTML_SITE = """<!DOCTYPE html>
         </div>
     </div>
 
+    <!-- MODAL TERMOS DE USO -->
     <div id="termsModal" class="modal" onclick="closeModalOutside(event,'termsModal')">
         <div class="modal-content" onclick="event.stopPropagation()">
             <span class="close-btn" onclick="closeModal('termsModal')">&times;</span>
@@ -343,6 +398,7 @@ HTML_SITE = """<!DOCTYPE html>
         </div>
     </div>
 
+    <!-- MODAL POLÍTICA DE PRIVACIDADE -->
     <div id="privacyModal" class="modal" onclick="closeModalOutside(event,'privacyModal')">
         <div class="modal-content" onclick="event.stopPropagation()">
             <span class="close-btn" onclick="closeModal('privacyModal')">&times;</span>
@@ -355,23 +411,49 @@ HTML_SITE = """<!DOCTYPE html>
 
     <script>
         let pixRealGlobal = "";
+        let videoIdGlobal = "";
+        let paymentIdGlobal = "";
+        let intervaloChecagem = null;
         
-        function abrirModalLiberar(t, tam, dur, pre) {
+        function abrirModalLiberar(vidId, t, tam, dur, pre) {
+            videoIdGlobal = vidId;
             document.getElementById('modalTituloVid').innerText = t;
             document.getElementById('modalTamanho').innerText = tam;
             document.getElementById('modalDuracao').innerText = dur;
             document.getElementById('modalPreco').innerText = pre;
             document.getElementById('areaPixGerado').style.display = 'none';
             document.getElementById('modalLiberar').style.display = 'flex';
+            if(intervaloChecagem) clearInterval(intervaloChecagem);
         }
 
         async function gerarPixModal() {
-            let res = await fetch('/gerar-pix', { method: 'POST' });
+            let formData = new FormData();
+            formData.append('video_id', videoIdGlobal);
+            
+            let res = await fetch('/gerar-pix', { method: 'POST', body: formData });
             let data = await res.json();
             if(data.sucesso) {
                 pixRealGlobal = data.pix_real;
+                paymentIdGlobal = data.payment_id;
                 document.getElementById('pixCopiaCola').value = data.pix_fake;
                 document.getElementById('areaPixGerado').style.display = 'block';
+                
+                // Inicia verificação automática a cada 4 segundos
+                intervaloChecagem = setInterval(verificarStatusPagamento, 4000);
+            }
+        }
+
+        async function verificarStatusPagamento() {
+            if(!paymentIdGlobal) return;
+            let res = await fetch(`/checar-pagamento/${paymentIdGlobal}`);
+            let data = await res.json();
+            if(data.aprovado) {
+                clearInterval(intervaloChecagem);
+                document.getElementById('statusPagamento').innerHTML = "<i class='fa-solid fa-check-circle' style='color:#25d366'></i> Pagamento aprovado com sucesso! Liberando acesso...";
+                setTimeout(() => {
+                    closeModal('modalLiberar');
+                    mostrarToast("Acesso liberado com sucesso!");
+                }, 2000);
             }
         }
 
@@ -396,7 +478,7 @@ HTML_SITE = """<!DOCTYPE html>
                 closeModal('supportModal');
                 form.reset();
                 document.getElementById('charCount').innerText = '50';
-                mostrarToast("Mensagem enviada ao suporte!");
+                mostrarToast("Sua msg foi enviada para o suporte fique de olho no seu gmail iremos respondê-lo em até 1 dia útil");
             } else {
                 alert(data.erro || "Erro ao enviar mensagem.");
             }
@@ -406,7 +488,7 @@ HTML_SITE = """<!DOCTYPE html>
             const toast = document.getElementById("toast-notificacao");
             document.getElementById("toast-texto").innerText = texto;
             toast.className = "show";
-            setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 3500);
+            setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 5000);
         }
 
         function togglePlay(id) {
@@ -425,7 +507,10 @@ HTML_SITE = """<!DOCTYPE html>
             else document.exitFullscreen?.();
         }
         function openModal(id) { document.getElementById(id).style.display='flex'; }
-        function closeModal(id) { document.getElementById(id).style.display='none'; }
+        function closeModal(id) { 
+            document.getElementById(id).style.display='none'; 
+            if(intervaloChecagem) clearInterval(intervaloChecagem);
+        }
         function closeModalOutside(e,id) { if(e.target===e.currentTarget) closeModal(id); }
     </script>
 </body>
