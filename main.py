@@ -176,15 +176,18 @@ def adicionar():
     if request.method == 'POST':
         titulo = request.form.get('titulo')
         url_video = request.form.get('url_video')
+        url_amostra = request.form.get('url_amostra', '').strip()
         preco = request.form.get('preco', '10.00')
+        duracao = request.form.get('duracao', '').strip()
+        tamanho = request.form.get('tamanho', '').strip()
         link_thumbnail = request.form.get('thumbnail_link', '').strip()
         
         if not titulo or not url_video:
-            return render_template_string(ADICIONAR_HTML, erro='Preencha o título e o link/embed do vídeo!')
+            return render_template_string(ADICIONAR_HTML, erro='Preencha o título e o link/embed do vídeo completo!')
         
         thumbnail = CAPA_PADRAO
 
-        # 1. Tenta pegar imagem enviada manualmente
+        # 1. Tenta pegar imagem enviada manualmente para este vídeo específico
         if 'thumbnail_file' in request.files:
             file = request.files['thumbnail_file']
             if file and file.filename != '':
@@ -193,11 +196,11 @@ def adicionar():
                 mime_type = file.content_type or 'image/jpeg'
                 thumbnail = f"data:{mime_type};base64,{encoded}"
         
-        # 2. Se não enviou foto, mas enviou link de capa
+        # 2. Se não enviou arquivo de imagem, verifica se enviou link de capa
         if thumbnail == CAPA_PADRAO and link_thumbnail:
             thumbnail = link_thumbnail
 
-        # 3. Se foi enviado um arquivo de vídeo direto para extrair exatamente o 20º frame
+        # 3. Se foi enviado arquivo de vídeo específico para extrair o 20º frame exclusivo
         if 'video_file' in request.files:
             v_file = request.files['video_file']
             if v_file and v_file.filename != '':
@@ -207,11 +210,9 @@ def adicionar():
                         tmp_path = tmp.name
                     
                     cap = cv2.VideoCapture(tmp_path)
-                    # Pula para o 20º frame (índice 19)
-                    cap.set(cv2.CAP_PROP_POS_FRAMES, 19)
+                    cap.set(cv2.CAP_PROP_POS_FRAMES, 19) # 20º frame
                     success, frame = cap.read()
                     
-                    # Se o vídeo for muito curto e não tiver 20 frames, pega o primeiro frame disponível
                     if not success:
                         cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
                         success, frame = cap.read()
@@ -230,9 +231,10 @@ def adicionar():
             'id': str(uuid.uuid4()),
             'titulo': titulo,
             'url_video': url_video,
+            'url_amostra': url_amostra,
             'thumbnail': thumbnail,
-            'tamanho': '25 MB',
-            'duracao': '01:30',
+            'tamanho': tamanho,
+            'duracao': duracao,
             'preco': preco,
             'ativo': True,
             'criado_em': datetime.utcnow()
@@ -258,7 +260,7 @@ def health():
     return "OK", 200
 
 # ==========================================
-# TEMPLATE DO SITE PRINCIPAL (BLOQUEADO ATÉ O PAGAMENTO)
+# TEMPLATE DO SITE PRINCIPAL (COM AMOSTRA GRÁTIS E BLOQUEIO VIP)
 # ==========================================
 HTML_SITE = """<!DOCTYPE html>
 <html lang="pt-BR">
@@ -272,8 +274,9 @@ HTML_SITE = """<!DOCTYPE html>
         body { background-color: #0d0d0d; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: space-between; min-height: 100vh; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; }
         .main-content { flex: 1; width: 100%; padding: 20px 15px; display: flex; flex-direction: column; align-items: center; }
         #container-misturado { width: 100%; max-width: 580px; display: flex; flex-direction: column; gap: 25px; }
-        .video-title { font-size: 15px; font-weight: 600; color: #e0e0e0; text-align: left; width: 100%; display: flex; align-items: center; gap: 8px; }
-        .video-title i { color: #25d366; }
+        .video-title { font-size: 15px; font-weight: 600; color: #e0e0e0; text-align: left; width: 100%; display: flex; align-items: center; justify-content: space-between; }
+        .video-title span.detalhes-info { font-size: 11px; color: #8b949e; font-weight: normal; }
+        .video-title i { color: #25d366; margin-right: 5px; }
         
         .video-container { width: 100%; aspect-ratio: 16 / 9; border-radius: 14px; overflow: hidden; position: relative; background: #0d0d0d; box-shadow: 0px 15px 35px rgba(0,0,0,0.95); }
         .video-container iframe { width: 100%; height: 100%; border: none; }
@@ -281,11 +284,13 @@ HTML_SITE = """<!DOCTYPE html>
         /* Estilo da Capa Bloqueada */
         .capa-bloqueada { width: 100%; height: 100%; position: absolute; top: 0; left: 0; background-size: cover; background-position: center; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(6px); z-index: 5; }
         .capa-bloqueada::before { content: ""; position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.75); }
-        .conteudo-bloqueio { position: relative; z-index: 6; display: flex; flex-direction: column; align-items: center; gap: 12px; }
-        .conteudo-bloqueio i { font-size: 40px; color: #25d366; text-shadow: 0 0 15px rgba(37,211,102,0.6); }
-        .conteudo-bloqueio p { font-size: 14px; font-weight: 600; color: #fff; }
+        .conteudo-bloqueio { position: relative; z-index: 6; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 0 15px; }
+        .conteudo-bloqueio i { font-size: 36px; color: #25d366; text-shadow: 0 0 15px rgba(37,211,102,0.6); }
+        .conteudo-bloqueio p { font-size: 13px; font-weight: 600; color: #fff; }
 
-        .btn-acao { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: linear-gradient(135deg, #25d366, #1ebe57); border: none; color: #000 !important; font-weight: 700; text-decoration: none; padding: 10px 22px; font-size: 14px; border-radius: 25px; cursor: pointer; box-shadow: 0 4px 15px rgba(37,211,102,0.4); }
+        .botoes-acao-capa { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 5px; }
+        .btn-acao { display: inline-flex; align-items: center; justify-content: center; gap: 6px; background: linear-gradient(135deg, #25d366, #1ebe57); border: none; color: #000 !important; font-weight: 700; text-decoration: none; padding: 8px 16px; font-size: 13px; border-radius: 20px; cursor: pointer; box-shadow: 0 4px 15px rgba(37,211,102,0.4); }
+        .btn-amostra { background: linear-gradient(135deg, #229ED9, #1b85b8); color: #fff !important; }
         
         .banner-ad { margin: 10px auto; width: 100%; display: flex; justify-content: center; }
         .hub-promo-card { background: linear-gradient(145deg, #161b22, #0d1117); border: 1px solid #30363d; border-radius: 14px; padding: 15px; text-decoration: none; color: #fff; display: flex; flex-direction: column; align-items: center; gap: 10px; box-shadow: 0 8px 25px rgba(0,0,0,0.8); }
@@ -327,21 +332,36 @@ HTML_SITE = """<!DOCTYPE html>
         <!-- VÍDEOS NO TOPO DO SITE -->
         {% if videos %}
             {% for video in videos %}
-            <div class="video-title"><i class="fa-solid fa-fire"></i>{{ video.titulo }}</div>
+            <div class="video-title">
+                <span><i class="fa-solid fa-fire"></i>{{ video.titulo }}</span>
+                <span class="detalhes-info">
+                    {% if video.duracao %}⏱️ {{ video.duracao }}{% endif %} 
+                    {% if video.tamanho %} | 📦 {{ video.tamanho }}{% endif %}
+                </span>
+            </div>
+            
             <div class="video-container" id="containerVideo_{{ video.id }}">
                 
-                <!-- O IFRAME SÓ APARECE SE O USUÁRIO JÁ PAGOU ESTE VÍDEO -->
+                <!-- O IFRAME DO VÍDEO COMPLETO SÓ APARECE SE O USUÁRIO JÁ PAGOU -->
                 {% if video.id in videos_pagos_ids %}
                 <iframe src="{{ video.url_video }}" scrolling="no" frameborder="0" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true"></iframe>
                 {% else %}
-                <!-- CASO CONTRÁRIO, MOSTRA A CAPA BLOQUEADA COM O BOTÃO DE LIBERAÇÃO -->
+                
+                <!-- CAPA BLOQUEADA COM AMOSTRA GRÁTIS E BOTÃO DE PAGAMENTO -->
                 <div class="capa-bloqueada" id="capa_{{ video.id }}" style="background-image: url('{{ video.thumbnail }}');">
                     <div class="conteudo-bloqueio">
                         <i class="fa-solid fa-lock"></i>
-                        <p>Conteúdo Exclusivo Bloqueado</p>
-                        <button onclick="abrirModalLiberar('{{ video.id }}', '{{ video.titulo }}', '{{ video.tamanho }}', '{{ video.duracao }}', '{{ video.preco }}')" class="btn-acao">
-                            <i class="fa-solid fa-lock-open"></i> Liberar Acesso VIP (R$ {{ video.preco }})
-                        </button>
+                        <p>Vídeo Exclusivo Bloqueado</p>
+                        <div class="botoes-acao-capa">
+                            {% if video.url_amostra %}
+                            <button onclick="abrirAmostra('{{ video.url_amostra }}', '{{ video.titulo }}')" class="btn-acao btn-amostra">
+                                <i class="fa-solid fa-play"></i> Amostra Grátis
+                            </button>
+                            {% endif %}
+                            <button onclick="abrirModalLiberar('{{ video.id }}', '{{ video.titulo }}', '{{ video.tamanho }}', '{{ video.duracao }}', '{{ video.preco }}')" class="btn-acao">
+                                <i class="fa-solid fa-lock-open"></i> Liberar VIP (R$ {{ video.preco }})
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <iframe id="iframe_{{ video.id }}" src="{{ video.url_video }}" scrolling="no" frameborder="0" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" style="display:none;"></iframe>
@@ -384,6 +404,17 @@ HTML_SITE = """<!DOCTYPE html>
         <p>2020 - 2027 &copy; Todos os direitos reservados</p>
     </footer>
 
+    <!-- MODAL DA AMOSTRA GRÁTIS -->
+    <div id="modalAmostra" class="modal" onclick="closeModalOutside(event,'modalAmostra')">
+        <div class="modal-content" style="max-width: 580px; padding: 20px;" onclick="event.stopPropagation()">
+            <span class="close-btn" onclick="closeModal('modalAmostra')">&times;</span>
+            <h2 id="tituloAmostraModal" style="font-size:15px; margin-bottom:10px;"><i class="fa-solid fa-play"></i> Amostra Grátis</h2>
+            <div style="width:100%; aspect-ratio:16/9; background:#000; border-radius:10px; overflow:hidden;">
+                <iframe id="iframeAmostraSrc" src="" width="100%" height="100%" frameborder="0" allowfullscreen></iframe>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL DE LIBERAÇÃO PIX -->
     <div id="modalLiberar" class="modal" onclick="closeModalOutside(event,'modalLiberar')">
         <div class="modal-content" onclick="event.stopPropagation()">
@@ -391,8 +422,8 @@ HTML_SITE = """<!DOCTYPE html>
             <h2><i class="fa-solid fa-shield-halved"></i> Liberação Instantânea</h2>
             <p id="modalTituloVid" style="color:#f0f6fc; font-weight:600; margin-bottom:12px; font-size:14px;"></p>
             <div class="modal-info-box">
-                <p>Tamanho do arquivo: <span id="modalTamanho"></span></p>
-                <p>Duração total: <span id="modalDuracao"></span></p>
+                <p>Tamanho do arquivo: <span id="modalTamanho">Não informado</span></p>
+                <p>Duração total: <span id="modalDuracao">Não informada</span></p>
                 <p>Valor do acesso: <span style="color:#25d366; font-size:15px;">R$ <span id="modalPreco"></span></span></p>
             </div>
             <button onclick="gerarPixModal()" class="btn-acao" style="width:100%; padding:10px; font-size:14px;">Gerar Chave Pix de Pagamento</button>
@@ -455,11 +486,17 @@ HTML_SITE = """<!DOCTYPE html>
         let paymentIdGlobal = "";
         let intervaloChecagem = null;
         
+        function abrirAmostra(urlAmostra, titulo) {
+            document.getElementById('tituloAmostraModal').innerHTML = `<i class="fa-solid fa-play"></i> Amostra Grátis: ${titulo}`;
+            document.getElementById('iframeAmostraSrc').src = urlAmostra;
+            openModal('modalAmostra');
+        }
+
         function abrirModalLiberar(vidId, t, tam, dur, pre) {
             videoIdGlobal = vidId;
             document.getElementById('modalTituloVid').innerText = t;
-            document.getElementById('modalTamanho').innerText = tam;
-            document.getElementById('modalDuracao').innerText = dur;
+            document.getElementById('modalTamanho').innerText = tam ? tam : 'Não informado';
+            document.getElementById('modalDuracao').innerText = dur ? dur : 'Não informada';
             document.getElementById('modalPreco').innerText = pre;
             document.getElementById('areaPixGerado').style.display = 'none';
             document.getElementById('modalLiberar').style.display = 'flex';
@@ -492,7 +529,6 @@ HTML_SITE = """<!DOCTYPE html>
                 
                 setTimeout(() => {
                     closeModal('modalLiberar');
-                    // Remove a capa bloqueada e mostra o iframe do vídeo liberado na hora
                     let capa = document.getElementById('capa_' + data.video_id);
                     let iframe = document.getElementById('iframe_' + data.video_id);
                     if(capa) capa.style.display = 'none';
@@ -533,12 +569,19 @@ HTML_SITE = """<!DOCTYPE html>
             const toast = document.getElementById("toast-notificacao");
             document.getElementById("toast-texto").innerText = texto;
             toast.className = "show";
-            setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 5000);
+            setTimeout(function(){ 
+                toast.className = toast.className.replace("show", ""); 
+                // Se fechou a modal de amostra, limpa o iframe para parar o vídeo
+                document.getElementById('iframeAmostraSrc').src = "";
+            }, 5000);
         }
 
         function openModal(id) { document.getElementById(id).style.display='flex'; }
         function closeModal(id) { 
             document.getElementById(id).style.display='none'; 
+            if(id === 'modalAmostra') {
+                document.getElementById('iframeAmostraSrc').src = "";
+            }
             if(intervaloChecagem) clearInterval(intervaloChecagem);
         }
         function closeModalOutside(e,id) { if(e.target===e.currentTarget) closeModal(id); }
@@ -590,7 +633,7 @@ h2{color:#25d366;margin-top:20px;font-size:18px;}
         <tr>
             <td>{{ v.titulo }}</td>
             <td>R$ {{ v.preco }}</td>
-            <td>{{ v.duracao }}</td>
+            <td>{{ v.duracao if v.duracao else 'N/A' }}</td>
             <td><a href="/admin/excluir/{{ v.id }}" class="btn-del">Excluir</a></td>
         </tr>
         {% else %}
@@ -619,7 +662,7 @@ ADICIONAR_HTML = """<!DOCTYPE html>
 <html lang="pt-BR">
 <head><meta charset="UTF-8"><title>Adicionar Vídeo</title>
 <style>body{background:#0d0d0d;color:#fff;font-family:sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;padding:20px;}
-form{background:#161b22;padding:30px;border-radius:12px;border:1px solid #30363d;width:100%;max-width:400px;}
+form{background:#161b22;padding:30px;border-radius:12px;border:1px solid #30363d;width:100%;max-width:420px;}
 input, label {display:block;width:100%;text-align:left;}
 label{font-size:13px;color:#8b949e;margin-top:10px;}
 input[type="text"]{padding:10px;margin-top:5px;background:#0d1117;border:1px solid #30363d;color:#fff;border-radius:6px;}
@@ -630,16 +673,25 @@ button{width:100%;padding:12px;background:#25d366;border:none;font-weight:bold;b
 </head>
 <body>
     <form method="POST" enctype="multipart/form-data">
-        <h2>Cadastrar Vídeo</h2>
+        <h2>Cadastrar Vídeo VIP</h2>
         {% if erro %}<div class="erro">{{ erro }}</div>{% endif %}
         
         <label>Título do Vídeo:</label>
         <input type="text" name="titulo" required>
         
-        <label>Link Embed do Vídeo (Lulustream / Iframe src):</label>
+        <label>Link Embed do Vídeo COMPLETO (Lulustream / Iframe src):</label>
         <input type="text" name="url_video" placeholder="https://luluvido.com/e/..." required>
+
+        <label>Link Embed da Amostra Grátis (Opcional - ex: 5 segs):</label>
+        <input type="text" name="url_amostra" placeholder="https://luluvido.com/e/...">
+
+        <label>Duração Real (Ex: 05:40):</label>
+        <input type="text" name="duracao" placeholder="Ex: 05:40">
+
+        <label>Tamanho Real do Arquivo (Ex: 120 MB):</label>
+        <input type="text" name="tamanho" placeholder="Ex: 120 MB">
         
-        <label>Enviar Vídeo para Extrair o 20º Frame (Capa Automática):</label>
+        <label>Enviar Vídeo para Extrair o 20º Frame (Capa Exclusiva):</label>
         <input type="file" name="video_file" accept="video/*">
         
         <label>OU Enviar Imagem da Capa (Direto da Galeria):</label>
