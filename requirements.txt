@@ -1,7 +1,5 @@
-flask
+Flask
 pymongo
 python-dotenv
 requests
-beautifulsoup4
-qrcode
-pillow<11
+opencv-python-headless
