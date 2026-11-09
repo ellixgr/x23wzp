@@ -17,6 +17,9 @@ db = client['video_site']
 videos_collection = db['videos']
 MP_TOKEN = os.getenv('MP_TOKEN')
 
+# Capa padrão automática solicitada
+CAPA_PADRAO = "https://files.catbox.moe/uw9r9l.png"
+
 # ==========================================
 # HEADERS DE SEGURANÇA E PROTEÇÃO CONTRA ATAQUES
 # ==========================================
@@ -106,9 +109,9 @@ def adicionar():
         if not titulo or not url_video:
             return render_template_string(ADICIONAR_HTML, erro='Preencha o título e o link do vídeo!')
         
-        # Se não colocar thumbnail, usa uma imagem padrão bonita ou o próprio vídeo
+        # Obedece rigorosamente o link da capa inserido no painel ADM; se estiver vazio, usa a padrão.
         if not thumbnail:
-            thumbnail = "https://files.catbox.moe/prb59o.webp"
+            thumbnail = CAPA_PADRAO
 
         videos_collection.insert_one({
             'id': str(uuid.uuid4()),
@@ -214,7 +217,7 @@ HTML_SITE = """<!DOCTYPE html>
             <div class="video-container" id="videoContainer{{ loop.index }}">
                 <div class="video-overlay" onclick="togglePlay('{{ loop.index }}')"></div>
                 <div id="playIconOverlay{{ loop.index }}" class="play-overlay-btn"><i class="fa-solid fa-play"></i></div>
-                <!-- Usando o poster configurado para garantir a capa perfeita -->
+                <!-- Respeita explicitamente a thumbnail cadastrada no banco de dados -->
                 <video id="meuVideo{{ loop.index }}" preload="metadata" playsinline crossorigin="anonymous" poster="{{ video.thumbnail }}">
                     <source src="{{ video.url_video }}" type="video/mp4">
                 </video>
@@ -366,7 +369,7 @@ button{width:100%;padding:12px;background:#25d366;border:none;font-weight:bold;b
 {% if erro %}<div class="erro">{{ erro }}</div>{% endif %}
 <label>Título:</label><input type="text" name="titulo" required>
 <label>Link Direto do Vídeo (.mp4):</label><input type="text" name="url_video" required>
-<label>Link da Capa / Thumbnail (Opcional):</label><input type="text" name="thumbnail" placeholder="Cole o link da imagem ou deixe vazio">
+<label>Link da Capa (Opcional - se vazio usa a padrão):</label><input type="text" name="thumbnail" placeholder="Cole o link da foto de capa aqui">
 <label>Preço (R$):</label><input type="text" name="preco" value="10.00" required>
 <button type="submit">Salvar Vídeo</button></form></body></html>"""
 
