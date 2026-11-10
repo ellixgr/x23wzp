@@ -1,6 +1,6 @@
-flask
-pymongo
-python-dotenv
-requests
-opencv-python-headless
-gunicorn
+Flask==3.1.3
+pymongo==4.11.1
+python-dotenv==1.0.1
+requests==2.32.3
+opencv-python-headless==4.10.0.84
+gunicorn==23.0.0
