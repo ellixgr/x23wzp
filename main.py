@@ -274,7 +274,7 @@ def adicionar():
         link_thumbnail = request.form.get('thumbnail_link', '').strip()
         
         if not titulo or not url_video:
-            return render_template_string(ADICIONAR_HTML, erro='Preencha o título e o link/embed do vídeo!')
+            return render_template_string(ADICIONAR_HTML, erro='Preencha o título e o link direto do vídeo!')
         
         thumbnail = CAPA_PADRAO
 
@@ -289,6 +289,27 @@ def adicionar():
         if thumbnail == CAPA_PADRAO and link_thumbnail:
             thumbnail = link_thumbnail
 
+        # Tenta extrair automático o 1º frame caso não tenha enviado capa e tenha um link direto de vídeo válido
+        if thumbnail == CAPA_PADRAO and url_video.startswith('http'):
+            try:
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp:
+                    r = requests.get(url_video, stream=True, timeout=10)
+                    for chunk in r.iter_content(chunk_size=8192):
+                        if chunk:
+                            tmp.write(chunk)
+                    tmp_path = tmp.name
+
+                cap = cv2.VideoCapture(tmp_path)
+                success, frame = cap.read()
+                if success:
+                    _, buffer = cv2.imencode('.jpg', frame)
+                    encoded_img = base64.b64encode(buffer).decode('utf-8')
+                    thumbnail = f"data:image/jpeg;base64,{encoded_img}"
+                cap.release()
+                os.unlink(tmp_path)
+            except Exception:
+                pass
+
         if 'video_file' in request.files:
             v_file = request.files['video_file']
             if v_file and v_file.filename != '':
@@ -298,13 +319,9 @@ def adicionar():
                         tmp_path = tmp.name
                     
                     cap = cv2.VideoCapture(tmp_path)
-                    cap.set(cv2.CAP_PROP_POS_FRAMES, 19)
+                    cap.set(cv2.CAP_PROP_POS_FRAMES, 1)
                     success, frame = cap.read()
                     
-                    if not success:
-                        cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
-                        success, frame = cap.read()
-
                     if success:
                         _, buffer = cv2.imencode('.jpg', frame)
                         encoded_img = base64.b64encode(buffer).decode('utf-8')
@@ -418,7 +435,7 @@ HTML_SITE = """<!DOCTYPE html>
         .video-title i { color: #25d366; margin-right: 5px; }
         
         .video-container { width: 100%; aspect-ratio: 16 / 9; border-radius: 14px; overflow: hidden; position: relative; background: #0d0d0d; box-shadow: 0px 15px 35px rgba(0,0,0,0.95); }
-        .video-container iframe { width: 100%; height: 100%; border: none; }
+        .video-container video { width: 100%; height: 100%; object-fit: cover; }
         
         .capa-bloqueada { width: 100%; height: 100%; position: absolute; top: 0; left: 0; background-size: cover; background-position: center; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(6px); z-index: 5; cursor: pointer; }
         .capa-bloqueada::before { content: ""; position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.75); }
@@ -486,7 +503,7 @@ HTML_SITE = """<!DOCTYPE html>
                 
                 <div class="video-container" id="containerGratis_{{ video.id }}">
                     {% if video.id in desbloqueios_gratis %}
-                    <iframe src="{{ video.url_video }}" scrolling="no" frameborder="0" allowfullscreen="true" onload="registrarView('gratis', '{{ video.id }}')"></iframe>
+                    <video src="{{ video.url_video }}" controls controlslist="nodownload" onplay="registrarView('gratis', '{{ video.id }}')"></video>
                     {% else %}
                     <div class="capa-bloqueada" id="capaGratis_{{ video.id }}" style="background-image: url('{{ video.thumbnail }}');" onclick="desbloquearVideoGratis('{{ video.id }}', '{{ video.url_video }}')">
                         <div class="conteudo-bloqueio">
@@ -526,7 +543,7 @@ HTML_SITE = """<!DOCTYPE html>
                 
                 <div class="video-container" id="containerVideo_{{ video.id }}">
                     {% if video.id in videos_pagos_ids %}
-                    <iframe src="{{ video.url_video }}" scrolling="no" frameborder="0" allowfullscreen="true" onload="registrarView('vip', '{{ video.id }}')"></iframe>
+                    <video src="{{ video.url_video }}" controls controlslist="nodownload" onplay="registrarView('vip', '{{ video.id }}')"></video>
                     {% else %}
                     <div class="capa-bloqueada" id="capa_{{ video.id }}" style="background-image: url('{{ video.thumbnail }}');" onclick="abrirModalLiberar('{{ video.id }}', '{{ video.titulo }}', '{{ video.tamanho }}', '{{ video.duracao }}', '{{ video.preco }}')">
                         <div class="conteudo-bloqueio">
@@ -569,17 +586,18 @@ HTML_SITE = """<!DOCTYPE html>
         <p>2020 - 2027 &copy; Todos os direitos reservados</p>
     </footer>
 
-    <!-- MODAL DE ENVIO DE VÍDEO DO CRIADOR -->
+    <!-- MODAL DE ENVIO DE VÍDEO DO CRIADOR (CATBOX) -->
     <div id="modalEnviarVideo" class="modal" onclick="closeModalOutside(event,'modalEnviarVideo')">
         <div class="modal-content" onclick="event.stopPropagation()">
             <span class="close-btn" onclick="closeModal('modalEnviarVideo')">&times;</span>
             <h2><i class="fa-solid fa-cloud-arrow-up"></i> Enviar Meu Vídeo</h2>
             
             <div class="instrucao-box">
-                <b>Como enviar:</b><br>
-                1. Hospede seu vídeo no <b>Lulustream</b>.<br>
-                2. Copie o <b>Link Embed</b> (ex: <i>https://luluvido.com/e/abc123xyz</i>).<br>
-                3. Preencha todos os campos abaixo corretamente. O site cobra uma taxa fixa de R$ 5,00 por venda.
+                <b>Como enviar pelo Catbox.moe:</b><br>
+                1. Acesse o site <b>catbox.moe</b> no seu navegador.<br>
+                2. Faça o upload do seu arquivo de vídeo.<br>
+                3. Copie o <b>Link Direto do Arquivo</b> gerado (terminado em .mp4).<br>
+                4. Cole o link no campo abaixo. O site cobra uma taxa fixa de R$ 5,00 por venda.
             </div>
 
             <form id="formEnviarCriador" onsubmit="enviarVideoCriadorForm(event)">
@@ -600,8 +618,8 @@ HTML_SITE = """<!DOCTYPE html>
                     <input type="text" name="titulo" class="form-control" required placeholder="Título chamativo para o vídeo">
                 </div>
                 <div class="form-group">
-                    <label>Link Embed do Vídeo (Lulustream) *</label>
-                    <input type="text" name="url_video" class="form-control" required placeholder="https://luluvido.com/e/...">
+                    <label>Link Direto do Vídeo (Catbox.moe) *</label>
+                    <input type="text" name="url_video" class="form-control" required placeholder="https://files.catbox.moe/xxxxxx.mp4">
                 </div>
                 <div class="form-group">
                     <label>Quanto você quer cobrar pelo vídeo? (R$) *</label>
@@ -733,7 +751,6 @@ HTML_SITE = """<!DOCTYPE html>
         }
 
         function desbloquearVideoGratis(videoId, urlVideo) {
-            // Suavização do anúncio: só abre nova aba/pop se já passou mais de 3 minutos desde o último clique de anúncio
             let ultimoAnuncio = localStorage.getItem('ultimo_anuncio_tempo') || 0;
             let agora = new Date().getTime();
             let intervaloMinimo = 3 * 60 * 1000; // 3 minutos
@@ -748,7 +765,7 @@ HTML_SITE = """<!DOCTYPE html>
             .then(data => {
                 if(data.sucesso) {
                     let container = document.getElementById('containerGratis_' + videoId);
-                    container.innerHTML = `<iframe src="${urlVideo}" scrolling="no" frameborder="0" allowfullscreen="true" onload="registrarView('gratis', '${videoId}')"></iframe>`;
+                    container.innerHTML = `<video src="${urlVideo}" controls controlslist="nodownload" onplay="registrarView('gratis', '${videoId}')"></video>`;
                     mostrarToast("Vídeo gratuito desbloqueado com sucesso!");
                 }
             });
@@ -887,7 +904,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
     <h2>Envios de Vídeos Feitos por Criadores</h2>
     <table>
-        <tr><th>Nome</th><th>Gmail</th><th>Pix</th><th>Título</th><th>Preço Final</th><th>Link Embed</th><th>Data</th></tr>
+        <tr><th>Nome</th><th>Gmail</th><th>Pix</th><th>Título</th><th>Preço Final</th><th>Link Direto</th><th>Data</th></tr>
         {% for e in envios %}
         <tr>
             <td>{{ e.nome }}</td>
@@ -986,8 +1003,8 @@ button{width:100%;padding:14px;background:#25d366;border:none;font-weight:bold;b
         <label>Título do Vídeo:</label>
         <input type="text" name="titulo" required>
         
-        <label>Link Embed do Vídeo (Lulustream / Iframe src):</label>
-        <input type="text" name="url_video" placeholder="https://luluvido.com/e/..." required>
+        <label>Link Direto do Vídeo (Catbox.moe):</label>
+        <input type="text" name="url_video" placeholder="https://files.catbox.moe/xxxxxx.mp4" required>
 
         <label>Duração Real (Opcional - Ex: 05:40):</label>
         <input type="text" name="duracao" placeholder="Ex: 05:40">
@@ -995,7 +1012,7 @@ button{width:100%;padding:14px;background:#25d366;border:none;font-weight:bold;b
         <label>Tamanho Real do Arquivo (Opcional - Ex: 120 MB):</label>
         <input type="text" name="tamanho" placeholder="Ex: 120 MB">
         
-        <label>Enviar Vídeo para Extrair Capa Exclusiva (Opcional):</label>
+        <label>Enviar Vídeo para Extrair Capa Automática (Opcional):</label>
         <input type="file" name="video_file" accept="video/*">
         
         <label>OU Enviar Imagem da Capa:</label>
@@ -1029,7 +1046,7 @@ button{width:100%;padding:14px;background:#25d366;border:none;font-weight:bold;b
         <label>Título do Vídeo:</label>
         <input type="text" name="titulo" value="{{ video.titulo }}" required>
         
-        <label>Link Embed do Vídeo (Lulustream):</label>
+        <label>Link Direto do Vídeo (Catbox.moe):</label>
         <input type="text" name="url_video" value="{{ video.url_video }}" required>
 
         <label>Duração:</label>
