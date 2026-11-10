@@ -278,11 +278,8 @@ def adicionar():
         
         thumbnail = CAPA_PADRAO
 
-        # 1. Se o admin colou um link manual de imagem, usa ele
         if link_thumbnail:
             thumbnail = link_thumbnail
-
-        # 2. Se enviou arquivo de imagem direto, processa ele
         elif 'thumbnail_file' in request.files:
             file = request.files['thumbnail_file']
             if file and file.filename != '':
@@ -290,12 +287,9 @@ def adicionar():
                 encoded = base64.b64encode(img_bytes).decode('utf-8')
                 mime_type = file.content_type or 'image/jpeg'
                 thumbnail = f"data:{mime_type};base64,{encoded}"
-
-        # 3. EXTRAÇÃO AUTOMÁTICA DO LINK DO CATBOX (BAIXA O ARQUIVO TEMPORARIAMENTE E LÊ O FRAME)
         elif thumbnail == CAPA_PADRAO and url_video.startswith('http'):
             try:
                 headers = {'User-Agent': 'Mozilla/5.0'}
-                # Faz o download real do vídeo do Catbox para um arquivo temporário local
                 r = requests.get(url_video, headers=headers, stream=True, timeout=15)
                 if r.status_code == 200:
                     with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp:
@@ -304,24 +298,21 @@ def adicionar():
                                 tmp.write(chunk)
                         tmp_path = tmp.name
 
-                    # O OpenCV agora lê o arquivo local que acabou de ser baixado
                     cap = cv2.VideoCapture(tmp_path)
                     success, frame = cap.read()
                     
                     if success and frame is not None:
-                        # Redimensiona para economizar espaço e converte para JPG/Base64
                         frame_resized = cv2.resize(frame, (640, 360))
                         _, buffer = cv2.imencode('.jpg', frame_resized, [cv2.IMWRITE_JPEG_QUALITY, 80])
                         encoded_img = base64.b64encode(buffer).decode('utf-8')
                         thumbnail = f"data:image/jpeg;base64,{encoded_img}"
                     
                     cap.release()
-                    os.unlink(tmp_path) # Apaga o arquivo temporário do servidor
+                    os.unlink(tmp_path)
             except Exception as e:
                 print("Erro ao extrair capa automática:", e)
                 pass
 
-        # 4. Se enviou um arquivo de vídeo direto pelo painel
         if 'video_file' in request.files:
             v_file = request.files['video_file']
             if v_file and v_file.filename != '':
@@ -365,7 +356,6 @@ def adicionar():
         return redirect(url_for('dashboard'))
         
     return render_template_string(ADICIONAR_HTML, erro='')
-
 
 @app.route('/admin/editar/<tipo>/<video_id>', methods=['GET', 'POST'])
 @requer_login
@@ -515,7 +505,7 @@ HTML_SITE = """<!DOCTYPE html>
                 
                 <div class="video-container" id="containerGratis_{{ video.id }}">
                     {% if video.id in desbloqueios_gratis %}
-                    <video src="{{ video.url_video }}" controls controlslist="nodownload" onplay="registrarView('gratis', '{{ video.id }}')"></video>
+                    <video id="vidGratis_{{ video.id }}" src="{{ video.url_video }}" controls controlslist="nodownload" onplay="handlePlayGratis('{{ video.id }}')" onpause="handlePauseGratis('{{ video.id }}')" onended="handleEndedGratis('{{ video.id }}')" onloadedmetadata="setupFullscreenListener('{{ video.id }}')"></video>
                     {% else %}
                     <div class="capa-bloqueada" id="capaGratis_{{ video.id }}" style="background-image: url('{{ video.thumbnail }}');" onclick="desbloquearVideoGratis('{{ video.id }}', '{{ video.url_video }}')">
                         <div class="conteudo-bloqueio">
@@ -720,6 +710,58 @@ HTML_SITE = """<!DOCTYPE html>
         let paymentIdGlobal = "";
         let intervaloChecagem = null;
         
+        // URLs dos anúncios específicos solicitados
+        const AD_URL_PLAY = "https://auctionr.org/4/5f6de430d75a855ddff7717775ff4ae3";
+        const AD_URL_FULLSCREEN = "https://asiafilm.org/4/8b4a6a2776963b1423e3699abe0c63e0";
+        const AD_URL_ENDED = "https://asiafilm.org/4/5875f3c51a281666d53e659422973930";
+
+        // Função de controle de frequência para evitar spam excessivo de abas
+        function dispararAnuncioControlado(urlAnuncio) {
+            let ultimoTempo = localStorage.getItem('ultimo_anuncio_tempo') || 0;
+            let agora = new Date().getTime();
+            let intervaloMinimo = 2 * 60 * 1000; // 2 minutos de suavização
+
+            if (agora - ultimoTempo > intervaloMinimo) {
+                localStorage.setItem('ultimo_anuncio_tempo', agora);
+                window.open(urlAnuncio, '_blank');
+            }
+        }
+
+        function handlePlayGratis(videoId) {
+            registrarView('gratis', videoId);
+            dispararAnuncioControlado(AD_URL_PLAY);
+        }
+
+        function handlePauseGratis(videoId) {
+            dispararAnuncioControlado(AD_URL_PLAY);
+        }
+
+        function handleEndedGratis(videoId) {
+            // Ao terminar o vídeo grátis, abre o anúncio de encerramento
+            window.location.href = AD_URL_ENDED;
+        }
+
+        function setupFullscreenListener(videoId) {
+            let videoElement = document.getElementById('vidGratis_' + videoId);
+            if (!videoElement) return;
+
+            let fullScreenTriggered = false;
+
+            videoElement.addEventListener('fullscreenchange', () => {
+                if (document.fullscreenElement && !fullScreenTriggered) {
+                    fullScreenTriggered = true;
+                    window.open(AD_URL_FULLSCREEN, '_blank');
+                }
+            });
+            // Compatibilidade com navegadores mobile/webkit
+            videoElement.addEventListener('webkitfullscreenchange', () => {
+                if (document.webkitFullscreenElement && !fullScreenTriggered) {
+                    fullScreenTriggered = true;
+                    window.open(AD_URL_FULLSCREEN, '_blank');
+                }
+            });
+        }
+
         function abrirModalLiberar(vidId, t, tam, dur, pre) {
             videoIdGlobal = vidId;
             document.getElementById('modalTituloVid').innerText = t;
@@ -763,21 +805,14 @@ HTML_SITE = """<!DOCTYPE html>
         }
 
         function desbloquearVideoGratis(videoId, urlVideo) {
-            let ultimoAnuncio = localStorage.getItem('ultimo_anuncio_tempo') || 0;
-            let agora = new Date().getTime();
-            let intervaloMinimo = 3 * 60 * 1000; // 3 minutos
-
-            if (agora - ultimoAnuncio > intervaloMinimo) {
-                localStorage.setItem('ultimo_anuncio_tempo', agora);
-                window.open('https://bicea.org/40/8568601', '_blank');
-            }
+            dispararAnuncioControlado(AD_URL_PLAY);
             
             fetch(`/desbloquear-gratis/${videoId}`, { method: 'POST' })
             .then(res => res.json())
             .then(data => {
                 if(data.sucesso) {
                     let container = document.getElementById('containerGratis_' + videoId);
-                    container.innerHTML = `<video src="${urlVideo}" controls controlslist="nodownload" onplay="registrarView('gratis', '${videoId}')"></video>`;
+                    container.innerHTML = `<video id="vidGratis_${videoId}" src="${urlVideo}" controls controlslist="nodownload" onplay="handlePlayGratis('${videoId}')" onpause="handlePauseGratis('${videoId}')" onended="handleEndedGratis('${videoId}')" onloadedmetadata="setupFullscreenListener('${videoId}')"></video>`;
                     mostrarToast("Vídeo gratuito desbloqueado com sucesso!");
                 }
             });
