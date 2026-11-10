@@ -278,38 +278,50 @@ def adicionar():
         
         thumbnail = CAPA_PADRAO
 
-        if 'thumbnail_file' in request.files:
+        # 1. Se o admin colou um link manual de imagem, usa ele
+        if link_thumbnail:
+            thumbnail = link_thumbnail
+
+        # 2. Se enviou arquivo de imagem direto, processa ele
+        elif 'thumbnail_file' in request.files:
             file = request.files['thumbnail_file']
             if file and file.filename != '':
                 img_bytes = file.read()
                 encoded = base64.b64encode(img_bytes).decode('utf-8')
                 mime_type = file.content_type or 'image/jpeg'
                 thumbnail = f"data:{mime_type};base64,{encoded}"
-        
-        if thumbnail == CAPA_PADRAO and link_thumbnail:
-            thumbnail = link_thumbnail
 
-        # Tenta extrair automático o 1º frame caso não tenha enviado capa e tenha um link direto de vídeo válido
-        if thumbnail == CAPA_PADRAO and url_video.startswith('http'):
+        # 3. EXTRAÇÃO AUTOMÁTICA DO LINK DO CATBOX (BAIXA O ARQUIVO TEMPORARIAMENTE E LÊ O FRAME)
+        elif thumbnail == CAPA_PADRAO and url_video.startswith('http'):
             try:
-                with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp:
-                    r = requests.get(url_video, stream=True, timeout=10)
-                    for chunk in r.iter_content(chunk_size=8192):
-                        if chunk:
-                            tmp.write(chunk)
-                    tmp_path = tmp.name
+                headers = {'User-Agent': 'Mozilla/5.0'}
+                # Faz o download real do vídeo do Catbox para um arquivo temporário local
+                r = requests.get(url_video, headers=headers, stream=True, timeout=15)
+                if r.status_code == 200:
+                    with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp:
+                        for chunk in r.iter_content(chunk_size=16384):
+                            if chunk:
+                                tmp.write(chunk)
+                        tmp_path = tmp.name
 
-                cap = cv2.VideoCapture(tmp_path)
-                success, frame = cap.read()
-                if success:
-                    _, buffer = cv2.imencode('.jpg', frame)
-                    encoded_img = base64.b64encode(buffer).decode('utf-8')
-                    thumbnail = f"data:image/jpeg;base64,{encoded_img}"
-                cap.release()
-                os.unlink(tmp_path)
-            except Exception:
+                    # O OpenCV agora lê o arquivo local que acabou de ser baixado
+                    cap = cv2.VideoCapture(tmp_path)
+                    success, frame = cap.read()
+                    
+                    if success and frame is not None:
+                        # Redimensiona para economizar espaço e converte para JPG/Base64
+                        frame_resized = cv2.resize(frame, (640, 360))
+                        _, buffer = cv2.imencode('.jpg', frame_resized, [cv2.IMWRITE_JPEG_QUALITY, 80])
+                        encoded_img = base64.b64encode(buffer).decode('utf-8')
+                        thumbnail = f"data:image/jpeg;base64,{encoded_img}"
+                    
+                    cap.release()
+                    os.unlink(tmp_path) # Apaga o arquivo temporário do servidor
+            except Exception as e:
+                print("Erro ao extrair capa automática:", e)
                 pass
 
+        # 4. Se enviou um arquivo de vídeo direto pelo painel
         if 'video_file' in request.files:
             v_file = request.files['video_file']
             if v_file and v_file.filename != '':
@@ -319,10 +331,9 @@ def adicionar():
                         tmp_path = tmp.name
                     
                     cap = cv2.VideoCapture(tmp_path)
-                    cap.set(cv2.CAP_PROP_POS_FRAMES, 1)
                     success, frame = cap.read()
                     
-                    if success:
+                    if success and frame is not None:
                         _, buffer = cv2.imencode('.jpg', frame)
                         encoded_img = base64.b64encode(buffer).decode('utf-8')
                         thumbnail = f"data:image/jpeg;base64,{encoded_img}"
@@ -354,6 +365,7 @@ def adicionar():
         return redirect(url_for('dashboard'))
         
     return render_template_string(ADICIONAR_HTML, erro='')
+
 
 @app.route('/admin/editar/<tipo>/<video_id>', methods=['GET', 'POST'])
 @requer_login
