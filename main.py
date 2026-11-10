@@ -51,7 +51,6 @@ def index():
     videos = list(videos_collection.find({}, {'_id': 0}))
     videos_gratis = list(videos_gratis_collection.find({}, {'_id': 0}))
     
-    # Recupera likes do usuário na sessão
     likes_usuario = session.get('likes_usuario', [])
     desbloqueios_gratis = session.get('desbloqueios_gratis', [])
     
@@ -67,7 +66,6 @@ def curtir_video(tipo, video_id):
     if 'likes_usuario' not in session:
         session['likes_usuario'] = []
     
-    # Segurança contra flood/spam de cliques rápidos
     if video_id in session['likes_usuario']:
         return jsonify({'sucesso': False, 'erro': 'Você já curtiu este vídeo!'}), 400
     
@@ -107,7 +105,6 @@ def enviar_video_criador():
         url_video = request.form.get('url_video', '').strip()
         preco_original = float(request.form.get('preco', '10.00'))
         
-        # O site cobra taxa de R$ 5,00 em cima do valor escolhido
         preco_final = preco_original + 5.00
         
         termo_responsabilidade = request.form.get('termo')
@@ -142,6 +139,7 @@ def gerar_pix():
         
         video = videos_collection.find_one({'id': video_id})
         valor = float(video.get('preco', 10.00)) if video else 10.00
+        titulo_video = video.get('titulo', 'Vídeo VIP') if video else 'Vídeo VIP'
 
         headers = {
             'Authorization': f'Bearer {MP_TOKEN}',
@@ -149,7 +147,7 @@ def gerar_pix():
         }
         payload = {
             "transaction_amount": valor,
-            "description": "Liberacao de Video Exclusivo VIP",
+            "description": f"Acesso VIP: {titulo_video}",
             "payment_method_id": "pix",
             "payer": {"email": f"cliente_{user_token[:8]}@tempmail.com"}
         }
@@ -165,6 +163,7 @@ def gerar_pix():
                 'payment_id': payment_id,
                 'user_token': user_token,
                 'video_id': video_id,
+                'titulo_video': titulo_video,
                 'status': 'pendente',
                 'criado_em': datetime.utcnow()
             })
@@ -253,7 +252,14 @@ def dashboard():
     videos_gratis = list(videos_gratis_collection.find().sort('criado_em', -1))
     envios = list(envios_collection.find().sort('criado_em', -1))
     mensagens = list(suporte_collection.find().sort('criado_em', -1))
-    return render_template_string(DASHBOARD_HTML, videos=videos, videos_gratis=videos_gratis, envios=envios, mensagens=mensagens)
+    pagamentos_aprovados = list(pagamentos_collection.find({'status': 'aprovado'}).sort('criado_em', -1))
+    
+    return render_template_string(DASHBOARD_HTML, 
+                                  videos=videos, 
+                                  videos_gratis=videos_gratis, 
+                                  envios=envios, 
+                                  mensagens=mensagens,
+                                  pagamentos_aprovados=pagamentos_aprovados)
 
 @app.route('/admin/adicionar', methods=['GET', 'POST'])
 @requer_login
@@ -678,9 +684,6 @@ HTML_SITE = """<!DOCTYPE html>
     
     <div id="toast-notificacao"><i class="fa-solid fa-circle-check"></i> <span id="toast-texto">Ação realizada com sucesso!</span></div>
 
-    <!-- SCRIPT DO ADSTERRA ONCLICK -->
-    <script type="text/javascript" src="https://bicea.org/40/8568601"></script>
-
     <script>
         let pixRealGlobal = "";
         let videoIdGlobal = "";
@@ -730,8 +733,15 @@ HTML_SITE = """<!DOCTYPE html>
         }
 
         function desbloquearVideoGratis(videoId, urlVideo) {
-            // Abre o anúncio Adsterra em nova aba (ou redireciona popunder) e desbloqueia individualmente
-            window.open('https://bicea.org/40/8568601', '_blank');
+            // Suavização do anúncio: só abre nova aba/pop se já passou mais de 3 minutos desde o último clique de anúncio
+            let ultimoAnuncio = localStorage.getItem('ultimo_anuncio_tempo') || 0;
+            let agora = new Date().getTime();
+            let intervaloMinimo = 3 * 60 * 1000; // 3 minutos
+
+            if (agora - ultimoAnuncio > intervaloMinimo) {
+                localStorage.setItem('ultimo_anuncio_tempo', agora);
+                window.open('https://bicea.org/40/8568601', '_blank');
+            }
             
             fetch(`/desbloquear-gratis/${videoId}`, { method: 'POST' })
             .then(res => res.json())
@@ -859,6 +869,21 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         <a href="/admin/adicionar" class="btn">➕ Adicionar Novo Vídeo</a>
         <a href="/admin/logout" style="color:#888;text-decoration:none;margin-left:auto;font-size:14px;font-weight:bold;">Sair do Painel</a>
     </div>
+
+    <h2>💰 Histórico de Vendas / Pagamentos Aprovados (Pix)</h2>
+    <table>
+        <tr><th>ID do Pagamento</th><th>Título do Vídeo Comprado</th><th>Token do Usuário</th><th>Data e Hora</th></tr>
+        {% for p in pagamentos_aprovados %}
+        <tr>
+            <td>{{ p.payment_id }}</td>
+            <td style="color:#25d366; font-weight:bold;">{{ p.titulo_video if p.titulo_video else 'Vídeo VIP' }}</td>
+            <td style="font-size:11px; color:#8b949e;">{{ p.user_token }}</td>
+            <td>{{ p.criado_em.strftime('%d/%m/%Y %H:%M') }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" style="text-align:center; color:#888;">Nenhum pagamento aprovado no momento.</td></tr>
+        {% endfor %}
+    </table>
 
     <h2>Envios de Vídeos Feitos por Criadores</h2>
     <table>
