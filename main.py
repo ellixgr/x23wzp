@@ -45,6 +45,7 @@ def index():
     
     user_token = session['user_token']
     
+    # Busca estritamente apenas os video_ids que tiveram pagamento APROVADO para este usuário
     pagos = list(pagamentos_collection.find({'user_token': user_token, 'status': 'aprovado'}, {'video_id': 1, '_id': 0}))
     videos_pagos_ids = [p['video_id'] for p in pagos]
     
@@ -90,6 +91,7 @@ def incrementar_view(tipo, video_id):
 def desbloquear_gratis(video_id):
     if 'desbloqueios_gratis' not in session:
         session['desbloqueios_gratis'] = []
+    # Adiciona apenas este ID específico na lista da sessão do usuário
     if video_id not in session['desbloqueios_gratis']:
         session['desbloqueios_gratis'].append(video_id)
         session.modified = True
@@ -138,8 +140,11 @@ def gerar_pix():
             return jsonify({'sucesso': False, 'erro': 'Vídeo não especificado'}), 400
         
         video = videos_collection.find_one({'id': video_id})
-        valor = float(video.get('preco', 10.00)) if video else 10.00
-        titulo_video = video.get('titulo', 'Vídeo VIP') if video else 'Vídeo VIP'
+        if not video:
+            return jsonify({'sucesso': False, 'erro': 'Vídeo VIP não encontrado'}), 404
+
+        valor = float(video.get('preco', 10.00))
+        titulo_video = video.get('titulo', 'Vídeo VIP')
 
         headers = {
             'Authorization': f'Bearer {MP_TOKEN}',
@@ -159,6 +164,7 @@ def gerar_pix():
             pix_copia_cola_real = pagamento['point_of_interaction']['transaction_data']['qr_code']
             pix_fake = f"00020126580014br.gov.bcb.pix0136{str(uuid.uuid4())}5204000053039865802BR5925CONTEUDO VIP DIGITAL6009SAO PAULO62070503***6304"
             
+            # Vincula estritamente o payment_id ao video_id exato que está sendo comprado
             pagamentos_collection.insert_one({
                 'payment_id': payment_id,
                 'user_token': user_token,
@@ -490,8 +496,8 @@ HTML_SITE = """<!DOCTYPE html>
   <div class="main-content">
     <div id="container-misturado">
         
-        <!-- VÍDEOS GRATUITOS -->
-        <div class="secao-titulo"><i class="fa-solid fa-gift"></i> Vídeos Gratuitos (Desbloqueie com Anúncio)</div>
+        <!-- VÍDEOS GRATUITOS (CADA UM EXIGE SEU PRÓPRIO DESBLOQUEIO INDIVIDUAL) -->
+        <div class="secao-titulo"><i class="fa-solid fa-gift"></i> Vídeos Gratuitos (Desbloqueie Individualmente com Anúncio)</div>
         {% if videos_gratis %}
             {% for video in videos_gratis %}
             <div>
@@ -512,7 +518,7 @@ HTML_SITE = """<!DOCTYPE html>
                             <i class="fa-solid fa-play-circle"></i>
                             <p>Vídeo Gratuito</p>
                             <button class="btn-acao btn-desbloquear-gratis">
-                                <i class="fa-solid fa-unlock"></i> Assistir Vídeo (Ver Anúncio)
+                                <i class="fa-solid fa-unlock"></i> Assistir Este Vídeo (Ver Anúncio)
                             </button>
                         </div>
                     </div>
@@ -530,8 +536,8 @@ HTML_SITE = """<!DOCTYPE html>
             <div class="vazio">Nenhum vídeo gratuito no momento.</div>
         {% endif %}
 
-        <!-- VÍDEOS VIP PAGOS -->
-        <div class="secao-titulo" style="margin-top: 20px;"><i class="fa-solid fa-crown" style="color: #ffd700;"></i> Vídeos Exclusivos VIP</div>
+        <!-- VÍDEOS VIP PAGOS (CADA UM EXIGE SEU PRÓPRIO PAGAMENTO INDIVIDUAL) -->
+        <div class="secao-titulo" style="margin-top: 20px;"><i class="fa-solid fa-crown" style="color: #ffd700;"></i> Vídeos Exclusivos VIP (Pagamento Individual)</div>
         {% if videos %}
             {% for video in videos %}
             <div>
@@ -552,7 +558,7 @@ HTML_SITE = """<!DOCTYPE html>
                             <i class="fa-solid fa-lock"></i>
                             <p>Vídeo Exclusivo Bloqueado</p>
                             <button class="btn-acao">
-                                <i class="fa-solid fa-lock-open"></i> Liberar Acesso VIP (R$ {{ video.preco }})
+                                <i class="fa-solid fa-lock-open"></i> Liberar Apenas Este VIP (R$ {{ video.preco }})
                             </button>
                         </div>
                     </div>
@@ -717,7 +723,7 @@ HTML_SITE = """<!DOCTYPE html>
         function dispararAnuncioControlado(urlAnuncio) {
             let ultimoTempo = localStorage.getItem('ultimo_anuncio_tempo') || 0;
             let agora = new Date().getTime();
-            let intervaloMinimo = 60 * 1000; // 1 minuto de suavização para cliques e reprodução
+            let intervaloMinimo = 60 * 1000; // 1 minuto de suavização
 
             if (agora - ultimoTempo > intervaloMinimo) {
                 localStorage.setItem('ultimo_anuncio_tempo', agora);
@@ -735,7 +741,7 @@ HTML_SITE = """<!DOCTYPE html>
         }
 
         function handleVideoClick(videoId) {
-            // Dispara anúncio ao clicar no vídeo rodando ou pausado
+            // Dispara anúncio ao clicar em qualquer parte do vídeo rodando ou pausado
             dispararAnuncioControlado(AD_URL_PLAY);
         }
 
@@ -800,7 +806,7 @@ HTML_SITE = """<!DOCTYPE html>
             let data = await res.json();
             if(data.aprovado) {
                 clearInterval(intervaloChecagem);
-                document.getElementById('statusPagamento').innerHTML = "<i class='fa-solid fa-check-circle' style='color:#25d366'></i> Pagamento aprovado! Liberando vídeo...";
+                document.getElementById('statusPagamento').innerHTML = "<i class='fa-solid fa-check-circle' style='color:#25d366'></i> Pagamento aprovado! Liberando apenas este vídeo...";
                 
                 setTimeout(() => {
                     closeModal('modalLiberar');
@@ -817,9 +823,9 @@ HTML_SITE = """<!DOCTYPE html>
             .then(data => {
                 if(data.sucesso) {
                     let container = document.getElementById('containerGratis_' + videoId);
-                    // Atualiza estritamente este container individual sem afetar os outros
+                    // Renderiza APENAS este container do ID correspondente, mantendo os outros trancados
                     container.innerHTML = `<video id="vidGratis_${videoId}" src="${urlVideo}" controls controlslist="nodownload" onplay="handlePlayGratis('${videoId}')" onpause="handlePauseGratis('${videoId}')" onclick="handleVideoClick('${videoId}')" onended="handleEndedGratis('${videoId}')" onloadedmetadata="setupFullscreenListener('${videoId}')"></video>`;
-                    mostrarToast("Este vídeo foi desbloqueado com sucesso!");
+                    mostrarToast("Este vídeo gratuito foi desbloqueado com sucesso!");
                 }
             });
         }
