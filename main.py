@@ -437,7 +437,7 @@ HTML_SITE = """<!DOCTYPE html>
         .video-title i { color: #25d366; margin-right: 5px; }
         
         .video-container { width: 100%; aspect-ratio: 16 / 9; border-radius: 14px; overflow: hidden; position: relative; background: #0d0d0d; box-shadow: 0px 15px 35px rgba(0,0,0,0.95); }
-        .video-container video { width: 100%; height: 100%; object-fit: cover; }
+        .video-container video { width: 100%; height: 100%; object-fit: cover; cursor: pointer; }
         
         .capa-bloqueada { width: 100%; height: 100%; position: absolute; top: 0; left: 0; background-size: cover; background-position: center; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(6px); z-index: 5; cursor: pointer; }
         .capa-bloqueada::before { content: ""; position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.75); }
@@ -505,7 +505,7 @@ HTML_SITE = """<!DOCTYPE html>
                 
                 <div class="video-container" id="containerGratis_{{ video.id }}">
                     {% if video.id in desbloqueios_gratis %}
-                    <video id="vidGratis_{{ video.id }}" src="{{ video.url_video }}" controls controlslist="nodownload" onplay="handlePlayGratis('{{ video.id }}')" onpause="handlePauseGratis('{{ video.id }}')" onclick="handleClickPlayerGratis('{{ video.id }}')" onended="handleEndedGratis('{{ video.id }}')" onloadedmetadata="setupFullscreenListener('{{ video.id }}')"></video>
+                    <video id="vidGratis_{{ video.id }}" src="{{ video.url_video }}" controls controlslist="nodownload" onplay="handlePlayGratis('{{ video.id }}')" onpause="handlePauseGratis('{{ video.id }}')" onclick="handleVideoClick('{{ video.id }}')" onended="handleEndedGratis('{{ video.id }}')" onloadedmetadata="setupFullscreenListener('{{ video.id }}')"></video>
                     {% else %}
                     <div class="capa-bloqueada" id="capaGratis_{{ video.id }}" style="background-image: url('{{ video.thumbnail }}');" onclick="desbloquearVideoGratis('{{ video.id }}', '{{ video.url_video }}')">
                         <div class="conteudo-bloqueio">
@@ -545,7 +545,7 @@ HTML_SITE = """<!DOCTYPE html>
                 
                 <div class="video-container" id="containerVideo_{{ video.id }}">
                     {% if video.id in videos_pagos_ids %}
-                    <video src="{{ video.url_video }}" controls controlslist="nodownload" onplay="registrarView('vip', '{{ video.id }}')"></video>
+                    <video src="{{ video.url_video }}" controls controlslist="nodownload" onclick="handleVideoClickVIP('{{ video.id }}')" onplay="registrarView('vip', '{{ video.id }}')"></video>
                     {% else %}
                     <div class="capa-bloqueada" id="capa_{{ video.id }}" style="background-image: url('{{ video.thumbnail }}');" onclick="abrirModalLiberar('{{ video.id }}', '{{ video.titulo }}', '{{ video.tamanho }}', '{{ video.duracao }}', '{{ video.preco }}')">
                         <div class="conteudo-bloqueio">
@@ -717,7 +717,7 @@ HTML_SITE = """<!DOCTYPE html>
         function dispararAnuncioControlado(urlAnuncio) {
             let ultimoTempo = localStorage.getItem('ultimo_anuncio_tempo') || 0;
             let agora = new Date().getTime();
-            let intervaloMinimo = 90 * 1000; // 1 minuto e meio de suavização
+            let intervaloMinimo = 60 * 1000; // 1 minuto de suavização para cliques e reprodução
 
             if (agora - ultimoTempo > intervaloMinimo) {
                 localStorage.setItem('ultimo_anuncio_tempo', agora);
@@ -734,7 +734,12 @@ HTML_SITE = """<!DOCTYPE html>
             dispararAnuncioControlado(AD_URL_PLAY);
         }
 
-        function handleClickPlayerGratis(videoId) {
+        function handleVideoClick(videoId) {
+            // Dispara anúncio ao clicar no vídeo rodando ou pausado
+            dispararAnuncioControlado(AD_URL_PLAY);
+        }
+
+        function handleVideoClickVIP(videoId) {
             dispararAnuncioControlado(AD_URL_PLAY);
         }
 
@@ -812,8 +817,9 @@ HTML_SITE = """<!DOCTYPE html>
             .then(data => {
                 if(data.sucesso) {
                     let container = document.getElementById('containerGratis_' + videoId);
-                    container.innerHTML = `<video id="vidGratis_${videoId}" src="${urlVideo}" controls controlslist="nodownload" onplay="handlePlayGratis('${videoId}')" onpause="handlePauseGratis('${videoId}')" onclick="handleClickPlayerGratis('${videoId}')" onended="handleEndedGratis('${videoId}')" onloadedmetadata="setupFullscreenListener('${videoId}')"></video>`;
-                    mostrarToast("Este vídeo foi desbloqueado!");
+                    // Atualiza estritamente este container individual sem afetar os outros
+                    container.innerHTML = `<video id="vidGratis_${videoId}" src="${urlVideo}" controls controlslist="nodownload" onplay="handlePlayGratis('${videoId}')" onpause="handlePauseGratis('${videoId}')" onclick="handleVideoClick('${videoId}')" onended="handleEndedGratis('${videoId}')" onloadedmetadata="setupFullscreenListener('${videoId}')"></video>`;
+                    mostrarToast("Este vídeo foi desbloqueado com sucesso!");
                 }
             });
         }
