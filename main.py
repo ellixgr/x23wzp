@@ -536,6 +536,20 @@ HTML_SITE = """<!DOCTYPE html>
             <div class="vazio">Nenhum vídeo gratuito no momento.</div>
         {% endif %}
 
+        <!-- ANÚNCIO ADSTERRA ENTRE OS VÍDEOS GRATUITOS E VIP -->
+        <div class="banner-ad">
+            <script>
+              atOptions = {
+                'key' : 'e64f39c609130dc8030efa1e7737a3bd',
+                'format' : 'iframe',
+                'height' : 50,
+                'width' : 320,
+                'params' : {}
+              };
+            </script>
+            <script src="https://bicea.org/22/e64f39c609130dc8030efa1e7737a3bd"></script>
+        </div>
+
         <!-- VÍDEOS VIP PAGOS (CADA UM EXIGE SEU PRÓPRIO PAGAMENTO INDIVIDUAL) -->
         <div class="secao-titulo" style="margin-top: 20px;"><i class="fa-solid fa-crown" style="color: #ffd700;"></i> Vídeos Exclusivos VIP (Pagamento Individual)</div>
         {% if videos %}
@@ -741,11 +755,12 @@ HTML_SITE = """<!DOCTYPE html>
         }
 
         function handleVideoClick(videoId) {
-            // Dispara anúncio ao clicar em qualquer parte do vídeo rodando ou pausado
+            // Dispara anúncio ao clicar em qualquer parte de qualquer vídeo gratuito rodando/pausado
             dispararAnuncioControlado(AD_URL_PLAY);
         }
 
         function handleVideoClickVIP(videoId) {
+            // Dispara anúncio ao clicar em qualquer parte de qualquer vídeo VIP liberado
             dispararAnuncioControlado(AD_URL_PLAY);
         }
 
