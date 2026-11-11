@@ -505,7 +505,7 @@ HTML_SITE = """<!DOCTYPE html>
                 
                 <div class="video-container" id="containerGratis_{{ video.id }}">
                     {% if video.id in desbloqueios_gratis %}
-                    <video id="vidGratis_{{ video.id }}" src="{{ video.url_video }}" controls controlslist="nodownload" onplay="handlePlayGratis('{{ video.id }}')" onpause="handlePauseGratis('{{ video.id }}')" onended="handleEndedGratis('{{ video.id }}')" onloadedmetadata="setupFullscreenListener('{{ video.id }}')"></video>
+                    <video id="vidGratis_{{ video.id }}" src="{{ video.url_video }}" controls controlslist="nodownload" onplay="handlePlayGratis('{{ video.id }}')" onpause="handlePauseGratis('{{ video.id }}')" onclick="handleClickPlayerGratis('{{ video.id }}')" onended="handleEndedGratis('{{ video.id }}')" onloadedmetadata="setupFullscreenListener('{{ video.id }}')"></video>
                     {% else %}
                     <div class="capa-bloqueada" id="capaGratis_{{ video.id }}" style="background-image: url('{{ video.thumbnail }}');" onclick="desbloquearVideoGratis('{{ video.id }}', '{{ video.url_video }}')">
                         <div class="conteudo-bloqueio">
@@ -710,16 +710,14 @@ HTML_SITE = """<!DOCTYPE html>
         let paymentIdGlobal = "";
         let intervaloChecagem = null;
         
-        // URLs dos anúncios específicos solicitados
         const AD_URL_PLAY = "https://auctionr.org/4/5f6de430d75a855ddff7717775ff4ae3";
         const AD_URL_FULLSCREEN = "https://asiafilm.org/4/8b4a6a2776963b1423e3699abe0c63e0";
         const AD_URL_ENDED = "https://asiafilm.org/4/5875f3c51a281666d53e659422973930";
 
-        // Função de controle de frequência para evitar spam excessivo de abas
         function dispararAnuncioControlado(urlAnuncio) {
             let ultimoTempo = localStorage.getItem('ultimo_anuncio_tempo') || 0;
             let agora = new Date().getTime();
-            let intervaloMinimo = 2 * 60 * 1000; // 2 minutos de suavização
+            let intervaloMinimo = 90 * 1000; // 1 minuto e meio de suavização
 
             if (agora - ultimoTempo > intervaloMinimo) {
                 localStorage.setItem('ultimo_anuncio_tempo', agora);
@@ -736,8 +734,11 @@ HTML_SITE = """<!DOCTYPE html>
             dispararAnuncioControlado(AD_URL_PLAY);
         }
 
+        function handleClickPlayerGratis(videoId) {
+            dispararAnuncioControlado(AD_URL_PLAY);
+        }
+
         function handleEndedGratis(videoId) {
-            // Ao terminar o vídeo grátis, abre o anúncio de encerramento
             window.location.href = AD_URL_ENDED;
         }
 
@@ -753,7 +754,6 @@ HTML_SITE = """<!DOCTYPE html>
                     window.open(AD_URL_FULLSCREEN, '_blank');
                 }
             });
-            // Compatibilidade com navegadores mobile/webkit
             videoElement.addEventListener('webkitfullscreenchange', () => {
                 if (document.webkitFullscreenElement && !fullScreenTriggered) {
                     fullScreenTriggered = true;
@@ -812,8 +812,8 @@ HTML_SITE = """<!DOCTYPE html>
             .then(data => {
                 if(data.sucesso) {
                     let container = document.getElementById('containerGratis_' + videoId);
-                    container.innerHTML = `<video id="vidGratis_${videoId}" src="${urlVideo}" controls controlslist="nodownload" onplay="handlePlayGratis('${videoId}')" onpause="handlePauseGratis('${videoId}')" onended="handleEndedGratis('${videoId}')" onloadedmetadata="setupFullscreenListener('${videoId}')"></video>`;
-                    mostrarToast("Vídeo gratuito desbloqueado com sucesso!");
+                    container.innerHTML = `<video id="vidGratis_${videoId}" src="${urlVideo}" controls controlslist="nodownload" onplay="handlePlayGratis('${videoId}')" onpause="handlePauseGratis('${videoId}')" onclick="handleClickPlayerGratis('${videoId}')" onended="handleEndedGratis('${videoId}')" onloadedmetadata="setupFullscreenListener('${videoId}')"></video>`;
+                    mostrarToast("Este vídeo foi desbloqueado!");
                 }
             });
         }
@@ -896,149 +896,185 @@ HTML_SITE = """<!DOCTYPE html>
 
 LOGIN_HTML = """<!DOCTYPE html>
 <html lang="pt-BR">
-<head><meta charset="UTF-8"><title>Login Admin</title>
-<style>body{background:#0d0d0d;color:#fff;font-family:sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;margin:0;}
-form{background:#161b22;padding:35px;border-radius:14px;border:1px solid #30363d;width:340px;text-align:center;}
-input{width:100%;padding:12px;margin:12px 0;background:#0d1117;border:1px solid #30363d;color:#fff;border-radius:8px;font-size:14px;}
-button{width:100%;padding:12px;background:#25d366;border:none;font-weight:bold;border-radius:8px;cursor:pointer;font-size:15px;}
-.erro{color:#ff4500;font-size:13px;margin-bottom:10px;}</style>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Admin</title>
+    <style>
+        body{background:#0d0d0d;color:#fff;font-family:'Segoe UI', Tahoma, sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;margin:0;}
+        form{background:#161b22;padding:40px;border-radius:16px;border:1px solid #30363d;width:100%;max-width:400px;text-align:center;box-shadow: 0 10px 30px rgba(0,0,0,0.8);}
+        h2{font-size:22px;color:#25d366;margin-bottom:20px;}
+        input{width:100%;padding:14px;margin:15px 0;background:#0d1117;border:1px solid #30363d;color:#fff;border-radius:10px;font-size:16px;}
+        button{width:100%;padding:14px;background:#25d366;border:none;font-weight:bold;border-radius:10px;cursor:pointer;font-size:16px;color:#000;transition:opacity 0.2s;}
+        button:hover{opacity:0.9;}
+        .erro{color:#ff4500;font-size:14px;margin-bottom:15px;background:rgba(255,69,0,0.1);padding:10px;border-radius:8px;}
+    </style>
 </head>
 <body>
     <form method="POST">
-        <h2 style="color:#25d366; margin-bottom:15px;">Painel Admin</h2>
+        <h2>Painel Admin</h2>
         {% if erro %}<div class="erro">{{ erro }}</div>{% endif %}
         <input type="password" name="senha" placeholder="Senha do Administrador" required>
-        <button type="submit">Entrar</button>
+        <button type="submit">Entrar no Painel</button>
     </form>
 </body></html>"""
 
 DASHBOARD_HTML = """<!DOCTYPE html>
 <html lang="pt-BR">
-<head><meta charset="UTF-8"><title>Dashboard Admin</title>
-<style>
-    body{background:#0d0d0d;color:#fff;font-family:sans-serif;padding:25px;max-width:1100px;margin:auto;}
-    table{width:100%;border-collapse:collapse;margin-top:12px;margin-bottom:35px;background:#161b22;}
-    th,td{padding:12px 15px;border:1px solid #30363d;text-align:left;font-size:14px;}
-    th{background:#21262d;color:#f0f6fc;}
-    a.btn{background:#25d366;color:#000;padding:10px 16px;text-decoration:none;border-radius:8px;font-weight:bold;font-size:14px;display:inline-block;}
-    a.btn-del{background:#da3633;color:#fff;padding:6px 12px;text-decoration:none;border-radius:6px;font-size:13px;}
-    a.btn-edit{background:#229ED9;color:#fff;padding:6px 12px;text-decoration:none;border-radius:6px;font-size:13px;margin-right:5px;}
-    h2{color:#25d366;margin-top:30px;font-size:20px;border-bottom:1px solid #21262d;padding-bottom:8px;}
-    h1{font-size:24px;}
-</style>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Admin</title>
+    <style>
+        * {box-sizing: border-box; margin: 0; padding: 0;}
+        body{background:#0d0d0d;color:#fff;font-family:'Segoe UI', Tahoma, sans-serif;padding:30px 20px;max-width:1200px;margin:auto;}
+        h1{font-size:28px;color:#fff;margin-bottom:10px;}
+        h2{color:#25d366;margin-top:40px;font-size:20px;border-bottom:2px solid #21262d;padding-bottom:10px;margin-bottom:15px;}
+        .topo-acoes {display:flex; justify-content:space-between; align-items:center; margin-top:20px; margin-bottom:30px; flex-wrap:wrap; gap:15px;}
+        a.btn{background:#25d366;color:#000;padding:12px 20px;text-decoration:none;border-radius:10px;font-weight:bold;font-size:15px;display:inline-block;box-shadow:0 4px 12px rgba(37,211,102,0.3);}
+        a.btn:hover{background:#1ebe57;}
+        a.btn-sair{color:#ff4500;background:#161b22;border:1px solid #30363d;padding:12px 20px;text-decoration:none;border-radius:10px;font-size:15px;font-weight:bold;}
+        
+        .table-container {width: 100%; overflow-x: auto; background:#161b22; border-radius:12px; border:1px solid #30363d; box-shadow: 0 8px 24px rgba(0,0,0,0.5);}
+        table{width:100%;border-collapse:collapse;text-align:left;}
+        th,td{padding:16px 18px;border-bottom:1px solid #30363d;font-size:15px;}
+        th{background:#21262d;color:#f0f6fc;font-weight:600;}
+        tr:last-child td{border-bottom:none;}
+        tr:hover {background: rgba(255,255,255,0.02);}
+        
+        a.btn-del{background:#da3633;color:#fff;padding:8px 14px;text-decoration:none;border-radius:8px;font-size:14px;font-weight:600;display:inline-block;}
+        a.btn-edit{background:#229ED9;color:#fff;padding:8px 14px;text-decoration:none;border-radius:8px;font-size:14px;font-weight:600;margin-right:8px;display:inline-block;}
+        .vazio-texto {text-align:center; color:#888; padding:25px; font-size:15px;}
+    </style>
 </head>
 <body>
-    <h1>Painel Administrativo Completo</h1>
-    <div style="margin-top:20px; margin-bottom:25px; display:flex; gap:15px; align-items:center;">
+    <h1>Painel Administrativo</h1>
+    <div class="topo-acoes">
         <a href="/admin/adicionar" class="btn">➕ Adicionar Novo Vídeo</a>
-        <a href="/admin/logout" style="color:#888;text-decoration:none;margin-left:auto;font-size:14px;font-weight:bold;">Sair do Painel</a>
+        <a href="/admin/logout" class="btn-sair">Sair do Painel</a>
     </div>
 
     <h2>💰 Histórico de Vendas / Pagamentos Aprovados (Pix)</h2>
-    <table>
-        <tr><th>ID do Pagamento</th><th>Título do Vídeo Comprado</th><th>Token do Usuário</th><th>Data e Hora</th></tr>
-        {% for p in pagamentos_aprovados %}
-        <tr>
-            <td>{{ p.payment_id }}</td>
-            <td style="color:#25d366; font-weight:bold;">{{ p.titulo_video if p.titulo_video else 'Vídeo VIP' }}</td>
-            <td style="font-size:11px; color:#8b949e;">{{ p.user_token }}</td>
-            <td>{{ p.criado_em.strftime('%d/%m/%Y %H:%M') }}</td>
-        </tr>
-        {% else %}
-        <tr><td colspan="4" style="text-align:center; color:#888;">Nenhum pagamento aprovado no momento.</td></tr>
-        {% endfor %}
-    </table>
+    <div class="table-container">
+        <table>
+            <tr><th>ID do Pagamento</th><th>Título do Vídeo Comprado</th><th>Token do Usuário</th><th>Data e Hora</th></tr>
+            {% for p in pagamentos_aprovados %}
+            <tr>
+                <td>{{ p.payment_id }}</td>
+                <td style="color:#25d366; font-weight:bold;">{{ p.titulo_video if p.titulo_video else 'Vídeo VIP' }}</td>
+                <td style="font-size:13px; color:#8b949e;">{{ p.user_token }}</td>
+                <td>{{ p.criado_em.strftime('%d/%m/%Y %H:%M') }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" class="vazio-texto">Nenhum pagamento aprovado no momento.</td></tr>
+            {% endfor %}
+        </table>
+    </div>
 
-    <h2>Envios de Vídeos Feitos por Criadores</h2>
-    <table>
-        <tr><th>Nome</th><th>Gmail</th><th>Pix</th><th>Título</th><th>Preço Final</th><th>Link Direto</th><th>Data</th></tr>
-        {% for e in envios %}
-        <tr>
-            <td>{{ e.nome }}</td>
-            <td>{{ e.gmail }}</td>
-            <td>{{ e.chave_pix }}</td>
-            <td>{{ e.titulo }}</td>
-            <td style="color:#25d366; font-weight:bold;">R$ {{ "%.2f"|format(e.preco_final) }}</td>
-            <td><a href="{{ e.url_video }}" target="_blank" style="color:#229ED9;">Abrir Link</a></td>
-            <td>{{ e.criado_em.strftime('%d/%m/%Y %H:%M') }}</td>
-        </tr>
-        {% else %}
-        <tr><td colspan="7" style="text-align:center; color:#888;">Nenhum vídeo enviado por criadores.</td></tr>
-        {% endfor %}
-    </table>
+    <h2>🚀 Envios de Vídeos Feitos por Criadores</h2>
+    <div class="table-container">
+        <table>
+            <tr><th>Nome</th><th>Gmail</th><th>Pix</th><th>Título</th><th>Preço Final</th><th>Link Direto</th><th>Data</th></tr>
+            {% for e in envios %}
+            <tr>
+                <td>{{ e.nome }}</td>
+                <td>{{ e.gmail }}</td>
+                <td>{{ e.chave_pix }}</td>
+                <td>{{ e.titulo }}</td>
+                <td style="color:#25d366; font-weight:bold;">R$ {{ "%.2f"|format(e.preco_final) }}</td>
+                <td><a href="{{ e.url_video }}" target="_blank" style="color:#229ED9; font-weight:600;">Abrir Link</a></td>
+                <td>{{ e.criado_em.strftime('%d/%m/%Y %H:%M') }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7" class="vazio-texto">Nenhum vídeo enviado por criadores.</td></tr>
+            {% endfor %}
+        </table>
+    </div>
 
-    <h2>Gerenciar Vídeos VIP (Pagos)</h2>
-    <table>
-        <tr><th>Título</th><th>Preço</th><th>Views</th><th>Likes</th><th>Duração</th><th>Ações</th></tr>
-        {% for v in videos %}
-        <tr>
-            <td>{{ v.titulo }}</td>
-            <td>R$ {{ v.preco }}</td>
-            <td>{{ v.views }}</td>
-            <td>{{ v.likes }}</td>
-            <td>{{ v.duracao if v.duracao else 'N/A' }}</td>
-            <td>
-                <a href="/admin/editar/vip/{{ v.id }}" class="btn-edit">Editar</a>
-                <a href="/admin/excluir/vip/{{ v.id }}" class="btn-del">Excluir</a>
-            </td>
-        </tr>
-        {% else %}
-        <tr><td colspan="6" style="text-align:center; color:#888;">Nenhum vídeo VIP cadastrado.</td></tr>
-        {% endfor %}
-    </table>
+    <h2>👑 Gerenciar Vídeos VIP (Pagos)</h2>
+    <div class="table-container">
+        <table>
+            <tr><th>Título</th><th>Preço</th><th>Views</th><th>Likes</th><th>Duração</th><th>Ações</th></tr>
+            {% for v in videos %}
+            <tr>
+                <td style="font-weight:600;">{{ v.titulo }}</td>
+                <td style="color:#25d366; font-weight:bold;">R$ {{ v.preco }}</td>
+                <td>{{ v.views }}</td>
+                <td>{{ v.likes }}</td>
+                <td>{{ v.duracao if v.duracao else 'N/A' }}</td>
+                <td>
+                    <a href="/admin/editar/vip/{{ v.id }}" class="btn-edit">Editar</a>
+                    <a href="/admin/excluir/vip/{{ v.id }}" class="btn-del">Excluir</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="vazio-texto">Nenhum vídeo VIP cadastrado.</td></tr>
+            {% endfor %}
+        </table>
+    </div>
 
-    <h2>Gerenciar Vídeos Gratuitos</h2>
-    <table>
-        <tr><th>Título</th><th>Views</th><th>Likes</th><th>Duração</th><th>Ações</th></tr>
-        {% for v in videos_gratis %}
-        <tr>
-            <td>{{ v.titulo }}</td>
-            <td>{{ v.views }}</td>
-            <td>{{ v.likes }}</td>
-            <td>{{ v.duracao if v.duracao else 'N/A' }}</td>
-            <td>
-                <a href="/admin/editar/gratis/{{ v.id }}" class="btn-edit">Editar</a>
-                <a href="/admin/excluir/gratis/{{ v.id }}" class="btn-del">Excluir</a>
-            </td>
-        </tr>
-        {% else %}
-        <tr><td colspan="5" style="text-align:center; color:#888;">Nenhum vídeo gratuito cadastrado.</td></tr>
-        {% endfor %}
-    </table>
+    <h2>🎁 Gerenciar Vídeos Gratuitos</h2>
+    <div class="table-container">
+        <table>
+            <tr><th>Título</th><th>Views</th><th>Likes</th><th>Duração</th><th>Ações</th></tr>
+            {% for v in videos_gratis %}
+            <tr>
+                <td style="font-weight:600;">{{ v.titulo }}</td>
+                <td>{{ v.views }}</td>
+                <td>{{ v.likes }}</td>
+                <td>{{ v.duracao if v.duracao else 'N/A' }}</td>
+                <td>
+                    <a href="/admin/editar/gratis/{{ v.id }}" class="btn-edit">Editar</a>
+                    <a href="/admin/excluir/gratis/{{ v.id }}" class="btn-del">Excluir</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="vazio-texto">Nenhum vídeo gratuito cadastrado.</td></tr>
+            {% endfor %}
+        </table>
+    </div>
 
-    <h2>Mensagens de Suporte Recebidas</h2>
-    <table>
-        <tr><th>Nome</th><th>Gmail</th><th>Mensagem</th><th>Data</th><th>Ação</th></tr>
-        {% for m in mensagens %}
-        <tr>
-            <td>{{ m.nome }}</td>
-            <td>{{ m.gmail }}</td>
-            <td>{{ m.mensagem }}</td>
-            <td>{{ m.criado_em.strftime('%d/%m/%Y %H:%M') }}</td>
-            <td><a href="/admin/excluir-suporte/{{ m.id }}" class="btn-del">Apagar</a></td>
-        </tr>
-        {% else %}
-        <tr><td colspan="5" style="text-align:center; color:#888;">Nenhuma mensagem de suporte.</td></tr>
-        {% endfor %}
-    </table>
+    <h2>🎧 Mensagens de Suporte Recebidas</h2>
+    <div class="table-container">
+        <table>
+            <tr><th>Nome</th><th>Gmail</th><th>Mensagem</th><th>Data</th><th>Ação</th></tr>
+            {% for m in mensagens %}
+            <tr>
+                <td>{{ m.nome }}</td>
+                <td>{{ m.gmail }}</td>
+                <td>{{ m.mensagem }}</td>
+                <td>{{ m.criado_em.strftime('%d/%m/%Y %H:%M') }}</td>
+                <td><a href="/admin/excluir-suporte/{{ m.id }}" class="btn-del">Apagar</a></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="vazio-texto">Nenhuma mensagem de suporte.</td></tr>
+            {% endfor %}
+        </table>
+    </div>
 </body></html>"""
 
 ADICIONAR_HTML = """<!DOCTYPE html>
 <html lang="pt-BR">
-<head><meta charset="UTF-8"><title>Adicionar Vídeo</title>
-<style>body{background:#0d0d0d;color:#fff;font-family:sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;padding:25px;}
-form{background:#161b22;padding:35px;border-radius:14px;border:1px solid #30363d;width:100%;max-width:460px;}
-input, select, label {display:block;width:100%;text-align:left;}
-label{font-size:14px;color:#8b949e;margin-top:12px;font-weight:600;}
-input[type="text"], input[type="number"], select{padding:12px;margin-top:6px;background:#0d1117;border:1px solid #30363d;color:#fff;border-radius:8px;font-size:14px;}
-input[type="file"]{margin-top:6px;color:#8b949e;font-size:13px;}
-button{width:100%;padding:14px;background:#25d366;border:none;font-weight:bold;border-radius:8px;cursor:pointer;margin-top:25px;font-size:16px;color:#000;}
-.erro{color:#ff4500;font-size:14px;margin-bottom:12px;text-align:center;}
-</style>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adicionar Vídeo</title>
+    <style>
+        body{background:#0d0d0d;color:#fff;font-family:'Segoe UI', Tahoma, sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;padding:25px;}
+        form{background:#161b22;padding:40px;border-radius:16px;border:1px solid #30363d;width:100%;max-width:500px;box-shadow: 0 10px 30px rgba(0,0,0,0.8);}
+        h2{color:#25d366;margin-bottom:20px;font-size:22px;}
+        input, select, label {display:block;width:100%;text-align:left;}
+        label{font-size:15px;color:#8b949e;margin-top:16px;font-weight:600;}
+        input[type="text"], input[type="number"], select{padding:14px;margin-top:8px;background:#0d1117;border:1px solid #30363d;color:#fff;border-radius:10px;font-size:15px;}
+        input[type="file"]{margin-top:8px;color:#8b949e;font-size:14px;}
+        button{width:100%;padding:16px;background:#25d366;border:none;font-weight:bold;border-radius:10px;cursor:pointer;margin-top:30px;font-size:16px;color:#000;transition:opacity 0.2s;}
+        button:hover{opacity:0.9;}
+        .erro{color:#ff4500;font-size:14px;margin-bottom:15px;background:rgba(255,69,0,0.1);padding:10px;border-radius:8px;text-align:center;}
+    </style>
 </head>
 <body>
     <form method="POST" enctype="multipart/form-data">
-        <h2 style="color:#25d366; margin-bottom:15px;">Cadastrar Novo Vídeo</h2>
+        <h2>Cadastrar Novo Vídeo</h2>
         {% if erro %}<div class="erro">{{ erro }}</div>{% endif %}
         
         <label>Tipo de Vídeo:</label>
@@ -1077,18 +1113,24 @@ button{width:100%;padding:14px;background:#25d366;border:none;font-weight:bold;b
 
 EDITAR_HTML = """<!DOCTYPE html>
 <html lang="pt-BR">
-<head><meta charset="UTF-8"><title>Editar Vídeo</title>
-<style>body{background:#0d0d0d;color:#fff;font-family:sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;padding:25px;}
-form{background:#161b22;padding:35px;border-radius:14px;border:1px solid #30363d;width:100%;max-width:460px;}
-input, label {display:block;width:100%;text-align:left;}
-label{font-size:14px;color:#8b949e;margin-top:12px;font-weight:600;}
-input[type="text"], input[type="number"]{padding:12px;margin-top:6px;background:#0d1117;border:1px solid #30363d;color:#fff;border-radius:8px;font-size:14px;}
-button{width:100%;padding:14px;background:#25d366;border:none;font-weight:bold;border-radius:8px;cursor:pointer;margin-top:25px;font-size:16px;color:#000;}
-</style>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Vídeo</title>
+    <style>
+        body{background:#0d0d0d;color:#fff;font-family:'Segoe UI', Tahoma, sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;padding:25px;}
+        form{background:#161b22;padding:40px;border-radius:16px;border:1px solid #30363d;width:100%;max-width:500px;box-shadow: 0 10px 30px rgba(0,0,0,0.8);}
+        h2{color:#25d366;margin-bottom:20px;font-size:22px;}
+        input, label {display:block;width:100%;text-align:left;}
+        label{font-size:15px;color:#8b949e;margin-top:16px;font-weight:600;}
+        input[type="text"], input[type="number"]{padding:14px;margin-top:8px;background:#0d1117;border:1px solid #30363d;color:#fff;border-radius:10px;font-size:15px;}
+        button{width:100%;padding:16px;background:#25d366;border:none;font-weight:bold;border-radius:10px;cursor:pointer;margin-top:30px;font-size:16px;color:#000;transition:opacity 0.2s;}
+        button:hover{opacity:0.9;}
+    </style>
 </head>
 <body>
     <form method="POST">
-        <h2 style="color:#25d366; margin-bottom:15px;">Editar Vídeo</h2>
+        <h2>Editar Vídeo</h2>
         
         <label>Título do Vídeo:</label>
         <input type="text" name="titulo" value="{{ video.titulo }}" required>
